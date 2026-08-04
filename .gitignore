@@ -47,6 +47,3 @@ desktop.ini
 scratch/
 notes/
 *.local.md
-
-# 재현 가능한 파생 데이터 (scripts/normalize_data.py로 재생성)
-data_clean/

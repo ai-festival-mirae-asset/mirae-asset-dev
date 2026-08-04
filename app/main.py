@@ -12,7 +12,7 @@ from typing import Any
 from fastapi import FastAPI
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
-from query_engine import query  # noqa: E402
+from query_engine import assess_answerability, query  # noqa: E402
 
 app = FastAPI(title="금융상품 Agent (스텁)")
 
@@ -34,16 +34,29 @@ def parse_question(question: str) -> dict[str, Any] | None:
     return None
 
 
-def render_answer(question: str, plan: dict[str, Any], rows: list[dict], warnings: list[str]) -> str:
+def render_answer(
+    answerability: dict[str, Any], rows: list[dict], warnings: list[str]
+) -> str:
     """조회 결과 -> 사람이 읽을 답변 문장. TODO: HyperCLOVA X로 교체."""
-    if not rows:
-        return "조건에 맞는 상품을 찾지 못했습니다. 조건을 다시 확인해 주세요."
+    status = answerability["status"]
+
+    if status == "no_matching_rows":
+        return "조건에 맞는 상품이 없습니다. 데이터가 없는 게 아니라 조건에 맞는 상품이 없는 것입니다."
+    if status == "unsupported_field":
+        return f"요청하신 정보는 이 데이터에 없습니다. ({answerability['reason']})"
 
     lines = [f"조건에 부합하는 상품 {len(rows)}건입니다 (기준일 2026-07-11):"]
     for r in rows:
         lines.append(
             f"- {r['pd_nm']} ({r['pd_itm_no']}): 총보수 {r['cu_charge_rt']}%, "
             f"운용규모 {r['du_last_aum']:,.0f}"
+        )
+
+    if status == "partial_coverage":
+        lines.append(
+            f"주의: 조건에 맞는 상품 {answerability['eligible_count']}건 중 "
+            f"{answerability['available_count']}건만 해당 값을 보유하고 있어, "
+            "값이 있는 상품만 비교했습니다."
         )
     if warnings:
         lines.append("주의: " + " ".join(warnings))
@@ -63,15 +76,32 @@ def answer(question_id: str, question: str) -> dict[str, Any]:
             "answer": "현재 데모 버전은 정해진 예시 질의 패턴만 처리합니다. 다른 조건은 아직 지원하지 않습니다.",
         }
 
+    answerability = assess_answerability(
+        table=plan["table"], filters=plan["filters"], requested_columns=plan["columns"]
+    )
+
+    think_trace = [
+        {"tool": "parse_question", "status": "success", "matched_pattern": "overseas_equity_etf_low_fee_high_aum"},
+        {"tool": "assess_answerability", "status": "success", **{k: v for k, v in answerability.items() if k != "coverage_by_column"}},
+    ]
+
+    if answerability["status"] in ("no_matching_rows", "unsupported_field"):
+        return {
+            "question_id": question_id,
+            "question": question,
+            "retrieved_context": {"source_tables": [plan["table"]], "as_of_date": "2026-07-11"},
+            "think_trace": think_trace,
+            "answerability": answerability,
+            "answer": render_answer(answerability, [], []),
+        }
+
     result_df, warnings = query(
         table=plan["table"], filters=plan["filters"], sort=plan["sort"], limit=plan["limit"]
     )
     rows = result_df[plan["columns"]].to_dict(orient="records")
-
-    think_trace = [
-        {"tool": "parse_question", "status": "success", "matched_pattern": "overseas_equity_etf_low_fee_high_aum"},
-        {"tool": "query_engine.query", "status": "success", "table": plan["table"], "row_count": len(rows)},
-    ]
+    think_trace.append(
+        {"tool": "query_engine.query", "status": "success", "table": plan["table"], "row_count": len(rows)}
+    )
 
     retrieved_context = {
         "source_tables": ["PREF02N001"],
@@ -87,5 +117,6 @@ def answer(question_id: str, question: str) -> dict[str, Any]:
         "question": question,
         "retrieved_context": retrieved_context,
         "think_trace": think_trace,
-        "answer": render_answer(question, plan, rows, warnings),
+        "answerability": answerability,
+        "answer": render_answer(answerability, rows, warnings),
     }

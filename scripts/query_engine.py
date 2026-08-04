@@ -30,25 +30,8 @@ ZERO_UNVERIFIED_COLUMNS = {
 }
 
 
-def query(
-    table: str,
-    filters: dict[str, Any] | None = None,
-    sort: list[tuple[str, str]] | None = None,
-    limit: int | None = None,
-) -> tuple[pd.DataFrame, list[str]]:
-    """조건에 맞는 행을 필터링·정렬해서 반환한다.
-
-    filters: {"컬럼명": 값} (등호 매칭) 또는 {"컬럼명": (연산자, 값)} 형태.
-             연산자는 "eq", "gte", "lte", "gt", "lt" 지원.
-    sort: [(컬럼명, "asc"|"desc"), ...]
-    limit: 상위 N개만 반환
-
-    반환값: (결과 DataFrame, 경고 메시지 목록)
-    """
-    df = load_table(table)
-    warnings: list[str] = []
-
-    for col, cond in (filters or {}).items():
+def _apply_filters(df: pd.DataFrame, table: str, filters: dict[str, Any]) -> pd.DataFrame:
+    for col, cond in filters.items():
         if col not in df.columns:
             raise KeyError(f"'{table}' 테이블에 컬럼 '{col}'이 없습니다.")
         if isinstance(cond, tuple):
@@ -67,6 +50,39 @@ def query(
                 raise ValueError(f"알 수 없는 연산자: {op}")
         else:
             df = df[df[col] == cond]
+    return df
+
+
+def _eligible_set(table: str, filters: dict[str, Any] | None) -> tuple[pd.DataFrame, list[str]]:
+    """필터만 적용한(정렬/limit 전) 대상 집합. 만기채권은 명시적으로 요청하지 않으면 기본 제외."""
+    df = load_table(table)
+    filters = dict(filters or {})
+    warnings: list[str] = []
+
+    if table == "bond" and "is_matured" not in filters and "is_matured" in df.columns:
+        df = df[df["is_matured"] == False]  # noqa: E712
+        warnings.append("만기 도래한 채권은 기본적으로 제외했습니다. 만기 상품도 포함하려면 명시적으로 요청하세요.")
+
+    df = _apply_filters(df, table, filters)
+    return df, warnings
+
+
+def query(
+    table: str,
+    filters: dict[str, Any] | None = None,
+    sort: list[tuple[str, str]] | None = None,
+    limit: int | None = None,
+) -> tuple[pd.DataFrame, list[str]]:
+    """조건에 맞는 행을 필터링·정렬해서 반환한다.
+
+    filters: {"컬럼명": 값} (등호 매칭) 또는 {"컬럼명": (연산자, 값)} 형태.
+             연산자는 "eq", "gte", "lte", "gt", "lt" 지원.
+    sort: [(컬럼명, "asc"|"desc"), ...]
+    limit: 상위 N개만 반환
+
+    반환값: (결과 DataFrame, 경고 메시지 목록)
+    """
+    df, warnings = _eligible_set(table, filters)
 
     if sort:
         by = [c for c, _ in sort]
@@ -83,6 +99,66 @@ def query(
             warnings.append(message)
 
     return df, warnings
+
+
+def assess_answerability(
+    table: str,
+    filters: dict[str, Any] | None = None,
+    requested_columns: list[str] | None = None,
+) -> dict[str, Any]:
+    """조회 전/후로 이 질의에 답할 수 있는 상태인지 판정한다. (PROJECT_GUIDE.md §8 축소판)
+
+    status: answerable / partial_coverage / unsupported_field / no_matching_rows
+    """
+    all_cols = load_table(table).columns
+    requested_columns = requested_columns or []
+
+    missing = [c for c in requested_columns if c not in all_cols]
+    if missing:
+        return {
+            "status": "unsupported_field",
+            "reason": f"'{table}' 테이블에 없는 컬럼: {missing}",
+            "eligible_count": None,
+            "available_count": None,
+        }
+
+    eligible, _ = _eligible_set(table, filters)
+    eligible_count = len(eligible)
+
+    if eligible_count == 0:
+        return {
+            "status": "no_matching_rows",
+            "reason": "조건에 맞는 상품이 없습니다 (데이터 부재가 아니라 조건 불일치일 수 있음).",
+            "eligible_count": 0,
+            "available_count": 0,
+        }
+
+    coverage_by_column: dict[str, float] = {}
+    min_available_count = eligible_count
+    for col in requested_columns:
+        avail_col = f"{col}_available" if f"{col}_available" in eligible.columns else None
+        if avail_col:
+            available_count = int(eligible[avail_col].sum())
+        else:
+            available_count = int(eligible[col].notna().sum())
+        coverage_by_column[col] = available_count / eligible_count
+        min_available_count = min(min_available_count, available_count)
+
+    if requested_columns and min_available_count < eligible_count:
+        return {
+            "status": "partial_coverage",
+            "reason": "조건에 맞는 상품 중 일부만 요청한 값을 보유하고 있습니다.",
+            "eligible_count": eligible_count,
+            "available_count": min_available_count,
+            "coverage_by_column": coverage_by_column,
+        }
+
+    return {
+        "status": "answerable",
+        "reason": None,
+        "eligible_count": eligible_count,
+        "available_count": eligible_count,
+    }
 
 
 if __name__ == "__main__":

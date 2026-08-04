@@ -42,6 +42,41 @@ def _trim_strings(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+_TAXONOMY_PATH = OUT_DIR / "taxonomy_mapping.csv"
+_taxonomy_cache: pd.DataFrame | None = None
+
+
+def _load_taxonomy() -> pd.DataFrame:
+    global _taxonomy_cache
+    if _taxonomy_cache is None:
+        if not _TAXONOMY_PATH.exists():
+            raise FileNotFoundError(
+                f"{_TAXONOMY_PATH}가 없습니다. 먼저 scripts/build_taxonomy_mapping.py를 실행하세요."
+            )
+        _taxonomy_cache = pd.read_csv(_TAXONOMY_PATH)
+    return _taxonomy_cache
+
+
+def _apply_taxonomy(
+    df: pd.DataFrame, table: str, source_column: str, dimension: str, out_prefix: str
+) -> pd.DataFrame:
+    """source_column 값을 표준 코드로 매핑해 {out_prefix}_std, {out_prefix}_mapping_status 컬럼을 추가한다."""
+    tax = _load_taxonomy()
+    sub = tax[
+        (tax["source_table"] == table)
+        & (tax["source_column"] == source_column)
+        & (tax["standard_dimension"] == dimension)
+    ][["source_value", "standard_code", "mapping_status"]]
+
+    merged = df.merge(
+        sub, left_on=source_column, right_on="source_value", how="left"
+    ).drop(columns=["source_value"])
+    merged = merged.rename(
+        columns={"standard_code": f"{out_prefix}_std", "mapping_status": f"{out_prefix}_mapping_status"}
+    )
+    return merged
+
+
 def normalize_bond() -> pd.DataFrame:
     df = pd.read_excel(
         DATASETS_DIR / "PRBD01N001_국내채권마스터_20260711_datarows.xlsx", dtype=str
@@ -60,6 +95,10 @@ def normalize_bond() -> pd.DataFrame:
     buyable_qty = pd.to_numeric(df["BUYABLE_QUANTITY"], errors="coerce")
     df["is_buyable"] = buyable_qty > 0
     df["buyable_info_available"] = buyable_qty.notna()
+
+    df = _apply_taxonomy(df, "bond", "PD_CTRY_CD", "region", "region")
+    df["asset_class_std"] = "BOND"  # 국내채권 테이블 전체가 채권 (build_taxonomy_mapping.py의 상수와 동일)
+    df["asset_class_mapping_status"] = "mapped"
 
     df["as_of_date"] = AS_OF_DATE
     df["source_table"] = "PRBD01N001"
@@ -81,6 +120,9 @@ def normalize_domestic_etf() -> pd.DataFrame:
         df[col] = pd.to_numeric(df[col], errors="coerce")
     df["expense_ratio_available"] = df["cu_charge_rt"].notna()
 
+    df = _apply_taxonomy(df, "domestic_etf", "wu_inv_rgn", "region", "region")
+    df = _apply_taxonomy(df, "domestic_etf", "wu_inv_ast_type", "asset_class", "asset_class")
+
     df["as_of_date"] = AS_OF_DATE
     df["source_table"] = "PREF01N001"
     return df
@@ -99,6 +141,9 @@ def normalize_overseas_etf() -> pd.DataFrame:
     for col in ["du_clpr", "du_last_aum", "cu_charge_rt"]:
         df[col] = pd.to_numeric(df[col], errors="coerce")
     df["expense_ratio_available"] = df["cu_charge_rt"].notna()
+
+    df = _apply_taxonomy(df, "overseas_etf", "wu_inv_rgn", "region", "region")
+    df = _apply_taxonomy(df, "overseas_etf", "wu_inv_ast_type", "asset_class", "asset_class")
 
     df["as_of_date"] = AS_OF_DATE
     df["source_table"] = "PREF02N001"
@@ -120,6 +165,9 @@ def normalize_fund() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         risk = pd.to_numeric(df["zrin_fd_ivst_risk_gcd"], errors="coerce")
         df["risk_grade"] = risk
         df["risk_available"] = risk.notna()
+
+    df = _apply_taxonomy(df, "fund", "fd_ivst_rgn_desc", "region", "region")
+    df = _apply_taxonomy(df, "fund", "or_attr_desc", "asset_class", "asset_class")
 
     df["as_of_date"] = AS_OF_DATE
     df["source_table"] = "PRFD01N001"

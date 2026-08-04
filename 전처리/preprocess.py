@@ -3,9 +3,9 @@
 금융상품 4종 마스터 전처리 파이프라인 (1차)
 
 입력 : datasets/*.xlsx (원본 datarows 4종 + schema 4종)
-출력 : data/processed/<테이블ID>_<상품군>_전처리.csv   (전처리 완료 데이터)
-       data/processed/quarantine_PRFD01N001_비정상행.csv (격리 행)
-       data/processed/전처리_리포트.csv                  (규칙별 영향 행수)
+출력 : 전처리/처리결과/<테이블ID>_<상품군>_전처리.csv   (전처리 완료 데이터)
+       전처리/처리결과/quarantine_PRFD01N001_비정상행.csv (격리 행)
+       전처리/처리결과/전처리_리포트.csv                  (규칙별 영향 행수)
 
 원칙
   1. 원본 컬럼은 삭제·변형을 최소화하고(전량 무정보 컬럼 제외), 해석이 필요한
@@ -15,8 +15,8 @@
   3. 모든 규칙은 규칙ID와 영향 행수를 리포트로 남긴다 (전처리_리포트.csv).
   4. 재실행 가능(멱등): 같은 입력이면 항상 같은 출력.
 
-근거 문서 : 데이터_전처리_방법.md / 해석_메타데이터/수집_요약.md / PROJECT_GUIDE.md
-실행      : python scripts/preprocess.py  (repo 루트에서)
+근거 문서 : 전처리/데이터_전처리_방법.md / 외부데이터/수집_요약.md / PROJECT_GUIDE.md
+실행      : python 전처리/preprocess.py  (repo 루트에서, 또는 전처리/ 안에서 python preprocess.py)
 """
 import os
 import re
@@ -27,9 +27,10 @@ import pandas as pd
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+HERE = os.path.dirname(os.path.abspath(__file__))   # 전처리/
+ROOT = os.path.dirname(HERE)                        # repo 루트
 DS = os.path.join(ROOT, "datasets")
-OUT = os.path.join(ROOT, "data", "processed")
+OUT = os.path.join(HERE, "처리결과")
 os.makedirs(OUT, exist_ok=True)
 
 AS_OF = "2026-07-11"  # 데이터 스냅샷 기준일
@@ -41,7 +42,7 @@ TABLES = {
     "PRFD01N001": ("공모펀드", "PRFD01N001_공모펀드마스터_20260711_datarows.xlsx", "PRFD01N001_공모펀드마스터_schema.xlsx"),
 }
 
-# 신용등급 서열 (해석_메타데이터/사전_신용등급.csv): AAA=1(최상) ~ D=20
+# 신용등급 서열 (외부데이터/사전/사전_신용등급.csv): AAA=1(최상) ~ D=20
 CRD_RANK = {g: i + 1 for i, g in enumerate(
     ["AAA", "AA+", "AA", "AA-", "A+", "A", "A-", "BBB+", "BBB", "BBB-",
      "BB+", "BB", "BB-", "B+", "B", "B-", "CCC", "CC", "C", "D"])}

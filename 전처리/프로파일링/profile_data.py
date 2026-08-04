@@ -14,8 +14,8 @@ import sys
 import numpy as np
 import pandas as pd
 
-HERE = Path(__file__).resolve().parent
-DATA = HERE.parent / "금융상품Agent_data" / "금융상품"
+HERE = Path(__file__).resolve().parent          # 전처리/프로파일링/
+DATA = HERE.parent.parent / "datasets"          # repo 루트의 원본 xlsx
 
 TABLES = {
     "국내채권": ("PRBD01N001", "PRBD01N001_국내채권마스터_20260711_datarows.xlsx", 42394),

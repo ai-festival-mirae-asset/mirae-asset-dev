@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Generated, reproducible data products. Keep source Excel files under datasets/.
+artifacts/
+

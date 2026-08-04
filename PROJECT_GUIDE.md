@@ -1,12 +1,12 @@
 # 미래에셋 AI Festival 에이전트 프로젝트 가이드
 
-> 기준일: 2026-08-03  
+> 기준일: 2026-08-04
 > 데이터 추출 기준일: 2026-07-11  
 > 연속 작업 기록: [`memory.md`](./memory.md)
 
 ## 1. 문서 목적
 
-이 문서는 `README.md`, `datasets/`, `manifest/2.manifest`와 사용자가 제공한 데이터 분석 메모를 바탕으로 프로젝트의 구현 순서, 데이터 계약, 답변 가능성 판정, 검증 기준을 정리한다.
+이 문서는 `README.md`, `datasets/`, 공식 과제 소개서 [`manifest/금융상품Agent_과제소개.pdf`](./manifest/금융상품Agent_과제소개.pdf)와 사용자가 제공한 데이터 분석 메모를 바탕으로 프로젝트의 구현 순서, 데이터 계약, 답변 가능성 판정, 제출·운영 검증 기준을 정리한다.
 
 프로젝트의 핵심은 LLM 프롬프팅이 아니라 **데이터 정규화와 답변 불가 판정**이다. 실제 질문은 필터·정렬·순위·집계·비교가 중심이므로 Text-to-SQL을 주 경로로 사용하고, 벡터 검색은 해외 ETF 운용전략처럼 의미 검색이 필요한 텍스트에만 제한한다.
 
@@ -14,14 +14,17 @@
 
 ## 2. 현재 상태 요약
 
-- 현재 단계: 데이터 탐색 완료, 정규화 파이프라인 설계
-- 보유 자산: Excel 원본/스키마 4세트와 Lance manifest 1개
-- 소스 코드, 실행 환경, 테스트, 평가 데이터: 아직 없음
+- 현재 단계: 공식 과제 요구사항·데이터 탐색 완료, 비파괴 정규화·품질검증 파이프라인 구현 완료
+- 보유 자산: Excel 원본/스키마 4세트와 공식 과제 소개서 1개
+- 데이터 파이프라인·단위 테스트·상세 품질 보고서: 구현 완료. PostgreSQL/API/평가셋은 아직 없음
 - 전체 원본 행: 145,393행
-- 전체 원본 행은 고유 상품 수가 아니다. 공모펀드 95,619행은 11,139개 `itm_no`에 평균 8.584개의 속성코드가 결합된 구조다.
+- 전체 원본 행은 고유 상품 수가 아니다. 공모펀드 유효 95,618행은 11,138개 `itm_no`에 평균 8.585개의 속성코드가 결합된 구조이며 손상 1행은 격리됐다.
+- 상세 분석과 적용한 수정은 [`reports/DATA_QUALITY_REPORT.md`](./reports/DATA_QUALITY_REPORT.md)에 있다.
 - 1차 구현 방향: PostgreSQL + Text-to-SQL + 명시적 답변 가능성 판정
 - 보조 검색 방향: `pg_trgm` 상품명 검색, `pgvector` 해외 ETF 전략 검색
-- Lance manifest는 불완전하지만 Text-to-SQL 베이스라인의 blocker는 아니다.
+- 기존에 조사한 Lance manifest 바이너리는 현재 저장소에서 삭제된 상태이며 완전한 인덱스도 없으므로, Text-to-SQL 베이스라인과 선택적 임베딩 재생성 계획에 의존하지 않는다.
+- 답변 생성에 사용하는 LLM은 **HyperCLOVA X만 허용**한다. 다른 LLM이 호출되면 평가 제외이므로 설정·코드·런타임 로그에서 이를 검증한다.
+- 공식 일정은 예선 마감 2026-09-06, 평가 2026-09-07~09-30, 결과 발표 2026-10-01이다. 마감 이후 커밋·푸시·서버 배포 등 코드와 결과물 변경은 금지된다.
 
 ## 3. 데이터 인벤토리
 
@@ -30,9 +33,9 @@
 | 코드 | 도메인 | 원본 행 | 컬럼 | 선언 타입 | 검증된 행 키 | 핵심 관찰 |
 |---|---|---:|---:|---|---|---|
 | `PRBD01N001` | 국내채권 | 42,394 | 40 | text 14, double 25, bigint 1 | `PD_NO` | 공백·중복 없이 유일 |
-| `PREF01N001` | 국내 ETF/ETN | 1,734 | 73 | text 34, numeric 38, timestamp 1 | `pd_itm_no` | `pd_itm_no_ma`도 공백·중복 없이 유일 |
-| `PREF02N001` | 해외 ETF | 5,646 | 49 | text 31, numeric 17, timestamp 1 | `pd_itm_no` | `pd_itm_no_ma`도 유일. `pd_isin_cd`는 공백 9행과 중복 50행이 있어 키로 부적합 |
-| `PRFD01N001` | 공모펀드 | 95,619 | 45 | text 35, numeric 10 | `(itm_no, prfd_attr_cd)` | 조합 키는 유일. `itm_no`만 보면 11,139종이고 각 번호에 1~16개 속성 변형이 존재 |
+| `PREF01N001` | 국내 ETF/ETN | 1,734 | 73 | text 34, numeric 38, timestamp 1 | `pd_itm_no` | 키는 유일하지만 핵심 필드가 깨진 1행을 격리해 정제본 1,733행 |
+| `PREF02N001` | 해외 ETF/ETN | 5,646 | 49 | text 31, numeric 17, timestamp 1 | `pd_itm_no` | `pd_itm_no_ma`도 유일. `pd_isin_cd`는 공백 9행과 중복 50그룹이 있어 키로 부적합 |
+| `PRFD01N001` | 공모펀드 | 95,619 | 45 | text 35, numeric 10 | `(itm_no, prfd_attr_cd)` | 유효 조합 95,618개가 유일. 유효 `itm_no` 11,138종, 손상 1행 격리 |
 
 원본과 schema 파일은 [`datasets/`](./datasets)에 있다. 각 schema 파일에는 다음 시트가 있다.
 
@@ -51,7 +54,7 @@
 #### 공모펀드 행 폭증
 
 - 동일 `itm_no` 안에서 달라지는 컬럼은 trim 기준으로 `prfd_attr_cd` 하나뿐이다.
-- `fund_master`는 `itm_no` 기준 11,139행, `fund_attribute`는 `(itm_no, prfd_attr_cd)` 기준 95,619행의 N:M bridge로 분리한다.
+- `fund_master`는 `itm_no` 기준 유효 11,138행, `fund_attribute`는 `(itm_no, prfd_attr_cd)` 기준 유효 95,618행의 N:M bridge로 분리한다.
 - 분리하지 않으면 상품 수가 평균 8.584배 부풀고 같은 상품이 순위 결과를 반복 점유한다.
 - 단, 공모펀드 Excel 84,563행은 컬럼이 밀린 비정상 레코드다. `itm_no='"'`, `exchdg_yn='00080008'`처럼 타입/도메인 규칙을 위반하므로 자동 적재하지 말고 quarantine 후 원본 재확인 또는 복구한다.
 
@@ -70,14 +73,16 @@
 
 | 데이터 | 컬럼/조건 | 유효 범위 | 처리 원칙 |
 |---|---|---:|---|
-| 국내 ETF | `cu_charge_rt` 총보수 | 217/1,734 (12.5%) | 값이 있는 범위에서만 비교하고 coverage 표시 |
-| 국내 ETF | `cu_base_index` 기초지수 | 58/1,734 (3.3%) | 나머지 공백 문자열은 null 처리 |
+| 국내 ETF | `cu_charge_rt` 총보수 | 원본 비결측 217, 양수 67 | 150개 0을 미확정 값으로 두고 양수 범위에서만 비교 |
+| 국내 ETF | `cu_base_index` 기초지수 | 원본 58, 활성 ETF 2/1,140 | 활성 상품 coverage를 기준으로 답변 가능성 판정 |
 | 국내 ETF | `pd_sect_nm`, `ru_mkt_price`, `ru_mkt_volume`, `nru_mkt_inav`, `nru_mkt_diff_rt` | 0/1,734 | 해당 컬럼 기반 질문은 답변 불가 |
 | 국내 ETF | `du_chas_errt`, `du_diff_rt`, `pd_dvid_yield` | 비결측값이 전부 0 | 실제 0인지 미수집 대체값인지 확인 전 순위/비교 금지 |
 | 국내채권 | 매수·세전/세후수익률 계열 | 881/42,394 (2.1%) | 관측 범위와 기준일 표시 |
 | 해외 ETF | `cu_charge_rt` 총보수 | 5,646/5,646 (100%) | 전체 범위 비교 가능 |
 
-국내채권은 `MAT_DT < 20260711` 기준 16,496건이 이미 만기 도래했다. 같은 날 만기인 7건까지 포함할지는 정책으로 고정하되, 기본 검색에서는 만기 상품을 제외하고 사용자가 과거/만기 상품을 요구한 경우만 포함한다. `BUYABLE_QUANTITY > 0`인 행은 325건뿐이므로 “매수 가능”의 정의도 별도 검증해야 한다.
+국내채권의 공식 `MAT_DT`만 보면 추출일 전 만기 16,180건, 당일 만기 7건, 이후 만기 25,884건, 만기 불명 323건이다. 사용자 승인 상품명 해석 1건을 파생값에 반영하면 이후 만기 25,885건, 만기 불명 322건이다. 기존 16,496건 계산에는 `MAT_DT=0` 316건이 잘못 포함됐다. 이 수치는 재현용 스냅샷 통계이고, 운영 검색의 만기 상태와 잔존일수는 요청별 서울 `as_of_date`로 다시 계산한다. 기본 검색에서는 만기·만기불명 상품을 제외하고 사용자가 과거/만기 상품을 요구한 경우만 포함한다. `BUYABLE_QUANTITY > 0`인 행은 325건뿐이므로 “매수 가능”의 정의도 별도 검증해야 한다.
+
+파일의 `PD_NO`/`PD_CTRY_CD`는 42,393건이 `KR`, `XS3067881758` 1건만 `XS`다. 외국계 발행자라도 국내 등록채권이면 `KR` ISIN을 받을 수 있으므로 발행자 국적만으로 제외하지 않는다. 반면 `XS`는 국제발행·예탁 범위이므로 이 행은 일반·국제채권 조회에만 포함하고 국내발행채권 기본 검색에서는 제외한다. 실제 통화와 국내 마스터 포함 경위는 추가 확인이 필요하다.
 
 #### Taxonomy 불일치
 
@@ -92,7 +97,10 @@
 - 공모펀드 `or_attr_desc='06'`은 5,436행, 686개 `itm_no`에 나타난다. 결측으로 버리지 말고 파생형 상품 코드 후보로 별도 매핑·검증한다.
 - 공모펀드 `zrin_fd_ivst_risk_gcd='NULL'`은 18,416행이며 실제 null로 정규화한다.
 - 국내채권과 국내 ETF의 다수 문자열은 고정 폭 패딩이 있어 trim 전에 조인·필터하면 누락된다.
-- 국내 ETF 데이터에는 ETF 1,202건과 ETN 532건이 함께 있으므로 `product_type`을 구분한다.
+- 국내 ETP 원본에는 ETF 1,202건과 ETN 532건이 함께 있다. 불완전 ETF 1행을 격리한 정제본은 ETF 1,201건과 ETN 532건이다.
+- 해외 ETF 원본에도 ETF 5,587건과 ETN 59건이 함께 있으므로 두 파일 모두 `product_type`을 구분한다.
+- 국내 ETP Excel 1,155행은 `pd_itm_no='KR'`, 이름·운용사가 `.`이고 자산군도 상품명과 충돌해 격리한다.
+- 공모펀드 1상품의 18개월·2년·3년·5년 수익률이 -100%보다 작아 단위 오류 후보로 null 처리하고 원본 값을 품질 이력에 남긴다.
 
 ### 샘플 시트의 파생 분류값
 
@@ -103,9 +111,37 @@
 - 공모펀드: `axis_fundType`, `axis_redemptionType`, `axis_issuanceType`, `axis_listingType`, `axis_classDifferentiation`, `axis_investorEligibility`
 - 해외 ETF 샘플에는 별도 `axis_*` 컬럼이 없다.
 
-## 4. Lance manifest 분석
+## 4. 공식 과제 요구사항과 자산 상태
 
-[`manifest/2.manifest`](./manifest/2.manifest)는 366바이트의 Lance 바이너리 manifest이며 다음 정보를 담는다.
+### 요구사항 추적표
+
+공식 과제 소개서의 요구사항을 구현 산출물과 검증 항목으로 연결한다. 소개서에는 구체적인 평가 지표나 참고 질의가 없으므로 임의의 평가 가중치를 가정하지 않고 08-06 설명회 공지를 반영한다.
+
+| 공식 요구사항·제약 | 구현 반영 | 완료 검증 |
+|---|---|---|
+| 서로 다른 4종 마스터 구조화 | `raw_*`, 상품군별 master, `product_unified`, taxonomy, lineage | 행 수·키·reconciliation assertion 통과 |
+| 조건 검색·비교·정렬·순위·집계 | 의도/슬롯 추출 후 검증된 SQL 실행 | 대표 질의의 결과가 기준 SQL과 일치 |
+| 상품군 교차 질의 | 공통 의미 계층과 원본 상세 view 분리 | 교차 상품군 조건·단위·기준일 테스트 통과 |
+| 근거 기반 답변 | 결과 행, 사용 필드, 참조 테이블, 원본 행 키, 기준일을 `retrieved_context`에 반환 | 답변의 모든 상품명·수치가 근거에 존재 |
+| 정보 부족 시 확인 불가 또는 역질문 | 사전 스키마 지원 검사와 사후 coverage/품질 판정 | 답변 불가·부분 답변·중의성 회귀 테스트 통과 |
+| 데이터에 없는 내용 추측 및 단정적 추천 금지 | 생성 프롬프트 정책과 후처리 검증 | 전망·추천 금지 표현 테스트 통과 |
+| HyperCLOVA X 외 LLM 금지 | LLM provider allowlist, 시작 시 설정 검증, 호출 감사 로그 | 코드·환경·로그에 타 LLM provider 0건 |
+| 외부 금융상품 데이터 사용 가능, 충돌 시 주최 측 데이터 우선 | 모든 근거에 `source_origin`과 기준일 기록, 충돌 해결 규칙 적용 | 동일 필드 충돌 시 공식 스냅샷 채택 |
+| 평가용 API 및 JSON 명세 제출 | `GET /answer`와 필수 5개 최상위 필드 고정 | 계약 테스트와 공개 API 명세 통과 |
+| 소스·재현 환경·README·기술제안서 제출 | 주최 측 GitHub Organization의 Private Repository, Dockerfile, dependency lock, 실행 명령, 제안서 체크리스트 | 깨끗한 환경 재현 및 제출 목록 대조 |
+| 09-06 이후 코드·결과물 변경 금지 | 마감 전 immutable release 생성·배포·기록 | commit SHA, image digest, 설정 checksum 보관 |
+
+### 데이터와 답변 출처 우선순위
+
+1. 주최 측 제공 2026-07-11 스냅샷을 평가 답변의 기준 사실로 사용한다.
+2. 외부 수집 데이터는 공식 데이터에 없는 비정형 설명을 보강할 때만 선택적으로 사용한다.
+3. 두 출처가 충돌하면 공식 스냅샷 값을 채택하고, 기준일 차이와 출처를 답변에 표시한다.
+4. 외부 데이터만으로 답한 내용은 공식 데이터 근거와 혼합하지 않고 별도 출처·수집시각·버전을 남긴다.
+5. 외부 데이터 연동은 SQL 베이스라인과 공식 데이터 평가가 안정된 뒤 추가하며 초기 제출의 필수 경로로 두지 않는다.
+
+### 기존 Lance 조사 이력
+
+현재 저장소에는 기존 `manifest/2.manifest`가 없고 공식 과제 소개 PDF만 있다. 아래 내용은 2026-08-03에 존재하던 366바이트 Lance 바이너리를 조사한 기록이며, 현행 실행 자산에 대한 설명이 아니다.
 
 | 필드 | 저장 타입 | 용도 추정 |
 |---|---|---|
@@ -114,14 +150,14 @@
 | `vector` | fixed-size list of float, 1536차원 | 임베딩 벡터 |
 | `attributes` | string | 메타데이터 직렬화 값으로 추정 |
 
-추가로 Lance 라이브러리 `0.20.0`, 저장 형식 `2.0`, fragment `fe6e565a-2b59-416b-a2f2-e45ed1a65462.lance` 참조가 확인된다. 그러나 저장소에는 이 fragment와 트랜잭션 파일이 없다. 따라서 다음 중 하나가 필요하다.
+당시 Lance 라이브러리 `0.20.0`, 저장 형식 `2.0`, fragment `fe6e565a-2b59-416b-a2f2-e45ed1a65462.lance` 참조가 확인됐다. fragment와 트랜잭션 파일은 없었으므로 재사용하려면 다음 중 하나가 필요하다.
 
 1. 원래 Lance 데이터셋 디렉터리 전체를 복구한다.
 2. Excel 원본에서 검색 문서와 임베딩을 다시 생성한다.
 
 1536차원만으로 임베딩 모델을 식별할 수 없다. 재생성 시 모델명, 모델 버전, 벡터 차원, 거리 함수, 생성 시각을 별도 메타데이터로 기록해야 한다. `attributes`가 JSON이라면 JSON Schema 또는 필드 계약도 함께 고정한다.
 
-벡터 검색의 1차 대상은 해외 ETF `cu_strtegy`로 제한한다. 5,646행 중 5,638행에 값이 있고 서로 다른 비결측 전략 문서가 5,566개이므로 “커버드콜 전략”, “반도체 집중” 같은 의미 검색에 적합하다. 수치 필터·정렬·집계에는 벡터를 사용하지 않는다. 기존 Lance 복구는 선택 사항이며, PostgreSQL `pgvector`로 통합하면 운영 구성이 단순해진다.
+벡터 검색의 1차 대상은 해외 ETF `cu_strtegy`로 제한한다. 5,646행 중 5,638행에 값이 있고 서로 다른 비결측 전략 문서가 5,566개이므로 “커버드콜 전략”, “반도체 집중” 같은 의미 검색에 적합하다. 수치 필터·정렬·집계에는 벡터를 사용하지 않는다. 기존 Lance 복구는 선택 사항이며 필수 일정에서 제외한다. PostgreSQL `pgvector`로 다시 생성하면 운영 구성이 단순해진다.
 
 ## 5. 통합 데이터 모델
 
@@ -129,11 +165,11 @@ PostgreSQL 안에서 원본, 정규화 상품, 공통 조회 계층을 분리한
 
 ### 원본 및 상품군별 테이블
 
-- `raw_*`: 원본 행과 1:1로 보존하고 `source_file`, `source_row_number`, `extracted_at`, `quality_status`를 추가한다.
-- `bond_master`: 국내채권 상세값과 `is_matured`, `is_buyable` 파생값
+- `raw_*`: 원본 행과 1:1로 보존하고 `source_origin`, `source_file`, `source_row_number`, `extracted_at`, `quality_status`를 추가한다. 주최 측 제공 파일은 `source_origin=official_snapshot`으로 고정한다.
+- `bond_master`: 채권 상세값, 원본/보강값의 출처, `maturity_date_resolved`, `security_registration_scope`, 국내/국제 검색 eligibility, `is_buyable` 파생값. `is_matured`는 저장하지 않고 요청 기준일로 계산한다.
 - `domestic_etp_master`: 국내 ETF/ETN 상세값과 명시적인 `instrument_type`
 - `overseas_etf_master`: 해외 ETF 상세값과 `cu_strtegy` 원문
-- `fund_master`: `itm_no` 기준 논리 상품. 정상화 후 예상 11,139행이며 비정상 원본 1건의 복구 결과에 따라 재검증한다.
+- `fund_master`: `itm_no` 기준 유효 논리 상품 11,138행. 비정상 원본 1건의 복구 결과에 따라 재검증한다.
 - `fund_attribute`: `(itm_no, prfd_attr_cd)` bridge. 비정상 원본은 quarantine에서 복구되기 전까지 제외한다.
 - `taxonomy_mapping`: 원본 분류값을 표준 지역·자산군으로 연결하는 수동 검토 매핑
 - `data_quality_issue`: quarantine, 결측률, 상수값, 매핑 실패 이력
@@ -162,17 +198,22 @@ SELECT
   return_1y_available,
   return_ytd,
   return_ytd_available,
+  maturity_date,
+  security_registration_scope,
+  domestic_bond_search_eligible,
+  international_bond_search_eligible,
   is_tradable,
-  as_of_date,
+  source_as_of_date,
+  source_origin,          -- official_snapshot / external_enrichment
   source_table,
   source_row_key,
   quality_status
 FROM normalized_products;
 ```
 
-`*_available`은 값을 0으로 대체하기 위한 컬럼이 아니라 “원본에서 관측된 값인가”를 나타낸다. 원본 null을 0으로 `COALESCE`하여 순위나 평균에 넣지 않는다.
+`*_available`은 값을 0으로 대체하기 위한 컬럼이 아니라 “원본에서 관측된 값인가”를 나타낸다. 원본 null을 0으로 `COALESCE`하여 순위나 평균에 넣지 않는다. 응답의 `as_of_date`, `remaining_days`, `maturity_status`는 정적 view 값이 아니라 요청 컨텍스트에서 계산한다.
 
-국내 ETF 1,734 + 해외 ETF 5,646 + 공모펀드 11,139 = 18,519개 논리 항목에 조건을 충족하는 채권을 추가한다. 채권을 `BUYABLE_QUANTITY > 0`으로 제한하면 325건이므로 약 18,844행이지만, 최종 크기는 `is_tradable` 업무 규칙을 확정한 뒤 고정한다.
+국내 ETP 정제본 1,733 + 해외 ETF/ETN 5,646 + 공모펀드 11,138 = 18,517개 논리 항목에 조건을 충족하는 채권을 추가한다. 채권을 `BUYABLE_QUANTITY > 0` 관측값으로 제한하면 325건이므로 잠정 18,842행이지만, 최종 크기는 활성·판매·매수가능 업무 규칙을 확정한 뒤 고정한다.
 
 ### Taxonomy 매핑 계약
 
@@ -205,22 +246,32 @@ note
 7. 원본의 0이 실제 값인지 결측치 대용인지 컬럼별로 판단한다. 일괄 null 변환은 금지한다.
 8. 공모펀드를 `fund_master`와 `fund_attribute`로 분리하고, `(itm_no, prfd_attr_cd)` 중복을 금지한다.
 9. 공모펀드 비정상 1행은 타입·도메인 검증에서 반드시 quarantine한다. 조용히 밀린 컬럼을 적재하지 않는다.
-10. 해외 ETF의 `pd_isin_cd`는 공백 9행과 중복 50행이 있으므로 보조 식별자로만 사용한다.
-11. 위험등급은 상품군별 변환 후 1~6으로 통일하고, 원본 코드와 이름을 함께 보존한다.
-12. 국내 ETF의 ETF/ETN을 분리하고, 만기채권을 기본 활성 상품에서 제외한다.
-13. 분류값은 `taxonomy_mapping`의 버전과 검토 상태를 기록한다.
-14. schema 추출 기준일과 가격/NAV/갱신 기준일을 분리한다. 추출일만 보고 값을 “현재”라고 표현하지 않는다.
-15. 상품군 간 동일 상품 연결은 별도 alias/relationship 규칙으로 처리한다. 공모펀드와 국내 ETF를 이름만으로 강제 병합하지 않는다.
+10. 국내 ETP 핵심 식별자·상품명·운용사가 깨진 1행도 정정 원본을 받기 전까지 quarantine한다.
+11. 해외 ETF의 `pd_isin_cd`는 공백 9행과 중복 50그룹이 있으므로 보조 식별자로만 사용한다.
+12. 위험등급은 상품군별 변환 후 1~6으로 통일하고, 원본 코드와 이름을 함께 보존한다.
+13. 국내·해외 데이터의 ETF/ETN을 분리하고, 만기채권·거래종료 ETP를 기본 활성 상품에서 제외한다.
+14. -100% 미만 수익률과 비율 범위를 벗어난 값은 추정 보정하지 않고 null과 품질 이력으로 분리한다.
+15. 분류값은 `taxonomy_mapping`의 버전과 검토 상태를 기록한다.
+16. schema 추출 기준일과 가격/NAV/갱신 기준일을 분리한다. 추출일만 보고 값을 “현재”라고 표현하지 않는다.
+17. 상품군 간 동일 상품 연결은 별도 alias/relationship 규칙으로 처리한다. 공모펀드와 국내 ETF를 이름만으로 강제 병합하지 않는다.
+18. 잔존일수는 저장된 `REMAINING_DAYS`를 쓰지 않는다. 명시적 사용자 기준일이 없으면 요청 시작 시 `datetime.now(ZoneInfo("Asia/Seoul")).date()`를 한 번 확정하고 `maturity_date_resolved`와의 차이를 계산한다.
+19. 같은 API 요청의 모든 계산과 근거에는 동일한 `as_of_date`를 사용하고 응답에도 노출한다. 테스트·재현용 스냅샷 통계만 `2026-07-11`로 고정한다.
+20. 사람이 승인한 상품명 해석은 `config/manual_overrides.csv`의 파생 필드에만 적용한다. 원본 공란을 덮어쓰지 않고 source/status/reason을 함께 추적한다.
+21. 파일명이나 발행자 국적만으로 국내채권을 판정하지 않는다. `KR` ISIN은 국내발행채권 검색 대상으로, `XS` ISIN은 국제등록채권으로 분리하고 데이터셋 범위 예외를 품질 상태에 남긴다.
 
 ### 적재 후 필수 assertion
 
 - 원본 행 수: 채권 42,394 / 국내 ETF·ETN 1,734 / 해외 ETF 5,646 / 공모펀드 95,619
-- 키 유일성: `PD_NO`, 국내/해외 `pd_itm_no`, 공모펀드 `(itm_no, prfd_attr_cd)`
+- 키 유일성: `PD_NO`, 정제 국내/해외 `pd_itm_no`, 유효 공모펀드 `(itm_no, prfd_attr_cd)`
 - 공모펀드 그룹 내 변동 컬럼: `prfd_attr_cd` 외 0개
-- 비정상 행: 알려진 1건이 quarantine되거나 명시적으로 복구되었는지 확인
+- 비정상 행: 알려진 국내 ETP 1건과 공모펀드 1건이 quarantine되거나 명시적으로 복구되었는지 확인
+- 범위 오류: 정제 공모펀드 수익률 -100% 미만 0개, 해외 ETF 괴리율 절대값 100 초과 0개
 - taxonomy: 미등록 원본 값 0개 또는 승인된 `unmapped` 목록과 정확히 일치
 - coverage: 핵심 수치별 분자/분모를 빌드 산출물로 저장
 - 날짜: 만기·기준일 파싱 실패 0개 또는 quarantine 목록과 일치
+- 동적 날짜: 서울 자정 경계, 명시적 `as_of_date` 우선순위, 잔존일수·만기상태 계산 테스트 통과
+- 수동 보강: `XS3067881758`의 승인값·출처·통화 부분결측 상태가 예상값과 일치
+- 범위 예외: 비-`KR` ISIN 1건이 국내채권 기본 검색에서 제외되고 국제·일반 채권 조회에만 남는지 확인
 - 원본과 정제본의 탈락·병합·분리 행 수가 reconciliation 보고서로 설명됨
 
 ## 7. Text-to-SQL 중심 아키텍처
@@ -239,6 +290,8 @@ note
 ```
 
 PostgreSQL 하나를 운영 저장소로 사용한다. 14.5만 원본 행은 별도 GraphDB가 필요한 규모나 관계 구조가 아니며, 상품명 fuzzy 검색과 해외 ETF 전략 벡터까지 `pg_trgm`, `pgvector`로 함께 처리할 수 있다.
+
+자연어 이해와 답변 생성에 쓰는 LLM client는 HyperCLOVA X 구현 하나만 제공한다. 설정 누락 시 다른 provider로 fallback하지 않고 애플리케이션 시작을 실패시키며, 모델 식별자와 호출 성공·실패를 감사 로그에 남긴다. 임베딩 모델은 LLM 호출과 구분해 명시적으로 기록하되, 허용 범위가 불명확하면 08-06 Q&A에서 확인하고 확인 전에는 제출 필수 경로로 사용하지 않는다.
 
 Text-to-SQL은 무제한 자유 SQL보다 allowlist 의미 계층과 템플릿/검증기를 우선한다.
 
@@ -277,41 +330,50 @@ coverage는 전체 테이블이 아니라 **사용자 조건을 적용한 eligib
 
 ```json
 {
-  "question_id": "...",
+  "question_id": "Q-001",
+  "question": "평가 질의 원문",
+  "retrieved_context": [
+    {
+      "source_origin": "official_snapshot",
+      "source_table": "PREF01N001",
+      "source_row_key": "...",
+      "columns": ["pd_itm_no", "pd_nm", "cu_charge_rt"],
+      "values": {"pd_nm": "...", "cu_charge_rt": 0.1},
+      "as_of_date": "2026-07-11"
+    }
+  ],
+  "think_trace": [
+    {"step": "sql_query", "tool": "sql", "status": "success", "row_count": 3}
+  ],
   "answer": "...",
   "answerability": {
     "status": "partial_coverage",
     "reason": "expense_ratio is partially populated",
     "eligible_count": 1734,
     "available_count": 217
-  },
-  "retrieved_context": {
-    "source_tables": ["PREF01N001"],
-    "columns": ["pd_itm_no", "pd_nm", "cu_charge_rt"],
-    "as_of_date": "2026-07-11",
-    "filters": [],
-    "sql": "SELECT ..."
-  },
-  "think_trace": [
-    {"tool": "sql", "status": "success", "row_count": 3}
-  ]
+  }
 }
 ```
 
-`think_trace`에는 내부 추론문이 아니라 실제 도구 호출과 검증 이벤트만 기록한다. API 계약은 `GET /answer?question_id=&question=`을 기준으로 하고, 목표 응답시간은 5초 이내로 둔다.
+공식 예시에 맞춰 `question_id`, `question`, `retrieved_context`, `think_trace`, `answer`를 필수 최상위 필드로 유지한다. `answerability` 같은 추가 필드는 허용 여부를 계약 테스트로 확인하고 API 명세에 타입을 고정한다. 내부 표현은 구조화 객체로 유지하되, 평가 harness가 공식 예시처럼 `retrieved_context`와 `think_trace`를 문자열로 요구하면 응답 adapter에서 손실 없이 직렬화한다. 두 타입을 추측으로 섞지 않고 08-06 공지 후 JSON Schema와 golden response를 고정한다. `retrieved_context`는 SQL 문자열만이 아니라 실제 답변 근거 행과 필드·출처·기준일을 포함한다. `think_trace`에는 숨은 내부 추론문이 아니라 실제 도구 호출과 검증 이벤트만 기록한다. API 계약은 `GET /answer?question_id=&question=`을 기준으로 하고, 목표 응답시간은 5초 이내로 둔다.
 
 ## 9. 5주 실행 로드맵
 
-마감은 2026-09-06, API 운영 예상 기간은 2026-09-07~09-20으로 잡는다. 화려한 Agent loop보다 2주 차에 정확한 베이스라인 엔드포인트를 확보하는 것이 우선이다.
+마감은 2026-09-06, 공식 평가 기간은 2026-09-07~09-30으로 잡는다. 마감 이후 커밋·푸시·서버 배포 변경이 금지되므로 코드 완성뿐 아니라 평가 기간 전체를 버틸 immutable 배포와 운영 준비까지 마감 전에 끝낸다. 화려한 Agent loop보다 2주 차에 정확한 베이스라인 엔드포인트를 확보하는 것이 우선이다.
 
 ### 1주 차 · 08-03~08-09 — 적재와 정규화
 
 - [ ] Python/PostgreSQL/Docker 실행 환경 고정
-- [ ] 네 Excel 원본 적재, schema·행 수·키 assertion 자동화
-- [ ] 공모펀드 master/attribute 분리와 비정상 1행 quarantine
-- [ ] trim, null, 날짜, 위험등급, ETF/ETN, 만기채권 정규화
-- [ ] 지역·자산군 고유값을 추출하고 수동 표준 매핑표 작성
+- [x] 네 Excel 원본 적재, schema·행 수·키 assertion 자동화
+- [x] 공모펀드 master/attribute 분리와 비정상 행 quarantine
+- [x] trim, null, 날짜, 위험등급, ETF/ETN, 만기·거래종료 상태 정규화
+- [x] 요청 시점 서울 기준 잔존일수 정책과 승인된 채권 상품명 보강 경로 구현
+- [x] 지역·자산군 고유값과 수동 매핑 seed 생성
+- [x] 컬럼 profile, field policy, issue log, quarantine, reconciliation 산출물 생성
+- [ ] 지역·자산군 표준 매핑표 사람 검토·승인
 - [ ] 08-06 설명회 공개 예시 질의를 요구사항과 평가셋에 반영
+- [ ] HyperCLOVA X 단일 provider client와 타 LLM 차단 검증 구현
+- [ ] 공식 요구사항 추적표를 acceptance test 목록으로 전환
 
 ### 2주 차 · 08-10~08-16 — 동작하는 베이스라인
 
@@ -319,7 +381,8 @@ coverage는 전체 테이블이 아니라 **사용자 조건을 적용한 eligib
 - [ ] 의도/슬롯 스키마와 표준화 사전 구현
 - [ ] allowlist Text-to-SQL 또는 SQL template 실행기 구현
 - [ ] 답변 가능성·coverage 판정기 구현
-- [ ] 구조화 `retrieved_context`를 포함한 `/answer` 엔드포인트 확보
+- [ ] 필수 5개 필드와 구조화 `retrieved_context`를 포함한 `/answer` 엔드포인트 확보
+- [ ] 요청·응답 JSON Schema와 API 계약 테스트 작성
 - [ ] 대표 질문으로 5초 이내 응답과 LLM 최대 2회 호출 검증
 
 ### 3주 차 · 08-17~08-23 — 교차 질의와 의미 검색
@@ -329,6 +392,7 @@ coverage는 전체 테이블이 아니라 **사용자 조건을 적용한 eligib
 - [ ] 해외 ETF `cu_strtegy`에 한해 `pgvector` 의미 검색 추가
 - [ ] SQL 결과와 벡터 후보의 결합 규칙 및 중복 제거 구현
 - [ ] 근거 밖 추론과 단정적 추천을 막는 응답 정책 적용
+- [ ] 외부 보강 데이터를 사용할 경우 출처·시점·공식 데이터 우선순위 적용
 
 ### 4주 차 · 08-24~08-30 — 100문항 평가
 
@@ -337,23 +401,30 @@ coverage는 전체 테이블이 아니라 **사용자 조건을 적용한 eligib
 - [ ] SQL 정답률, 답변 가능성 F1, 근거 완전성, P95 지연 측정
 - [ ] 결측, 상수 0, 위험등급 중의성, 만기채권, 비정상 행 회귀 테스트
 - [ ] 실패 유형별 수정 후 평가 결과를 버전별 보존
+- [ ] 08-06 공개 질의와 Q&A를 회귀 평가셋에 반영하고 미공개 평가 가중치는 가정하지 않음
 
 ### 5주 차 · 08-31~09-06 — 안정화와 제출
 
 - [ ] Docker, 환경변수, 마이그레이션, seed/ingest 절차 고정
 - [ ] timeout, 재시도, DB/LLM 장애 fallback과 로깅 구현
-- [ ] README, API 명세, 기술제안서, 데이터 lineage 정리
-- [ ] 운영 환경 배포 및 health check/부하 테스트
-- [ ] 09-07~09-20 상시 운영 모니터링 준비
+- [ ] README에 환경 구성·실행 명령을, 기술제안서에 제안 요약·문제 정의·구성도·흐름도·시나리오·확장성을 정리
+- [ ] endpoint URL과 요청·응답 JSON Schema를 포함한 API 명세 완성
+- [ ] 주최 측 GitHub Organization Private Repository에 제출 범위를 확인하고 대용량 파일은 고정된 다운로드 링크와 checksum으로 제출
+- [ ] 운영 환경 최종 배포 및 health check/부하·장시간 테스트
+- [ ] 09-06 전 제출 commit SHA, image digest, dependency lock, 설정 checksum과 제출 목록 보관
+- [ ] 마감 후 변경 없이 09-30까지 상태를 관측할 모니터링·알림 준비
+- [ ] 마감 후 허용되는 장애 대응 범위를 08-06 Q&A에서 확인하고 immutable 복구 runbook 작성
 
 ## 10. 바로 이어서 할 작업
 
 1. PostgreSQL DDL과 `fund_master`, `fund_attribute`, `taxonomy_mapping`, quarantine 스키마를 작성한다.
-2. 네 Excel 파일을 재현 가능하게 적재하는 프로파일링/정제 스크립트를 만든다.
-3. 지역·자산군 원본 고유값과 초안 매핑표를 CSV 또는 DB seed로 만든다.
-4. 답변 가능성 상태와 coverage 계산을 순수 함수/SQL로 먼저 구현한다.
-5. 대표 질의 20개를 SQL 기대값과 함께 작성하고 `/answer` 베이스라인을 연결한다.
-6. 해외 ETF 전략 검색은 SQL 베이스라인이 통과한 뒤 추가한다.
+2. 생성된 정제 CSV와 품질 정책을 PostgreSQL staging/normalized 테이블에 적재한다.
+3. `taxonomy_mapping_seed.csv`의 국가/상위지역·자산군 매핑을 검토하고 승인한다.
+4. 격리된 국내 ETP·공모펀드 각 1행의 공식 정정본을 반영한다.
+5. 답변 가능성 상태와 coverage 계산을 순수 함수/SQL로 구현한다.
+6. 대표 질의 20개를 SQL 기대값과 함께 작성하고 `/answer` 베이스라인을 연결한다.
+7. HyperCLOVA X 단일 provider와 공식 API 필드 계약을 초기 골격부터 강제한다.
+8. 해외 ETF 전략 검색과 외부 데이터 보강은 SQL 베이스라인이 통과한 뒤 추가한다.
 
 ## 11. 완료 기준
 
@@ -368,6 +439,10 @@ coverage는 전체 테이블이 아니라 **사용자 조건을 적용한 eligib
 - 답변의 상품명, 수치, 기준일이 원본과 일치한다.
 - 지원 불가, 부분 coverage, 중의성, 결측, 만기 상태를 각각 올바르게 판정한다.
 - API가 구조화 근거와 도구 이벤트를 반환하고 정상 질문을 5초 내 처리한다.
+- API가 `question_id`, `question`, `retrieved_context`, `think_trace`, `answer` 필수 필드의 고정된 JSON 계약을 지킨다.
+- 자연어 이해·답변 생성 LLM 호출이 HyperCLOVA X로만 이뤄지고 타 provider fallback이 없다.
 - 100문항 평가 결과와 실패 원인이 재현 가능하게 기록된다.
 - 답변은 조건 부합 사실을 말하고 단정적 투자 추천을 하지 않는다.
+- 제출 3종과 immutable 배포의 commit SHA·image digest·설정 checksum이 09-06 전에 보관된다.
+- 평가 기간 09-07~09-30 동안 코드·결과물 변경 없이 운영할 모니터링과 복구 절차가 준비된다.
 - 주요 결정, 진행 상태, 다음 작업이 [`memory.md`](./memory.md)에 갱신된다.

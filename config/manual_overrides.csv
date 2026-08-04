@@ -1,0 +1,7 @@
+dataset,item_id,target_field,corrected_value,value_type,status,source,reason
+PRBD01N001,XS3067881758,issuer_code_inferred,BAC,text,approved,user_confirmed_product_name_parse,PD_NM의 국제채권 명명 규칙에서 확인
+PRBD01N001,XS3067881758,issuer_name_inferred,Bank of America Corporation,text,approved,user_confirmed_product_name_parse,PD_NM의 BAC 발행자 약어 해석
+PRBD01N001,XS3067881758,coupon_rate_inferred,0,numeric,approved,user_confirmed_product_name_parse,PD_NM의 쿠폰 0 해석
+PRBD01N001,XS3067881758,maturity_date_inferred,2055-05-14,date,approved,user_confirmed_product_name_parse,PD_NM의 05/14/55 만기 해석
+PRBD01N001,XS3067881758,issuance_scope_inferred,international,text,approved,user_confirmed_product_name_parse,XS ISIN 접두어의 국제 발행·결제 의미
+

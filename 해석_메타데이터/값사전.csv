@@ -1,0 +1,424 @@
+﻿상품군,컬럼,값,건수,고유값수,의미,동의어,정규화_규칙,신뢰도,출처
+국내채권,PD_EXG_MKT,장내,24749,2,"한국거래소(KRX)에 상장되어 일반채권시장·소액채권시장 등에서 가격·시간 우선의 경쟁매매로 거래되는 채권(24,749건). 최소 액면 1천원~1만원 단위 소액 거래가 가능하고 호가가 공개되어 가격 투명성이 높으며, 첨가소화채권은 전용 소액채권시장에서 거래된다.",장내채권;거래소 채권;KRX 상장채권;일반채권시장;소액채권시장,,high,http://open.krx.co.kr/contents/OPN/01/01020000/OPN01020000.jsp (KRX 채권시장 안내)
+국내채권,PD_EXG_MKT,장외,17645,2,"거래소를 거치지 않고 증권회사 창구·브로커를 통해 매도자와 매수자가 1:1 상대매매로 거래하는 채권(17,645건). 증권사가 보유한 채권을 고객에게 판매하는 형태가 일반적이며, 국내 채권 유통은 기관 간 장외거래 비중이 압도적으로 높다.",장외채권;OTC 채권;증권사 판매 채권;상대매매 채권;점두거래,,high,http://open.krx.co.kr/contents/OPN/01/01020000/OPN01020000.jsp (KRX 채권시장 안내); https://www.daishin.com/content/w/fnmall/bondrp/listedBondIntroduce.ds?p=1183&v=769&m=1021 (대신증권 장내채권 소개)
+국내채권,PD_CTRY_CD,KR,42393,2,"ISO 3166-1 alpha-2 국가코드로 대한민국. 국내채권 PD_CTRY_CD 42,393건의 값이며, ISIN 접두어로도 사용됨(국내 발행 증권).",한국;대한민국;남한;국내,"ISO 3166-1 alpha-2; 대응 alpha-3 KOR, 숫자 410",high,https://www.iso.org/obp/ui/#iso:code:3166:KR
+국내채권,PD_CTRY_CD,XS,1,2,"ISO 3166 국가코드가 아니라, 국제예탁결제기구(ICSD)인 Euroclear·Clearstream이 국제증권(유로본드 등)에 부여하는 ISIN 접두어. 국내채권 PD_CTRY_CD의 XS 1건은 국내 국가코드 대신 XS-ISIN을 갖는 국제채로 해석.",국제채;유로본드;국제증권;Euroclear;Clearstream,"ISIN 첫 2자리; 국가 매핑 시 '국제(International)'로 별도 분류, 특정 국가로 정규화 금지",high,"https://www.isin.net/xs-isin/, https://www.isin.org/isin/"
+국내채권,STD_PD_MCLS_NM,회사채,31447,6,"상법상 주식회사가 시설투자·운영자금 등 사업자금 조달을 위해 발행하는 채무증권. 본 데이터에서는 일반회사채뿐 아니라 카드채·할부금융채 등 민간 금융회사 발행 채권과 유동화·Conduit 사채까지 포괄하는 최상위 분류로 사용된다(31,447건).",사채;일반 회사채;기업채;크레딧채권;크레딧물,,high,"https://eiec.kdi.re.kr/material/clickView.do?click_yymm=201512&cidx=1084 (KDI 경제교육, 채권시장 분류)"
+국내채권,STD_PD_MCLS_NM,특수채,8755,6,"한국전력공사법·한국산업은행법 등 특별법에 따라 설립된 법인(공사·공단·특수은행·한국은행 등)이 발행하는 채권. 정부 관련 기관이 발행해 국채 다음가는 신용도를 가지며, 본 데이터에서는 공사채·특수은행채·MBS·통안채 등을 포괄한다(8,755건).",특수법인채;공공기관채;공사공단채;한전채;정부기관채,,high,"https://eiec.kdi.re.kr/material/clickView.do?click_yymm=201512&cidx=1084 (KDI 경제교육, 채권시장 분류)"
+국내채권,STD_PD_MCLS_NM,국공채,2137,6,"정부가 발행하는 국채(국고채·국민주택채권·재정증권 등)와 지방자치단체가 발행하는 지방채(지역개발채권·도시철도채권·모집지방채 등)를 합쳐 부르는 분류(2,137건). 국가·지자체의 신용으로 발행되어 신용위험이 가장 낮은 채권군이다.",국채;지방채;정부채;나라채권,,high,"https://ktb.moef.go.kr/ntndbtKnd.do (기획재정부 국채시장, 국채종류)"
+국내채권,STD_PD_MCLS_NM,개인투자용국채,49,6,"2024년 6월 최초 발행된 개인 전용 저축성 국채(49건)로 5·10·20년물이 있으며 전용계좌로 개인만 매입할 수 있다. 만기 보유 시 표면금리+가산금리 복리 이자와 이자소득 분리과세(14%) 혜택을 받고, 유통시장 매매는 불가하며 중도환매 시 혜택이 없다.",개인국채;개인투자용 국채;저축성 국채,,high,https://ktb.moef.go.kr/personalInvGovBonds.do (기획재정부); https://www.korea.kr/news/policyNewsView.do?newsId=148957316 (정책브리핑)
+국내채권,STD_PD_MCLS_NM,외화채권-회사채,5,6,국내 시장에서 원화가 아닌 외화(달러 등) 표시로 발행된 회사채 분류(5건). 국내 발행 외화표시 채권은 통칭 김치본드로 불린다.,외화표시 회사채;김치본드;달러표시 회사채;외화사채,,medium,https://en.wikipedia.org/wiki/Kimchi_bond (김치본드 개념); 데이터 스냅샷 관측
+국내채권,STD_PD_MCLS_NM,외화채권-금융채,1,6,국내 시장에서 외화 표시로 발행된 금융기관 채권 분류(1건). 은행·여전사 등 금융회사가 외화 자금조달을 위해 국내에서 발행한 외화표시 채권이다.,외화표시 금융채;김치본드;외화 은행채,,medium,https://en.wikipedia.org/wiki/Kimchi_bond (김치본드 개념); 데이터 스냅샷 관측
+국내채권,STD_PD_SCLS_NM,일반사채,30958,16,주식 관련 옵션(전환권·신주인수권 등)이나 유동화 구조가 없는 보통의 회사채. 발행회사의 신용을 바탕으로 약정 이자와 원금을 지급하는 표준적인 회사채 소분류다.,일반 회사채;무보증사채;보통사채;스트레이트본드;SB,,high,https://www.hanwhawm.com/main/finance/guide/TG440_4wt.htm (한화투자증권 채권의 종류)
+국내채권,STD_PD_SCLS_NM,공사채,5386,16,한국전력공사·한국토지주택공사 등 특별법에 따라 설립된 공사·공단이 발행하는 특수채. 정부 산하 공공기관의 신용으로 발행되어 신용도가 높으며 한전채가 대표적이다.,공공기관채;한전채;LH채;공사공단채;특수법인채,,high,https://eiec.kdi.re.kr/material/clickView.do?click_yymm=201512&cidx=1084 (KDI 경제교육)
+국내채권,STD_PD_SCLS_NM,특수은행채,2436,16,"한국산업은행·중소기업은행·한국수출입은행·농협·수협 등 특별법으로 설립된 특수은행이 발행하는 금융채(2,398건). 산업금융채권(산금채)·중소기업금융채권(중금채)이 대표적이며 국책은행의 신용으로 신용도가 매우 높다.",산금채;산업금융채권;중금채;중소기업금융채권;수출입은행채;국책은행채;농협채,,high,"https://kbthink.com/dictionary/view.html?dictId=KED-00001146 (KB 금융용어사전, 산업금융채권)"
+국내채권,STD_PD_SCLS_NM,지역개발,1266,16,"지방자치단체가 지역개발기금 재원 조달을 위해 발행하는 지방채로, 자동차 등록이나 지자체 인허가·계약 시 의무매입되는 첨가소화채다. 통상 5년 만기 일시상환 방식이다.",지역개발채권;첨가소화채;자동차 채권;도시개발채권;의무매입채권,,high,"https://www.hankyung.com/article/2023122628721 (한국경제, 지역개발채권 의무매입); https://www.fnnews.com/news/201702071717126162 (파이낸셜뉴스, 첨가소화채권)"
+국내채권,STD_PD_SCLS_NM,은행채,1247,16,시중은행·지방은행 등 은행법에 따른 일반은행이 대출재원 조달을 위해 발행하는 금융채. 예금과 함께 은행의 주요 자금조달 수단이다.,일반은행채;시중은행채;금융채;은행 발행 채권,,high,"https://www.moef.go.kr/sisa/dictionary/detail?idx=686 (기획재정부 시사경제용어사전, 금융채)"
+국내채권,STD_PD_SCLS_NM,국고채,312,16,국채법에 따라 정부(기획재정부)가 공공자금관리기금의 부담으로 발행하는 대한민국 대표 국채. 2·3·5·10·20·30·50년물 등으로 경쟁입찰 발행되며 국내 채권시장의 지표금리 역할을 한다.,국고채권;KTB;국채;국고채 3년물;국고채 10년물,,high,"https://ktb.moef.go.kr/ntpbnd.do (기획재정부 국채시장, 국고채권)"
+국내채권,STD_PD_SCLS_NM,도시철도,240,16,도시철도법에 근거해 서울시 등 지자체가 지하철(도시철도) 건설·운영 재원 조달을 위해 발행하는 지방채. 해당 지역 자동차 등록·인허가 시 의무매입되는 첨가소화채다.,도시철도채권;지하철채권;서울도시철도채권;첨가소화채,,high,"https://www.fnnews.com/news/201702071717126162 (파이낸셜뉴스, 첨가소화채권)"
+국내채권,STD_PD_SCLS_NM,국민주택,147,16,"주택도시기금법에 따라 주택도시기금 재원 조달을 위해 정부가 발행하는 국채로, 부동산 등기·인허가 시 의무매입되는 대표적 첨가소화채. 현재는 제1종만 신규 발행된다.",국민주택채권;제1종 국민주택채권;첨가소화채;주택채권,,high,https://www.kebhana.com/cont/houd/houd03/houd0301/index.jsp (주택도시기금 수탁은행 안내)
+국내채권,STD_PD_SCLS_NM,공모지방채,125,16,지방자치단체가 불특정 다수 투자자를 대상으로 공모(모집) 방식으로 발행하는 지방채. 의무매입 방식의 첨가소화채(지역개발·도시철도채권)와 달리 시장에서 자발적 청약으로 소화된다.,모집지방채;공모 지방채;지자체 공모채;서울시채,,medium,https://main.krxverse.co.kr/_contents/ACA/02/02010201/03.pdf (KRX 채권시장 해설)
+국내채권,STD_PD_SCLS_NM,중앙은행채,101,16,"중앙은행인 한국은행이 발행하는 채권 소분류로, 실체는 통화안정증권이다. 시중 유동성 조절(공개시장운영)을 위해 발행된다.",통안채;통안증권;통화안정증권;한국은행 채권;한은 통안채,,high,https://www.law.go.kr/법령/한국은행 통화안정증권법 (국가법령정보센터)
+국내채권,STD_PD_SCLS_NM,기타사채,67,16,"일반사채로 분류되지 않는 회사채를 묶는 소분류로, 유동화회사채·Conduit회사채·SPAC사채 등 특수한 발행구조의 사채가 포함되는 것으로 추정된다. 정확한 포함 범위는 데이터 제공사 분류 기준 확인이 필요하다.",기타 회사채;특수구조 사채,,low,데이터 스냅샷 관측 기반 추정 (공식 분류기준 미확인)
+국내채권,STD_PD_SCLS_NM,기타국채,41,16,"국고채·국민주택채권 외의 국채를 묶는 소분류로, 재정증권·외국환평형기금채권·보상채권(용지보상 국채) 등이 해당한다.",재정증권;외평채;보상채권;기타 국채,,medium,"https://ktb.moef.go.kr/ntndbtKnd.do (기획재정부 국채시장, 국채종류)"
+국내채권,STD_PD_SCLS_NM,개인투자용국채10년물,19,16,만기 10년의 개인투자용국채로 2024년 6월 최초 발행분부터 존재한다. 만기 보유 시 표면금리+가산금리 복리 이자와 분리과세 혜택을 받으며 중도환매 시 혜택이 소멸한다.,개인국채 10년;개인투자용 국채 10년물,,high,https://ktb.moef.go.kr/personalInvGovBonds.do (기획재정부 국채시장)
+국내채권,STD_PD_SCLS_NM,개인투자용국채20년물,19,16,만기 20년의 개인투자용국채로 2024년 6월 최초 발행분부터 존재한다. 초장기 저축성 국채로 만기 보유 시 가산금리와 분리과세 혜택이 가장 크게 설계되어 있다.,개인국채 20년;개인투자용 국채 20년물,,high,https://ktb.moef.go.kr/personalInvGovBonds.do (기획재정부 국채시장)
+국내채권,STD_PD_SCLS_NM,개인투자용국채5년물,11,16,"만기 5년의 개인투자용국채로, 장기물 수요 저조에 대응해 2025년 3월부터 발행이 시작되었다. 만기 보유 시 표면금리+가산금리를 복리로 수취하고 이자소득 분리과세 혜택이 있다.",개인국채 5년;개인투자용 국채 5년물,,high,"https://www.nabo.go.kr/board/file/down.do?fid=33319091 (국회예산정책처, 개인투자용 국채 발행 현황)"
+국내채권,STD_PD_SCLS_NM,물가채,6,16,"원금과 이자가 소비자물가지수(CPI)에 연동되어 조정되는 국고채로, 인플레이션 위험을 헤지할 수 있는 국채. 물가 상승 시 원금이 늘어나 이자와 상환액이 함께 증가한다.",물가연동국고채;물가연동채;KTBi;물가연동국채;인플레이션 연동 국채,,high,"https://ktb.moef.go.kr/ntndbtKnd.do (기획재정부 국채시장, 국채종류)"
+국내채권,BD_KND,일반회사채,13998,39,"상법상 주식회사가 자기 신용으로 발행하는 보통의 회사채(13,998건)로 특수한 옵션이나 유동화 구조가 없다. 신용등급(AAA~D)에 따라 금리가 차등되는 대표적 크레딧물이다.",일반사채;회사채;기업채;무보증 회사채,,high,https://eiec.kdi.re.kr/material/clickView.do?click_yymm=201512&cidx=1084 (KDI 경제교육)
+국내채권,BD_KND,할부금융채,4677,39,"여신전문금융업법상 할부금융업을 영위하는 캐피탈사가 자금조달을 위해 발행하는 채권(4,677건). 수신 기능이 없는 여신전문금융회사의 핵심 조달수단으로, 여전채의 대표 유형이다.",여전채;캐피탈채;할부채;여신전문금융회사채;여신전문금융채권,,high,"https://kbthink.com/dictionary/view.html?dictId=KED-00008500 (KB 금융용어사전, 여전채); https://www.moef.go.kr/sisa/dictionary/detail?idx=686 (기재부 시사경제용어사전, 금융채)"
+국내채권,BD_KND,일반특수법인채,3019,39,"한국전력공사·한국가스공사·한국도로공사 등 특별법으로 설립된 법인(비금융 공공기관)이 발행하는 특수채(3,019건). 시장에서 한전채로 대표되는 공사채·공공기관채가 여기에 해당한다.",한전채;공사채;공공기관채;특수법인채;가스공사채;도로공사채,,medium,https://eiec.kdi.re.kr/material/clickView.do?click_yymm=201512&cidx=1084 (KDI 경제교육)
+국내채권,BD_KND,유동화회사채,2798,39,"자산유동화에 관한 법률에 따라 설립된 유동화전문회사(SPC)가 매출채권·대출채권 등 유동화자산을 기초로 발행하는 사채 형태의 자산유동화증권(ABS)(2,798건). 기초자산의 현금흐름으로 원리금이 상환된다.",ABS;자산유동화증권;자산유동화사채;유동화증권;SPC 사채,,high,"https://www.moef.go.kr/sisa/dictionary/detail?idx=2124 (기재부 시사경제용어사전, ABS)"
+국내채권,BD_KND,Conduit회사채,2792,39,"자산유동화법에 따른 등록유동화가 아닌, 상법상 SPC(도관체·콘듀잇)를 통해 반복적으로 발행되는 회사채 형태의 비등록 유동화증권(2,792건). ABCP 콘듀잇처럼 기초자산의 현금흐름을 투자자에게 전달하는 도관 구조로 발행된다.",콘듀잇채;콘딧회사채;비등록 유동화 사채;도관체 회사채;SPC 회사채,,medium,"https://dic.hankyung.com/economy/view/?seq=7230 (한경 경제용어사전, 콘듀잇); https://fsc.go.kr/no010101/77985 (금융위, 자산유동화법 규율 정비)"
+국내채권,BD_KND,신용카드채,2520,39,"신용카드사가 카드론·결제대금 등 영업자금 조달을 위해 발행하는 여신전문금융회사채(2,520건). 여전채의 한 유형으로 동일 등급 일반 회사채보다 금리가 다소 높게 형성되는 경향이 있다.",카드채;여전채;카드사 채권;신용카드회사채,,high,"https://kbthink.com/dictionary/view.html?dictId=KED-00008500 (KB 금융용어사전, 여전채)"
+국내채권,BD_KND,특수은행채,2398,39,"한국산업은행·중소기업은행·한국수출입은행·농협·수협 등 특별법으로 설립된 특수은행이 발행하는 금융채(2,398건). 산업금융채권(산금채)·중소기업금융채권(중금채)이 대표적이며 국책은행의 신용으로 신용도가 매우 높다.",산금채;산업금융채권;중금채;중소기업금융채권;수출입은행채;국책은행채;농협채,,high,"https://kbthink.com/dictionary/view.html?dictId=KED-00001146 (KB 금융용어사전, 산업금융채권)"
+국내채권,BD_KND,MBS,2159,39,"한국주택금융공사가 은행 등에서 양수한 주택담보대출채권(주택저당채권)을 기초로 발행하는 유동화증권(2,159건). 주금공 MBS는 공사의 지급보증으로 신용도가 높고 보금자리론 등 정책모기지 재원이 된다.",주금공 MBS;주택저당증권;주택금융공사 MBS;모기지채권;주택저당채권담보부증권;HF MBS,,high,"https://researcher.hf.go.kr/researcher/sub02/sub02_08.do?mode=download&articleNo=591847&attachNo=90535 (한국주택금융공사, MBS 발행구조)"
+국내채권,BD_KND,지역개발채,1266,39,"지방자치단체가 지역개발기금 조성을 위해 발행하는 지방채(1,266건)로, 자동차 등록이나 지자체 인허가·공사계약 시 의무적으로 매입해야 하는 첨가소화채다. 통상 5년 만기이며 표면금리가 시중금리보다 낮아 매입 즉시 할인 매도하는 경우가 많다.",지역개발채권;첨가소화채;자동차 등록 채권;의무매입채권;도시개발채권,,high,https://www.hankyung.com/article/2023122628721 (한국경제); https://www.kcie.or.kr/mobile/guide/2/12/web_view?content_idx=957 (전국투자자교육협의회)
+국내채권,BD_KND,일반은행채,1253,39,"시중은행·지방은행 등 은행법에 따른 일반은행이 발행하는 금융채(1,253건). 예금 외의 자금조달 수단으로 대출재원 마련을 위해 발행된다.",은행채;시중은행채;금융채;은행 발행 채권,,high,"https://www.moef.go.kr/sisa/dictionary/detail?idx=686 (기재부 시사경제용어사전, 금융채)"
+국내채권,BD_KND,시설대여채(리스),1039,39,"여신전문금융업법상 시설대여업(리스업)을 영위하는 리스사가 발행하는 채권(1,039건). 카드채·할부금융채와 함께 여전채로 통칭된다.",리스채;여전채;시설대여채권;리스회사채;캐피탈채,,high,"https://www.moef.go.kr/sisa/dictionary/detail?idx=686 (기재부 시사경제용어사전, 금융채)"
+국내채권,BD_KND,금융지주회사채,429,39,금융지주회사법에 따른 금융지주회사(KB금융지주·신한금융지주 등)가 발행하는 회사채(429건). 자회사 출자·운영자금 조달 목적이며 은행채와 함께 은행계 크레딧물로 분류된다.,지주채;금융지주채;지주회사채;은행지주채,,medium,"https://www.moef.go.kr/sisa/dictionary/detail?idx=686 (기재부 시사경제용어사전, 금융채) 기반 분류"
+국내채권,BD_KND,일반지방공사채,423,39,지방공기업법에 따라 지자체가 설립한 지방공사(서울주택도시공사·경기주택도시공사 등)가 발행하는 채권(423건). 지자체의 신용이 뒷받침되는 공공 부문 채권이다.,지방공사채;SH공사채;GH채;도시공사채;지방공기업채,,medium,지방공기업법(국가법령정보센터) 기반 분류; 데이터 스냅샷 관측
+국내채권,BD_KND,지방공사보상채권,417,39,지방공사(SH공사 등)가 공익사업의 토지 수용 시 토지보상법에 따라 현금 대신 토지소유자에게 지급(교부)하는 보상채권(417건). 만기 전 양도·담보 제공이 가능해 유통시장에서 거래된다.,토지보상채권;SH 보상채권;용지보상채권;보상채권,,medium,https://www.law.go.kr/lsLawLinkInfo.do?lsJoLnkSeq=1000384237&chrClsCd=010202 (공익사업을 위한 토지 등의 취득 및 보상에 관한 법률)
+국내채권,BD_KND,투자매매.중개채,365,39,자본시장법상 투자매매업·투자중개업 인가를 받은 증권회사가 발행하는 채권(365건). 증권사의 운영자금·발행어음 외 조달수단으로 발행되는 금융회사채다.,증권사채;증권회사채;증권사 발행 채권;투자매매업자 채권,,medium,"https://www.easylaw.go.kr/CSP/CnpClsMainBtr.laf?popMenu=ov&csmSeq=572&ccfNo=2&cciNo=2&cnpClsNo=1 (찾기쉬운 생활법령, 자본시장법상 투자매매·중개업 정의)"
+국내채권,BD_KND,국고채권,298,39,국채법에 따라 기획재정부가 공공자금관리기금 부담으로 발행하는 대한민국 대표 국채(298건). 지표금리 역할을 하며 국채전문딜러(PD) 경쟁입찰로 발행된다.,국고채;KTB;국채;국고채 3년;국고채 10년,,high,https://ktb.moef.go.kr/ntpbnd.do (기획재정부 국채시장)
+국내채권,BD_KND,도시철도공채,240,39,"도시철도법에 근거해 서울시 등이 지하철 건설·운영 재원 조달을 위해 발행하는 지방채(240건)로, 해당 지역 자동차 등록 등 시 의무매입되는 첨가소화채다. 서울 도시철도채권은 통상 7년(과거 9년) 만기 일시상환이다.",도시철도채권;지하철채권;서울도시철도채권;첨가소화채,,high,"https://www.fnnews.com/news/201702071717126162 (파이낸셜뉴스, 첨가소화채권)"
+국내채권,BD_KND,특수보상채권,177,39,"특별법상 법인(한국토지주택공사 등 공공기관)이 공익사업 토지 수용 시 현금 대신 지급하는 보상채권(177건)으로, LH 토지보상채권이 대표적이다. 토지보상법에 따라 발행되며 양도·담보 제공이 가능하다.",토지보상채권;LH 보상채권;용지보상채권;보상채권,,medium,https://www.law.go.kr/lsLawLinkInfo.do?lsJoLnkSeq=1000384237&chrClsCd=010202 (토지보상법)
+국내채권,BD_KND,기업인수목적회사채,174,39,"비상장기업 인수합병을 유일한 목적으로 설립된 기업인수목적회사(SPAC)가 발행하는 사채(174건)로, 통상 상장 전 발기인 대상 전환사채 형태다. 합병 성공 시 주식 전환, 실패 시 원리금 상환 구조를 가진다.",스팩사채;SPAC 전환사채;스팩 CB;기업인수목적회사 사채,,medium,"자본시장과 금융투자업에 관한 법률 시행령(기업인수목적회사 정의, 국가법령정보센터) 기반 분류"
+국내채권,BD_KND,보험회사채,173,39,"보험업법에 따른 보험회사가 발행하는 채권(173건)으로, 지급여력비율(K-ICS) 제고를 위한 후순위채·신종자본증권 형태가 많다. 금융회사채(크레딧물)의 한 유형이다.",보험사채;보험사 후순위채;보험사 신종자본증권;보험사 자본성증권,,medium,"https://www.moef.go.kr/sisa/dictionary/detail?idx=686 (기재부 시사경제용어사전, 금융채) 기반 분류"
+국내채권,BD_KND,모집지방채,125,39,지방자치단체가 불특정 다수 투자자로부터 청약을 받아 모집(공모) 방식으로 발행하는 지방채(125건). 의무매입 방식의 매출채(첨가소화채)와 대비되는 발행방식이다.,공모지방채;모집 지방채;지자체 공모채,,medium,https://main.krxverse.co.kr/_contents/ACA/02/02010201/03.pdf (KRX 채권시장 해설)
+국내채권,BD_KND,기타금융회사채,120,39,은행·카드·캐피탈·증권·보험 등 주요 업권으로 별도 분류되지 않는 금융회사가 발행하는 채권(120건). 신용정보회사·대부업 지주 등 기타 금융업권 발행분이 포함되는 것으로 추정된다.,기타 금융채;기타 금융회사 채권,,low,데이터 스냅샷 관측 기반 추정 (공식 분류기준 미확인)
+국내채권,BD_KND,통화안정채권,101,39,한국은행이 한국은행 통화안정증권법에 따라 시중 유동성 조절(공개시장운영)을 위해 발행하는 채권(101건). 기관·일반 투자자 대상 경쟁입찰·모집으로 발행되며 단기물 중심의 무위험 채권으로 취급된다.,통안채;통안증권;통화안정증권;한은 통안채;MSB,,high,https://www.law.go.kr/법령/한국은행 통화안정증권법; https://www.bok.or.kr/portal/main/contents.do?menuNo=200362 (한국은행 증권업무)
+국내채권,BD_KND,국민주택1종,74,39,"주택도시기금법에 따라 부동산 소유권 이전등기 등 각종 등기·인허가, 국가·지자체와의 공사 도급계약 시 의무매입하는 국채(74건). 만기 5년 일시상환 첨가소화채로 주택도시기금의 재원이 된다.",국민주택채권;1종 주택채권;첨가소화채;등기 채권,,high,"https://www.kebhana.com/cont/houd/houd03/houd0302/houd030201/index.jsp (주택도시기금 수탁은행, 1종 국민주택채권)"
+국내채권,BD_KND,국민주택2종,73,39,"과거 분양가상한제 아파트 청약(채권입찰제) 시 의무매입하던 만기 20년(구 10년) 국채(73건)로, 2013~2015년 이후 신규 발행이 중단되었다. 데이터의 73건은 만기가 남은 기발행 잔존물량이다.",2종 주택채권;국민주택채권 2종;채권입찰제 채권,,high,https://namu.wiki/w/국민주택채권 (발행중단 연혁); https://www.kebhana.com/cont/houd/houd03/houd0301/index.jsp (주택도시기금 안내)
+국내채권,BD_KND,부동산투자회사채,57,39,부동산투자회사법에 따른 부동산투자회사(REITs)가 부동산 취득·운영자금 조달을 위해 발행하는 사채(57건).,리츠채;REITs 사채;리츠 회사채;부동산투자회사 사채,,medium,부동산투자회사법(국가법령정보센터) 기반 분류; 데이터 스냅샷 관측
+국내채권,BD_KND,기타금융투자전업회사채,53,39,자본시장법상 금융투자업자 중 투자매매·중개업자(증권사)로 분류되지 않는 전업사(신탁업·투자자문업 전업사 등)가 발행하는 채권(53건)으로 추정된다. 정확한 포함 업권은 분류기준 확인이 필요하다.,금융투자회사채;기타 금융투자업자 채권,,low,자본시장법상 금융투자업 구분(찾기쉬운 생활법령) 기반 추정
+국내채권,BD_KND,개인투자용국채,49,39,"2024년 6월 최초 발행된 개인 전용 저축성 국채(49건)로 5·10·20년물이 있으며 전용계좌로 개인만 매입할 수 있다. 만기 보유 시 표면금리+가산금리 복리 이자와 이자소득 분리과세(14%) 혜택을 받고, 유통시장 매매는 불가하며 중도환매 시 혜택이 없다.",개인국채;개인투자용 국채;저축성 국채,,high,https://ktb.moef.go.kr/personalInvGovBonds.do (기획재정부); https://www.korea.kr/news/policyNewsView.do?newsId=148957316 (정책브리핑)
+국내채권,BD_KND,장기산업채권(특수금융),39,39,"특수금융채로 분류되는 장기 산업자금 조달용 채권(39건)으로, 등록발행 통계에서 별도 채권종류로 관리된다. 정확한 발행주체(산업은행 계열 여부 등)는 공식 문서로 확인하지 못했다.",장기산업채;특수금융채,,low,"http://www.s-d.kr/news/articleView.html?idxno=25217 (증권일보, 등록발행 채권종류 통계에 장기산업채권(특수) 존재 확인)"
+국내채권,BD_KND,집합투자회사채,38,39,자본시장법상 집합투자업자(자산운용사) 또는 집합투자기구 관련 회사가 발행하는 채권(38건)으로 추정된다. 금융투자업권 회사채의 한 유형이다.,자산운용사채;운용사 채권;집합투자업자 채권,,low,자본시장법상 금융투자업 구분(찾기쉬운 생활법령) 기반 추정
+국내채권,BD_KND,SLBS,34,39,"한국장학재단의 학자금대출채권을 기초자산으로 발행되는 유동화증권(Student Loan-Backed Securities, 34건). 전자증권법상 의무 전자등록 대상 증권의 하나로 명시된 채권 유형이다.",학자금대출증권;학자금대출 유동화증권;장학재단 유동화채;학자금 ABS,,medium,"https://www.koit.co.kr/news/articleView.html?idxno=76806 (전자증권 전환 대상에 SLBS 명시); https://www.kcmi.re.kr/kcmifile/oldreportdata/0000222_2.pdf (자본시장연구원, 학자금대출 유동화)"
+국내채권,BD_KND,재정증권,27,39,국고금관리법에 따라 기획재정부가 국고금 출납상 일시 부족자금 조달을 위해 일반회계·특별회계 부담으로 공개시장에서 발행하는 초단기 국채(27건). 통상 63일물로 발행되어 회계연도 내 상환된다.,재정증권 63일물;단기 국채;국고 일시차입 증권,,high,"https://www.korea.kr/briefing/actuallyView.do?newsId=148902055 (정책브리핑, 재정증권·일시차입); 국고금관리법(국가법령정보센터)"
+국내채권,BD_KND,증권금융채(특수금융),26,39,자본시장법상 증권금융회사인 한국증권금융이 증권 담보금융·투자자예탁금 운용 등 업무 재원 조달을 위해 발행하는 특수금융채(26건).,한국증권금융채;증금채;증권금융채권,,medium,자본시장법상 증권금융회사 규정 기반 분류; 데이터 스냅샷 관측
+국내채권,BD_KND,외국환평형기금,14,39,환율 급변동에 대응해 원화의 대외가치 안정을 위한 외국환평형기금 재원 조달용으로 정부가 발행·보증하는 국채(14건). 원화표시와 외화표시 두 종류가 있으며 원화 외평채는 2003년 이후 국고채로 통합 발행되어 현재는 잔존·외화물 중심이다.,외평채;외국환평형기금채권;외평기금채,,high,https://ko.wikipedia.org/wiki/외국환평형기금채권; https://ktb.moef.go.kr/ntndbtKnd.do (기획재정부 국채종류)
+국내채권,BD_KND,중기창투회사채,10,39,벤처투자법(구 중소기업창업지원법)상 중소기업창업투자회사(벤처캐피탈)가 발행하는 채권(10건).,창투사채;벤처캐피탈채;VC 채권;창업투자회사 사채,,medium,벤처투자 촉진에 관한 법률(국가법령정보센터) 기반 분류; 데이터 스냅샷 관측
+국내채권,BD_KND,종합금융채,9,39,자본시장법상 종합금융회사(종금사)가 발행하는 금융채(9건). 종금업 라이선스를 보유한 회사의 자금조달 수단이다.,종금채;종금사채;종합금융회사채,,medium,"https://www.moef.go.kr/sisa/dictionary/detail?idx=686 (기재부 시사경제용어사전, 금융채 — 종합금융채 언급)"
+국내채권,BD_KND,상호저축은행채,3,39,상호저축은행법에 따른 저축은행이 발행하는 금융채(3건). 발행 규모가 매우 작은 업권이다.,저축은행채;저축은행 채권,,medium,상호저축은행법(국가법령정보센터) 기반 분류; 데이터 스냅샷 관측
+국내채권,BD_KND,신기술금융채,2,39,여신전문금융업법상 신기술사업금융회사(신기술 벤처 투자·융자 전문)가 발행하는 채권(2건). 여전채 계열의 소수 업권 채권이다.,신기술사업금융회사채;신기술금융회사채;여전채,,medium,"여신전문금융업법(국가법령정보센터, 신기술사업금융업) 기반 분류"
+국내채권,BD_KND,투자일임회사채,1,39,자본시장법상 투자일임업자가 발행하는 채권(1건). 금융투자업권 회사채 중 극소수 유형이다.,투자일임업자 채권;일임사 채권,,low,자본시장법상 투자일임업 정의(찾기쉬운 생활법령) 기반 추정
+국내채권,CURR_CD,KRW,42372,5,"ISO 4217 통화코드로 대한민국의 법정통화인 원(Won)을 의미. 국내채권 CURR_CD의 99.9%(42,372건), 공모펀드 curr_cd, 국내ETF pd_curr_cd(CURR_CD_KRW 형태)의 기본 통화.",원;원화;한국원;한국 원화;대한민국 원;₩;KRW,"ISO 4217 alpha-3 코드, 숫자코드 410, 소수 자릿수 0(보조단위 없음)",high,https://www.iso.org/iso-4217-currency-codes.html
+국내채권,CURR_CD,USD,19,5,"ISO 4217 통화코드로 미국 달러(US Dollar). 해외ETF의 거래통화(pd_trd_ccy)·기준통화(pd_curr_cd 5,637건), 국내채권 외화표시 19건, 공모펀드 일부 클래스에 등장.",달러;미국달러;달러화;미 달러;US달러;불;$;USD,"ISO 4217 alpha-3 코드, 숫자코드 840, 소수 자릿수 2(센트)",high,https://www.iso.org/iso-4217-currency-codes.html
+국내채권,CURR_CD,EUR,1,5,ISO 4217 통화코드로 유로존 공동통화 유로(Euro). 국내채권 CURR_CD에 1건 존재(유로화 표시 채권).,유로;유로화;EUR;€,"ISO 4217 alpha-3 코드, 숫자코드 978, 소수 자릿수 2",high,https://www.iso.org/iso-4217-currency-codes.html
+국내채권,CURR_CD,JPY,1,5,ISO 4217 통화코드로 일본 엔(Yen). 국내채권 CURR_CD에 1건 존재(엔화 표시 채권).,엔;엔화;일본엔;일본 엔화;¥;JPY,"ISO 4217 alpha-3 코드, 숫자코드 392, 소수 자릿수 0",high,https://www.iso.org/iso-4217-currency-codes.html
+국내채권,CURR_CD,000,1,5,,,,,
+국내채권,PD_RISK_GCD,1,15950,7,,,,,
+국내채권,PD_RISK_GCD,5,13696,7,,,,,
+국내채권,PD_RISK_GCD,6,10408,7,,,,,
+국내채권,PD_RISK_GCD,4,1938,7,,,,,
+국내채권,PD_RISK_GCD,3,282,7,,,,,
+국내채권,PD_RISK_GCD,2,62,7,,,,,
+국내채권,PD_RISK_GCD,0,58,7,,,,,
+국내채권,AVG_ANNUAL_TAX_YIELD,0,881,1,,,,,
+국내채권,CRD_GRD,AAA,12240,20,"원리금 상환가능성이 최고 수준인 최상위 등급(한국신용평가 정의). rank=1, 투자등급. 3사 모두 AAA에는 +/- 부호를 붙이지 않는다.",트리플에이;트리플A;최고등급;최상위등급,"rank=1; 투자등급; 데이터 표기 'AAA'(12,240건)",high,한국신용평가 신용평가 기호 및 정의(https://kisrating.com/fileDown.do?menuCd=R7&gubun=I&fileName=rm20241226-1.pdf); 한국기업평가 등급정의(https://www.korearatings.com/cms/frCmnCon/index.do?MENU_ID=240)
+국내채권,CRD_GRD,AA-,4939,20,"AA등급 내 상대적 열위(-). rank=4, 투자등급. 국내 회사채 시장에서 우량 등급의 하단으로 통용된다.",더블에이마이너스;AA마이너스,"rank=4; 투자등급; 데이터 표기 'AA-'(4,939건)",high,한국신용평가 신용평가 기호 및 정의(https://kisrating.com/fileDown.do?menuCd=R7&gubun=I&fileName=rm20241226-1.pdf)
+국내채권,CRD_GRD,AA+,3191,20,"원리금 상환가능성이 매우 높지만 AAA에 비해 다소 열위한 AA등급 중 상대적 우위(+). rank=2, 투자등급.",더블에이플러스;AA플러스,"rank=2; 투자등급; 데이터 표기 'AA+'(3,191건)",high,한국신용평가 신용평가 기호 및 정의(https://kisrating.com/fileDown.do?menuCd=R7&gubun=I&fileName=rm20241226-1.pdf)
+국내채권,CRD_GRD,AA0,1713,20,"CRD_GRD 원본 표기. 끝의 '0'은 +도 -도 아닌 무부호(플랫) 등급을 뜻하며 신용평가사 공식 표기로는 'AA'다. 관측 1,713건.",AA;AA플랫,정규화: AA0 → AA (rank=3),high,신용평가 3사 공식 표기(AA)와 데이터 표기 대조; 한국신용평가 기호 및 정의(https://kisrating.com/fileDown.do?menuCd=R7&gubun=I&fileName=rm20241226-1.pdf)
+국내채권,CRD_GRD,A+,906,20,"원리금 상환가능성이 높지만 AA 대비 환경변화에 영향을 받기 쉬운 A등급 중 상대적 우위(+). rank=5, 투자등급.",싱글에이플러스;A플러스,rank=5; 투자등급; 데이터 표기 'A+'(906건),high,한국신용평가 신용평가 기호 및 정의(https://kisrating.com/fileDown.do?menuCd=R7&gubun=I&fileName=rm20241226-1.pdf)
+국내채권,CRD_GRD,A0,904,20,CRD_GRD 원본 표기로 무부호 A등급. 관측 904건.,A;A플랫,정규화: A0 → A (rank=6),high,신용평가 3사 공식 표기(A)와 데이터 표기 대조
+국내채권,CRD_GRD,A-,345,20,"A등급 내 상대적 열위(-). rank=7, 투자등급.",싱글에이마이너스;A마이너스,rank=7; 투자등급; 데이터 표기 'A-'(345건),high,한국신용평가 신용평가 기호 및 정의(https://kisrating.com/fileDown.do?menuCd=R7&gubun=I&fileName=rm20241226-1.pdf)
+국내채권,CRD_GRD,BBB+,206,20,"원리금 상환가능성이 일정수준 인정되나 환경변화에 따라 저하 가능성이 있는 BBB등급 중 상대적 우위(+). rank=8, 투자등급.",트리플비플러스;BBB플러스,rank=8; 투자등급; 데이터 표기 'BBB+'(206건),high,한국신용평가 신용평가 기호 및 정의(https://kisrating.com/fileDown.do?menuCd=R7&gubun=I&fileName=rm20241226-1.pdf)
+국내채권,CRD_GRD,C0,137,20,"CRD_GRD 원본 표기로 무부호 C등급. 관측 137건으로 하위등급 중 이례적으로 많아, 실제 C등급 채권인지 별도 의미의 코드인지 표본 확인이 필요하다.",C,정규화: C0 → C (rank=19),medium,신용평가사 공식 표기(C)와 데이터 표기 대조(건수 이례성은 미확인)
+국내채권,CRD_GRD,BBB0,116,20,CRD_GRD 원본 표기로 무부호 BBB등급. 관측 116건.,BBB;BBB플랫,정규화: BBB0 → BBB (rank=9),high,신용평가 3사 공식 표기(BBB)와 데이터 표기 대조
+국내채권,CRD_GRD,BB0,10,20,CRD_GRD 원본 표기로 무부호 BB등급. 관측 10건.,BB;BB플랫,정규화: BB0 → BB (rank=12),high,신용평가 3사 공식 표기(BB)와 데이터 표기 대조
+국내채권,CRD_GRD,BB-,9,20,"BB등급 내 상대적 열위(-). rank=13, 투기등급.",더블비마이너스,rank=13; 투기등급; 데이터 표기 'BB-'(9건),high,한국신용평가 신용평가 기호 및 정의(https://kisrating.com/fileDown.do?menuCd=R7&gubun=I&fileName=rm20241226-1.pdf)
+국내채권,CRD_GRD,BBB-,8,20,"투자등급(투자적격)의 최하단 등급. rank=10이며, 이보다 낮으면(BB+ 이하) 투기등급으로 분류된다.",트리플비마이너스;투자적격 하한;투자등급 경계,rank=10; 투자등급 하한(경계); 데이터 표기 'BBB-'(8건),high,한국신용평가 신용평가 기호 및 정의(https://kisrating.com/fileDown.do?menuCd=R7&gubun=I&fileName=rm20241226-1.pdf); NICE신용평가 장기신용등급(https://www.nicerating.com/disclosure/longTermGrade.do)
+국내채권,CRD_GRD,B-,8,20,"B등급 내 상대적 열위(-). rank=16, 투기등급.",싱글비마이너스,rank=16; 투기등급; 데이터 표기 'B-'(8건),high,한국신용평가 신용평가 기호 및 정의(https://kisrating.com/fileDown.do?menuCd=R7&gubun=I&fileName=rm20241226-1.pdf)
+국내채권,CRD_GRD,B+,6,20,"상환가능성 불확실성이 상당하여 BB보다 투기적 요소가 큰 B등급 중 상대적 우위(+). rank=14, 투기등급.",싱글비플러스,rank=14; 투기등급; 데이터 표기 'B+'(6건),high,한국신용평가 신용평가 기호 및 정의(https://kisrating.com/fileDown.do?menuCd=R7&gubun=I&fileName=rm20241226-1.pdf)
+국내채권,CRD_GRD,B0,5,20,CRD_GRD 원본 표기로 무부호 B등급. 관측 5건.,B;B플랫,정규화: B0 → B (rank=15),high,신용평가 3사 공식 표기(B)와 데이터 표기 대조
+국내채권,CRD_GRD,BB+,4,20,"투기등급의 최상단. 원리금 상환가능성에 불확실성이 내포된 BB등급 중 상대적 우위(+). rank=11, 투기등급.",더블비플러스;투기등급 상단,rank=11; 투기등급; 데이터 표기 'BB+'(4건),high,한국신용평가 신용평가 기호 및 정의(https://kisrating.com/fileDown.do?menuCd=R7&gubun=I&fileName=rm20241226-1.pdf)
+국내채권,CRD_GRD,CCC,1,20,"채무불이행의 위험 수준이 높고 원리금 상환가능성이 의문시된다(한국신용평가 정의). rank=17, 투기등급. 한신평·한기평은 CCC에 부호를 붙이지 않으나 NICE신용평가는 CCC까지 +/-를 부가하므로 CCC+/CCC-가 존재할 수 있다.",트리플씨;CCC0,"rank=17; 투기등급; 데이터 표기 'CCC'(1건, 0 접미사 없음)",high,한국신용평가 신용평가 기호 및 정의(https://kisrating.com/fileDown.do?menuCd=R7&gubun=I&fileName=rm20241226-1.pdf); NICE신용평가 장기신용등급(https://www.nicerating.com/disclosure/longTermGrade.do)
+국내채권,CRD_GRD,CC0,1,20,CRD_GRD 원본 표기로 무부호 CC등급. 관측 1건.,CC,정규화: CC0 → CC (rank=18),high,신용평가 3사 공식 표기(CC)와 데이터 표기 대조
+국내채권,CRD_GRD,C,1,20,"채무불이행의 위험 수준이 극히 높고 원리금 상환가능성이 없다(한국신용평가 정의). rank=19, 투기등급. 부호(+/-) 없이 사용된다.",씨등급;C0,rank=19; 투기등급; 데이터에서는 'C0'(137건)과 'C'(1건)로 혼재 → 정규화 시 C,high,한국신용평가 신용평가 기호 및 정의(https://kisrating.com/fileDown.do?menuCd=R7&gubun=I&fileName=rm20241226-1.pdf)
+국내ETF,cu_base_index,종합채권 3개월~1년,14,19,"국내 채권 전체를 포괄하는 종합채권지수의 잔존만기 3개월~1년 구간 하위지수로, 단기채권형 ETF의 벤치마크 표기다. 국내 종합채권지수는 KAP(한국자산평가)·KIS자산평가·매경-KAP 등이 산출하는데, 이 표기가 어느 기관 지수인지(또는 펀드평가사 KG제로인의 자체 BM 표기인지)는 웹에서 확정하지 못했다.",종합채권지수; 단기 종합채권; 종합채권 1~2년; 종합채권 3M~1Y; KIS종합채권; KAP종합채권,"동일 계열 표기: '종합채권 1~2년'(6건), '종합채권03Y 90%'(1건), '종합채권01Y'(혼합 BM 내)",low,KAP: https://www.koreaap.com/kor/index_pe01_01.html / KIS: https://www.bond.co.kr/conts/10049 (기관 특정 불가)
+국내ETF,cu_base_index,KOSPI200,9,19,한국거래소(KRX)가 유가증권시장 상장종목 중 시장대표성·유동성·업종대표성을 기준으로 선정한 200종목을 유동주식 시가총액가중으로 산출하는 한국 주식시장의 대표 지수다. 국내 주가지수 선물·옵션과 다수 ETF의 기초지수다.,코스피200; 코스피 200; KOSPI 200; K200; 코스피이백,1990.1.3=100 기준,high,https://ko.wikipedia.org/wiki/%EC%BD%94%EC%8A%A4%ED%94%BC_200 (KRX 산출)
+국내ETF,cu_base_index,MSCI ACWI,6,19,"선진국 23개국과 신흥국 시장을 모두 포함하는 MSCI의 전세계 대·중형주 지수다. 데이터에 'MSCI AC World NR USD'(해외ETF 19건), 'MSCI ACWI'(국내ETF 6건) 등으로 표기가 갈리므로 동일 지수로 정규화해야 한다.",MSCI AC World; 엠에스씨아이 전세계; 전세계 주식; 글로벌 주식지수; ACWI; MSCI ACWI CR; MSCI AC World NR USD; 올컨트리,,high,https://www.msci.com/indexes (MSCI ACWI Index factsheet)
+국내ETF,cu_base_index,종합채권 1~2년,6,19,,,,,
+국내ETF,cu_base_index,MSCI NORTH AMERICA,4,19,,,,,
+국내ETF,cu_base_index,MSCI ACWI CR 50% + 종합채권01Y 50%,3,19,"MSCI 전세계 지수(가격 기준, CR)와 국내 종합채권 1년 구간 지수를 각각 50% 가중으로 합성한 자산배분형(주식혼합·채권혼합) ETF의 벤치마크 표기다. 정규화 시 두 구성 지수와 가중치로 분해해 저장해야 한다.",주식채권 혼합 벤치마크; 자산배분 BM; 50대50 혼합,'지수A a% + 지수B b%' 파싱 규칙 적용,medium,제공 데이터 관측(3건) + MSCI ACWI/종합채권 각 entry 참조
+국내ETF,cu_base_index,MSCI ACWI Information Technology,2,19,,,,,
+국내ETF,cu_base_index,MSCI CHINA,2,19,,,,,
+국내ETF,cu_base_index,KAP CD 6개월  90%,2,19,,,,,
+국내ETF,cu_base_index,KRX 미디어통신,1,19,"한국거래소가 산출하는 KRX 섹터지수 시리즈 중 미디어·통신 업종 종목으로 구성된 지수다. KRX는 KRX300·섹터지수 등 1,000개 이상의 지수를 산출하며, 정확한 공식 지수명(예: KRX 미디어&엔터테인먼트)은 KRX 정보데이터시스템에서 확인이 필요하다.",KRX 미디어; KRX 통신; 미디어통신 섹터; 미디어엔터 지수,,medium,https://open.krx.co.kr/contents/OPN/02/02010100/OPN02010100.jsp
+국내ETF,cu_base_index,MSCI ACWI Health Care,1,19,,,,,
+국내ETF,cu_base_index,종합채권03Y 90%,1,19,,,,,
+국내ETF,cu_base_index,iSelect K-REITs,1,19,"NH투자증권이 개발·발표하는 증권사 자체(private) 지수 브랜드 'iSelect'의 국내 상장 리츠 지수로, 경영 건전성·유동성 기준으로 선정한 리츠들을 시가총액가중으로 산출한다. 2019년 11월 PR형, 2020년 2월 배당 재투자를 반영한 TR형이 출시됐다.",아이셀렉트 K리츠; K-REITs 지수; 케이리츠; 국내 리츠 지수; NH 리츠지수,PR/TR 두 버전 존재,high,https://newsis.com/view/?id=NISX20200130_0000902524
+국내ETF,cu_base_index,코스닥150 150%,1,19,,,,,
+국내ETF,cu_base_index,MSCI EM (EMERGING MARKETS),1,19,,,,,
+국내ETF,cu_base_index,KRX 300,1,19,,,,,
+국내ETF,cu_base_index,DWGRTT 90%,1,19,,,,,
+국내ETF,cu_base_index,Rogers International Commodity TR,1,19,"짐 로저스(Jim Rogers)가 1998년 만든 글로벌 원자재 지수로, 세계 소비 비중을 반영해 38개 원자재 선물로 구성되며 Beeland Interests가 소유하고 RICI 위원회가 연 1회 구성을 검토한다. 국내ETF 데이터에 1건 출현한다.",RICI; 로저스 원자재; 로저스 상품지수; 짐로저스 지수,블룸버그 심볼 ROGRTR(TR),high,https://www.beelandinterests.com/the-rici/
+국내ETF,cu_base_index,제로인 대안투자기대수익지수,1,19,펀드평가사 KG제로인(펀드닥터 운영사)이 대안투자(부동산·인프라 등) 펀드의 성과평가용으로 부여하는 자체 벤치마크 지수로 추정된다. 공개 웹 문서에서 공식 정의·산출방법을 확인하지 못했다.,대안투자 기대수익; 제로인 BM; 대안투자 벤치마크,,low,KG제로인 펀드평가서비스: https://www.zeroin.co.kr/service/rating.do (지수 자체 정의는 미확인)
+국내ETF,cu_charge_etc_rt,0,1553,1,,,,,
+국내ETF,cu_charge_rt,0,150,17,,,,,
+국내ETF,cu_charge_rt,0.4,21,17,,,,,
+국내ETF,cu_charge_rt,0.49,19,17,,,,,
+국내ETF,cu_charge_rt,0.52,10,17,,,,,
+국내ETF,cu_charge_rt,0.15,4,17,,,,,
+국내ETF,cu_charge_rt,0.35,2,17,,,,,
+국내ETF,cu_charge_rt,0.08,1,17,,,,,
+국내ETF,cu_charge_rt,0.1,1,17,,,,,
+국내ETF,cu_charge_rt,0.59,1,17,,,,,
+국내ETF,cu_charge_rt,0.19,1,17,,,,,
+국내ETF,cu_charge_rt,0.09,1,17,,,,,
+국내ETF,cu_charge_rt,0.37,1,17,,,,,
+국내ETF,cu_charge_rt,0.16,1,17,,,,,
+국내ETF,cu_charge_rt,0.2,1,17,,,,,
+국내ETF,cu_charge_rt,0.64,1,17,,,,,
+국내ETF,cu_charge_rt,0.07,1,17,,,,,
+국내ETF,cu_charge_rt,0.26,1,17,,,,,
+국내ETF,cu_lev_fector,1,1169,9,,,,,
+국내ETF,cu_lev_fector,2,190,9,,,,,
+국내ETF,cu_lev_fector,-2,105,9,,,,,
+국내ETF,cu_lev_fector,-1,65,9,,,,,
+국내ETF,cu_lev_fector,3,9,9,,,,,
+국내ETF,cu_lev_fector,-3,7,9,,,,,
+국내ETF,cu_lev_fector,-0.5,3,9,,,,,
+국내ETF,cu_lev_fector,1.5,2,9,,,,,
+국내ETF,cu_lev_fector,-1.5,1,9,,,,,
+국내ETF,cu_strtegy,실물복제,745,4,,,,,
+국내ETF,cu_strtegy,C,409,4,,,,,
+국내ETF,cu_strtegy,액티브,343,4,,,,,
+국내ETF,cu_strtegy,합성복제,82,4,,,,,
+국내ETF,cu_upt_dt,20260615,1517,11,,,,,
+국내ETF,cu_upt_dt,20260520,8,11,,,,,
+국내ETF,cu_upt_dt,20260601,5,11,,,,,
+국내ETF,cu_upt_dt,20260429,4,11,,,,,
+국내ETF,cu_upt_dt,20260511,4,11,,,,,
+국내ETF,cu_upt_dt,20260522,4,11,,,,,
+국내ETF,cu_upt_dt,20260420,3,11,,,,,
+국내ETF,cu_upt_dt,20260608,2,11,,,,,
+국내ETF,cu_upt_dt,20260409,2,11,,,,,
+국내ETF,cu_upt_dt,20260421,1,11,,,,,
+국내ETF,cu_upt_dt,20260528,1,11,,,,,
+국내ETF,du_chas_errt,0.00,1551,1,,,,,
+국내ETF,du_diff_rt,0.00,1517,1,,,,,
+국내ETF,du_upt_dt,2026-06-15 00:00:00,1517,1,,,,,
+국내ETF,pd_curr_cd,CURR_CD_KRW,1732,2,,,,,
+국내ETF,pd_curr_cd,CURR_CD_000,1,2,,,,,
+국내ETF,pd_curr_nm,한국원화,1732,2,,,,,
+국내ETF,pd_curr_nm,해당없음,1,2,,,,,
+국내ETF,pd_divd_amt_pshr,0.00,1551,1,,,,,
+국내ETF,pd_dvid_yield,0.00,1551,1,,,,,
+국내ETF,pd_exg_mkt_cd,EXG_MKT_NO_001,1733,1,"국내ETF pd_exg_mkt_cd의 값으로, 한국거래소(KRX) 유가증권시장을 의미. KRX 증권상품(ETF·ETN·ELW)은 전부 유가증권시장에 상장되므로 국내ETF 1,734건이 모두 이 값을 갖는 것이 정상.",유가증권시장;코스피시장;KOSPI시장;거래소시장;유가증권,정규화 규칙: 'EXG_MKT_NO_' 접두어 제거 후 001=유가증권시장으로 매핑,high,https://open.krx.co.kr/contents/OPN/01/01030100/OPN01030100.jsp (KRX 증권상품시장 소개: ETF·ETN·ELW 거래) + 제공 데이터 관측
+국내ETF,pd_exg_mkt_nm,유가증권,1733,1,,,,,
+국내ETF,pd_grp_no,ETF,1202,2,,,,,
+국내ETF,pd_grp_no,ETN,532,2,,,,,
+국내ETF,pd_lst_price,0.00,1734,1,,,,,
+국내ETF,pd_mkt_id,STK,1733,1,국내ETF pd_mkt_id의 값으로 KRX 유가증권시장(Stock Market)을 가리키는 시장 ID. 해외ETF의 pd_mkt_id=US(미국)와 동일 계열의 상장시장 구분 필드.,유가증권시장;국내 주식시장;KRX 주식시장,"STK=한국 유가증권시장, US=미국 시장",high,제공 데이터 관측 + https://www.iotafinance.com/en/Detail-view-MIC-code-XKRX.html (Korea Exchange Stock Market 명칭 대응)
+국내ETF,pd_mkt_nm,유가증권,1733,1,,,,,
+국내ETF,pd_net_ast_pshr,0.00,1551,1,,,,,
+국내ETF,pd_net_prft_pshr,0.00,1551,1,,,,,
+국내ETF,pd_net_rt_ast_pshr,0.00,1551,1,,,,,
+국내ETF,pd_pen_risk_nm,위험자산,788,3,,,,,
+국내ETF,pd_pen_risk_nm,N,732,3,,,,,
+국내ETF,pd_pen_risk_nm,안전자산,214,3,,,,,
+국내ETF,pd_pen_tr_yn,Y,1002,2,,,,,
+국내ETF,pd_pen_tr_yn,N,732,2,,,,,
+국내ETF,pd_risk_cd,PD_RISK_GCD_11,761,6,"국내ETF 투자위험등급 1등급. 레버리지·인버스, 파생형·고변동성 ETF가 주로 해당하며 관측 761건으로 최다이다.",매우 높은 위험; 초고위험 ETF,→ 1등급,high,제공 데이터; 금융위 가이드라인(레버리지·인버스 ETF 1등급 상향 조항)
+국내ETF,pd_risk_cd,PD_RISK_GCD_12,667,6,국내ETF 투자위험등급 2등급(관측 667건). 일반 주식형(지수추종) ETF가 주로 해당한다.,높은 위험,→ 2등급,high,제공 데이터; 금융위 가이드라인 명칭 체계
+국내ETF,pd_risk_cd,PD_RISK_GCD_15,115,6,국내ETF 투자위험등급 5등급(관측 115건). 우량 채권형 ETF 등이 해당한다.,낮은 위험,→ 5등급,high,제공 데이터; 금융위 가이드라인 명칭 체계
+국내ETF,pd_risk_cd,PD_RISK_GCD_14,86,6,국내ETF 투자위험등급 4등급(관측 86건). 채권혼합형·장기채권형 등이 해당한다.,보통 위험,→ 4등급,high,제공 데이터; 금융위 가이드라인 명칭 체계
+국내ETF,pd_risk_cd,PD_RISK_GCD_13,84,6,국내ETF 투자위험등급 3등급(관측 84건). 혼합형·저변동 주식형 등이 해당한다.,다소 높은 위험,→ 3등급,high,제공 데이터; 금융위 가이드라인 명칭 체계
+국내ETF,pd_risk_cd,PD_RISK_GCD_16,21,6,국내ETF 투자위험등급 6등급(관측 21건). 단기 국공채·머니마켓(파킹형) ETF 등이 해당한다.,매우 낮은 위험; 초저위험,→ 6등급,high,제공 데이터; 금융위 가이드라인 명칭 체계
+국내ETF,pd_risk_nm,매우높은위험(1등급),761,6,,,,,
+국내ETF,pd_risk_nm,높은위험(2등급),667,6,,,,,
+국내ETF,pd_risk_nm,낮은위험(5등급),115,6,,,,,
+국내ETF,pd_risk_nm,보통위험(4등급),86,6,,,,,
+국내ETF,pd_risk_nm,다소높은위험(3등급),84,6,,,,,
+국내ETF,pd_risk_nm,매우낮은위험(6등급),21,6,,,,,
+국내ETF,pd_sale_yn,1,1520,2,,,,,
+국내ETF,pd_sale_yn,0,214,2,,,,,
+국내ETF,pd_sect_cd,2,1126,5,,,,,
+국내ETF,pd_sect_cd,3,406,5,,,,,
+국내ETF,pd_sect_cd,8,16,5,,,,,
+국내ETF,pd_sect_cd,9,2,5,,,,,
+국내ETF,pd_sect_cd,4,1,5,,,,,
+국내ETF,pd_spac_yn,N,1551,1,,,,,
+국내ETF,pd_tr_yn,0,1661,2,,,,,
+국내ETF,pd_tr_yn,1,72,2,,,,,
+국내ETF,wu_core_yn,N,1646,2,,,,,
+국내ETF,wu_core_yn,Y,88,2,,,,,
+국내ETF,wu_inv_ast_type,주식,1069,8,,,,,
+국내ETF,wu_inv_ast_type,채권,261,8,,,,,
+국내ETF,wu_inv_ast_type,원자재,207,8,,,,,
+국내ETF,wu_inv_ast_type,혼합자산,78,8,,,,,
+국내ETF,wu_inv_ast_type,단기자금,42,8,,,,,
+국내ETF,wu_inv_ast_type,통화,41,8,,,,,
+국내ETF,wu_inv_ast_type,부동산,18,8,,,,,
+국내ETF,wu_inv_ast_type,기타,18,8,,,,,
+국내ETF,wu_inv_rgn,국내,1036,11,,,,,
+국내ETF,wu_inv_rgn,미국,453,11,,,,,
+국내ETF,wu_inv_rgn,글로벌,76,11,,,,,
+국내ETF,wu_inv_rgn,중국,63,11,,,,,
+국내ETF,wu_inv_rgn,아시아,33,11,,,,,
+국내ETF,wu_inv_rgn,일본,25,11,,,,,
+국내ETF,wu_inv_rgn,인도,19,11,,,,,
+국내ETF,wu_inv_rgn,남미/북미,12,11,,,,,
+국내ETF,wu_inv_rgn,유럽,7,11,,,,,
+국내ETF,wu_inv_rgn,베트남,5,11,,,,,
+국내ETF,wu_inv_rgn,이머징/브릭스,5,11,,,,,
+국내ETF,wu_upt_dt,20260615,1729,1,,,,,
+해외ETF,cu_etn_yn,Y,59,1,,,,,
+해외ETF,cu_index_repl_mthd,Optimized,1802,4,,,,,
+해외ETF,cu_index_repl_mthd,Swap,289,4,,,,,
+해외ETF,cu_index_repl_mthd,Full,263,4,,,,,
+해외ETF,cu_index_repl_mthd,Other,6,4,,,,,
+해외ETF,cu_index_tracking_yn,Y,2360,1,,,,,
+해외ETF,cu_inverse_short_yn,Y,171,1,,,,,
+해외ETF,cu_upt_dt,20260614,5646,1,,,,,
+해외ETF,du_base_dt_match_yn,N,5636,1,,,,,
+해외ETF,du_clpr_src,pd65n101.tday_clpr,5636,1,,,,,
+해외ETF,du_diff_rt,3.297200,1,3,,,,,
+해외ETF,du_diff_rt,8.117500,1,3,,,,,
+해외ETF,du_diff_rt,37585.000000,1,3,,,,,
+해외ETF,du_er_1d,0.000000,5388,1,,,,,
+해외ETF,du_nav_base_dt,2026-06-14 00:00:00,5646,1,,,,,
+해외ETF,pd_curr_cd,USD,5637,2,"ISO 4217 통화코드로 미국 달러(US Dollar). 해외ETF의 거래통화(pd_trd_ccy)·기준통화(pd_curr_cd 5,637건), 국내채권 외화표시 19건, 공모펀드 일부 클래스에 등장.",달러;미국달러;달러화;미 달러;US달러;불;$;USD,"ISO 4217 alpha-3 코드, 숫자코드 840, 소수 자릿수 2(센트)",high,https://www.iso.org/iso-4217-currency-codes.html
+해외ETF,pd_curr_cd,INR,1,2,"ISO 4217 통화코드로 인도 루피(Indian Rupee). 해외ETF pd_curr_cd에 단 1건 존재하며, 미국 외 시장(인도) 관련 상품이거나 통화 필드 이상치일 가능성이 있어 개별 확인 필요.",루피;인도루피;인도 루피화;INR,"ISO 4217 alpha-3 코드, 숫자코드 356, 소수 자릿수 2",high,https://www.iso.org/iso-4217-currency-codes.html
+해외ETF,pd_exg_mkt_cd,AMX,4241,5,"문자 그대로는 구 American Stock Exchange(AMEX, 현 NYSE American)를 뜻하나, 해외ETF 5,646건 중 4,241건(75%)이 AMX인 것은 현재 NYSE American 상장 ETF가 극소수라는 사실과 모순되므로, 구 AMEX가 미국 ETF 상장 중심지였다가 2008년 NYSE Euronext 인수 후 ETF가 NYSE Arca로 이관된 역사를 반영해 NYSE Arca 상장 ETP까지 'AMEX'로 묶어 표기하는 국내 증권사·데이터 벤더의 레거시 코드로 해석해야 함. 즉 QA 응답 시 'AMX = 사실상 NYSE Arca 등 미국 ETP 전용 거래소 상장'으로 안내하는 것이 안전.",아멕스;AMEX;American Stock Exchange;NYSE American;NYSE Arca(실질 포괄);뉴욕 아메리칸,표시용 권고: 'AMEX(현 NYSE American/NYSE Arca 계열)'로 병기,medium,"https://en.wikipedia.org/wiki/NYSE_American (2008년 NYSE Euronext 인수·ETF Arca 이관), https://www.nyse.com/markets/nyse-arca (ETF 2,200개 이상 상장·세계 최대 ETF 거래), https://securities.miraeasset.com/imf/600/imf102.do (미래에셋증권 미국시장 구분: NYSE/NYSE ARCA/NYSE AMEX/NASDAQ)"
+해외ETF,pd_exg_mkt_cd,NAS,1296,5,"미국 나스닥 증권거래소(NASDAQ Stock Market) 상장을 의미하는 3문자 거래소 코드. 해외ETF 1,296건(QQQ 등 나스닥 상장 ETF).",나스닥;NASDAQ;나스닥거래소;나스닥 시장,MIC 대응: XNAS,high,"https://www.onixs.biz/fix-dictionary/5.0.sp2/app_6_c.html (XNAS=NASDAQ), https://community.developers.lseg.com/discussion/47440 (LSEG/Refinitiv 3문자 거래소 약어 관행)"
+해외ETF,pd_exg_mkt_cd,NYS,78,5,"New York Stock Exchange 본장 상장을 의미하는 3문자 거래소 코드. 해외ETF 78건으로 소수인데, 이는 NYSE 본장에는 ETF가 아닌 일부 ETP·폐쇄형펀드만 상장되고 대부분 ETF는 NYSE Arca에 상장되기 때문.",뉴욕증권거래소;뉴욕거래소;NYSE;빅보드,MIC 대응: XNYS,high,"https://www.onixs.biz/fix-dictionary/5.0.sp2/app_6_c.html (XNYS=New York Stock Exchange), https://community.developers.lseg.com/discussion/47440 (NYS=NYSE 약어)"
+해외ETF,pd_exg_mkt_cd,102,22,5,"해외ETF pd_exg_mkt_cd에 22건 관측되는 숫자형 코드로, 공개 표준·벤더 문서에서 대응을 확인하지 못함. 101과 같은 원천 시스템 내부 코드 체계로 추정되며 확인 전까지 '거래소 미상'으로 처리 권고.",,확인 전 NULL 또는 '미상' 처리 권고,low,웹 검색으로 확인 불가 — 제공 데이터 스냅샷 관측(2026-07-11)만 존재
+해외ETF,pd_exg_mkt_cd,101,9,5,"해외ETF pd_exg_mkt_cd에 9건 관측되는 숫자형 코드로, 공개된 표준(ISO 10383)이나 벤더 문서에서 대응을 확인하지 못함. 원천 시스템 내부 코드로 추정되며 확인 전까지 '거래소 미상'으로 처리 권고.",,확인 전 NULL 또는 '미상' 처리 권고,low,웹 검색으로 확인 불가 — 제공 데이터 스냅샷 관측(2026-07-11)만 존재
+해외ETF,pd_grp_no,ETF,5587,2,,,,,
+해외ETF,pd_grp_no,ETN,59,2,,,,,
+해외ETF,pd_lst_price,0E-8,5635,2,,,,,
+해외ETF,pd_lst_price,0.01000000,1,2,,,,,
+해외ETF,pd_mkt_id,US,5646,1,ISO 3166-1 alpha-2 국가코드로 미국. 해외ETF pd_mkt_id=US는 상장시장 국가가 미국임을 의미.,미국;아메리카;미 시장;미국시장,"ISO 3166-1 alpha-2; 대응 alpha-3 USA, 숫자 840",high,https://www.iso.org/obp/ui/#iso:code:3166:US
+해외ETF,pd_sale_yn,1,5636,1,,,,,
+해외ETF,pd_trd_ccy,USD,5646,1,"ISO 4217 통화코드로 미국 달러(US Dollar). 해외ETF의 거래통화(pd_trd_ccy)·기준통화(pd_curr_cd 5,637건), 국내채권 외화표시 19건, 공모펀드 일부 클래스에 등장.",달러;미국달러;달러화;미 달러;US달러;불;$;USD,"ISO 4217 alpha-3 코드, 숫자코드 840, 소수 자릿수 2(센트)",high,https://www.iso.org/iso-4217-currency-codes.html
+해외ETF,pd_tr_yn,0,5636,1,,,,,
+해외ETF,wu_core_yn,N,103,1,,,,,
+해외ETF,wu_inv_ast_type,Equity,2500,6,,,,,
+해외ETF,wu_inv_ast_type,Alternatives,1800,6,,,,,
+해외ETF,wu_inv_ast_type,Bond,1084,6,,,,,
+해외ETF,wu_inv_ast_type,Mixed Assets,138,6,,,,,
+해외ETF,wu_inv_ast_type,Commodity,107,6,,,,,
+해외ETF,wu_inv_ast_type,Money Market,9,6,,,,,
+해외ETF,wu_inv_rgn,United States of America,4196,59,,,,,
+해외ETF,wu_inv_rgn,Global,718,59,,,,,
+해외ETF,wu_inv_rgn,Global Ex US,303,59,,,,,
+해외ETF,wu_inv_rgn,Global Emerging Markets,175,59,,,,,
+해외ETF,wu_inv_rgn,China,46,59,,,,,
+해외ETF,wu_inv_rgn,Europe,41,59,,,,,
+해외ETF,wu_inv_rgn,Japan,25,59,,,,,
+해외ETF,wu_inv_rgn,India,24,59,,,,,
+해외ETF,wu_inv_rgn,Brazil,9,59,,,,,
+해외ETF,wu_inv_rgn,Asia Pacific ex Japan,8,59,,,,,
+해외ETF,wu_inv_rgn,Korea,7,59,,,,,
+해외ETF,wu_inv_rgn,Asia Pacific,7,59,,,,,
+해외ETF,wu_inv_rgn,United Kingdom,5,59,,,,,
+해외ETF,wu_inv_rgn,Switzerland,4,59,,,,,
+해외ETF,wu_inv_rgn,Germany,4,59,,,,,
+해외ETF,wu_inv_rgn,Israel,4,59,,,,,
+해외ETF,wu_inv_rgn,Canada,4,59,,,,,
+해외ETF,wu_inv_rgn,Latin America,4,59,,,,,
+해외ETF,wu_inv_rgn,Australia,3,59,,,,,
+해외ETF,wu_inv_rgn,Vietnam,3,59,,,,,
+해외ETF,wu_inv_rgn,Mexico,3,59,,,,,
+해외ETF,wu_inv_rgn,Taiwan,3,59,,,,,
+해외ETF,wu_inv_rgn,Greater China,2,59,,,,,
+해외ETF,wu_inv_rgn,Indonesia,2,59,,,,,
+해외ETF,wu_inv_rgn,Saudi Arabia,2,59,,,,,
+해외ETF,wu_inv_rgn,EuroZone,2,59,,,,,
+해외ETF,wu_inv_rgn,Norway,2,59,,,,,
+해외ETF,wu_inv_rgn,Malaysia,1,59,,,,,
+해외ETF,wu_inv_rgn,Italy,1,59,,,,,
+해외ETF,wu_inv_rgn,Peru,1,59,,,,,
+해외ETF,wu_inv_rgn,Austria,1,59,,,,,
+해외ETF,wu_inv_rgn,Greece,1,59,,,,,
+해외ETF,wu_inv_rgn,Qatar,1,59,,,,,
+해외ETF,wu_inv_rgn,Poland,1,59,,,,,
+해외ETF,wu_inv_rgn,United Arab Emirates,1,59,,,,,
+해외ETF,wu_inv_rgn,Argentina,1,59,,,,,
+해외ETF,wu_inv_rgn,Hong Kong,1,59,,,,,
+해외ETF,wu_inv_rgn,Colombia,1,59,,,,,
+해외ETF,wu_inv_rgn,Turkey,1,59,,,,,
+해외ETF,wu_inv_rgn,Africa,1,59,,,,,
+해외ETF,wu_inv_rgn,Ireland,1,59,,,,,
+해외ETF,wu_inv_rgn,Chile,1,59,,,,,
+해외ETF,wu_inv_rgn,Finland,1,59,,,,,
+해외ETF,wu_inv_rgn,Belgium,1,59,,,,,
+해외ETF,wu_inv_rgn,Philippines,1,59,,,,,
+해외ETF,wu_inv_rgn,BRIC,1,59,,,,,
+해외ETF,wu_inv_rgn,Iceland,1,59,,,,,
+해외ETF,wu_inv_rgn,North America,1,59,,,,,
+해외ETF,wu_inv_rgn,Singapore,1,59,,,,,
+해외ETF,wu_inv_rgn,Denmark,1,59,,,,,
+해외ETF,wu_inv_rgn,ASEAN,1,59,,,,,
+해외ETF,wu_inv_rgn,Spain,1,59,,,,,
+해외ETF,wu_inv_rgn,France,1,59,,,,,
+해외ETF,wu_inv_rgn,Netherlands,1,59,,,,,
+해외ETF,wu_inv_rgn,Thailand,1,59,,,,,
+해외ETF,wu_inv_rgn,Kuwait,1,59,,,,,
+해외ETF,wu_inv_rgn,South Africa,1,59,,,,,
+해외ETF,wu_inv_rgn,New Zealand,1,59,,,,,
+해외ETF,wu_inv_rgn,Sweden,1,59,,,,,
+해외ETF,wu_upt_dt,20260614,5646,1,,,,,
+공모펀드,curr_cd,KRW,95046,2,"ISO 4217 통화코드로 대한민국의 법정통화인 원(Won)을 의미. 국내채권 CURR_CD의 99.9%(42,372건), 공모펀드 curr_cd, 국내ETF pd_curr_cd(CURR_CD_KRW 형태)의 기본 통화.",원;원화;한국원;한국 원화;대한민국 원;₩;KRW,"ISO 4217 alpha-3 코드, 숫자코드 410, 소수 자릿수 0(보조단위 없음)",high,https://www.iso.org/iso-4217-currency-codes.html
+공모펀드,curr_cd,USD,572,2,"ISO 4217 통화코드로 미국 달러(US Dollar). 해외ETF의 거래통화(pd_trd_ccy)·기준통화(pd_curr_cd 5,637건), 국내채권 외화표시 19건, 공모펀드 일부 클래스에 등장.",달러;미국달러;달러화;미 달러;US달러;불;$;USD,"ISO 4217 alpha-3 코드, 숫자코드 840, 소수 자릿수 2(센트)",high,https://www.iso.org/iso-4217-currency-codes.html
+공모펀드,exchdg_yn,Y,44987,3,"금투협 표준 16개 클래스 유형에 속하지 않는 기타 클래스로, 분류코드 값 'Y'에 대응.",기타 클래스,,medium,금융투자회사의 영업 및 업무에 관한 규정 시행세칙 별지 제15호; https://new-macro.com/2023/02/26/펀드의-종류2-종류형-펀드/
+공모펀드,exchdg_yn,N,20870,3,,,,,
+공모펀드,exchdg_yn,00080008,1,3,,,,,
+공모펀드,fd_estb_ctry_cd,000,92838,2,,,,,
+공모펀드,fd_estb_ctry_cd,410,2715,2,"ISO 3166-1 숫자(numeric-3) 국가코드로 대한민국. 공모펀드 fd_estb_ctry_cd=410(2,715건)은 설정국가가 대한민국으로 명시된 펀드를 의미.",한국;대한민국;국내 설정,ISO 3166-1 numeric; KR/KOR과 동일 국가. ISO 4217 KRW의 숫자코드 410과 동일 계열,high,https://www.iso.org/obp/ui/#iso:code:3166:KR
+공모펀드,fd_ivst_rgn_desc,글로벌,42875,7,,,,,
+공모펀드,fd_ivst_rgn_desc,국내,33223,7,,,,,
+공모펀드,fd_ivst_rgn_desc,아시아,10265,7,,,,,
+공모펀드,fd_ivst_rgn_desc,남미/북미,4984,7,,,,,
+공모펀드,fd_ivst_rgn_desc,이머징/브릭스,2261,7,,,,,
+공모펀드,fd_ivst_rgn_desc,유럽,1846,7,,,,,
+공모펀드,fd_ivst_rgn_desc,중동/아프리카,99,7,,,,,
+공모펀드,fd_set_pcd,10,91354,3,,,,,
+공모펀드,fd_set_pcd,20,3806,3,,,,,
+공모펀드,fd_set_pcd,00,458,3,,,,,
+공모펀드,frc_bpr_itm_yn,0,95046,2,,,,,
+공모펀드,frc_bpr_itm_yn,1,572,2,,,,,
+공모펀드,hdge_fd_yn,0,95553,1,,,,,
+공모펀드,int_dvd_desc,배당,95543,2,,,,,
+공모펀드,int_dvd_desc,이자,10,2,,,,,
+공모펀드,itm_eabrv_nm,KB China A-share Sec,59,14,,,,,
+공모펀드,itm_eabrv_nm,MIRAE G2INNOVATOR_Ce,13,14,,,,,
+공모펀드,itm_eabrv_nm,MIRAE G2 INNOVATOR F,12,14,,,,,
+공모펀드,itm_eabrv_nm,MIRAE G2INNOVATOR_C1,12,14,,,,,
+공모펀드,itm_eabrv_nm,MIRAE G2INNOVATOR_C2,12,14,,,,,
+공모펀드,itm_eabrv_nm,MIRAE GL-GROWTH F,10,14,,,,,
+공모펀드,itm_eabrv_nm,MIRAE GL-GROWTH A,10,14,,,,,
+공모펀드,itm_eabrv_nm,DWS DeutschEquity C1,8,14,,,,,
+공모펀드,itm_eabrv_nm,DWS DeutschEquity A,8,14,,,,,
+공모펀드,itm_eabrv_nm,DWS DeutschEquity C3,7,14,,,,,
+공모펀드,itm_eabrv_nm,DWS DeutschEquity C2,7,14,,,,,
+공모펀드,itm_eabrv_nm,DWS DeutschEquity C4,7,14,,,,,
+공모펀드,itm_eabrv_nm,Dream auto plus,6,14,,,,,
+공모펀드,itm_eabrv_nm,배당,1,14,,,,,
+공모펀드,ofsfd_yn,0,95618,1,,,,,
+공모펀드,or_attr_desc,주식형,36338,11,"자산총액의 60% 이상을 주식에 투자하는 펀드(금투협 분류기준). 자본시장법상으로는 증권집합투자기구(제229조 제1호, 자산의 40% 초과를 증권에 투자)에 속함.",주식펀드;성장형;stock fund;equity fund,주식 편입비율 60% 이상,high,자본시장법 제229조; https://www.samsungfund.com/fund/insight/guide/view02.do; https://www.kbam.co.kr/board/view/551
+공모펀드,or_attr_desc,재간접,30243,11,펀드재산의 40% 이상(초과)을 다른 집합투자기구가 발행한 집합투자증권(외국 펀드 포함)에 투자하는 펀드. 해외 운용사 펀드를 편입하는 국내 공모펀드 대부분이 해당.,펀드오브펀즈;FoF;모태펀드형;재간접형,타 펀드 집합투자증권 40% 이상 투자,high,https://www.funddoctor.co.kr/board/aboard/content.jsp?name=fund_abc&number=277; 자본시장법 시행령 제80조
+공모펀드,or_attr_desc,채권혼합,8964,11,주식과 채권에 함께 투자하되 주식 최고 편입한도가 50% 미만인 혼합형 펀드(금투협 분류기준). 퇴직연금 DC/IRP에서 위험자산 한도 때문에 많이 활용됨.,채권혼합형;혼합채권형;balanced fund(채권우위),주식 최고편입한도 50% 미만,high,https://www.samsungfund.com/fund/insight/guide/view02.do; https://brunch.co.kr/@money-economy/44
+공모펀드,or_attr_desc,채권형,8344,11,자산총액의 60% 이상을 채권(및 채권 관련 파생상품)에 투자하고 주식을 편입하지 않는 펀드(금투협 분류기준).,채권펀드;bond fund;안정형,"채권 편입비율 60% 이상, 주식 미편입",high,자본시장법 제229조; https://www.samsungfund.com/fund/insight/guide/view02.do
+공모펀드,or_attr_desc,06,5436,11,,,,,
+공모펀드,or_attr_desc,주식혼합,2782,11,주식과 채권에 함께 투자하되 주식 최고 편입한도가 50% 이상인 혼합형 펀드(금투협 분류기준).,주식혼합형;혼합주식형;balanced fund(주식우위),주식 최고편입한도 50% 이상 60% 미만,high,https://www.samsungfund.com/fund/insight/guide/view02.do; https://brunch.co.kr/@money-economy/44
+공모펀드,or_attr_desc,MMF,1532,11,"집합투자재산 전부를 콜론, CP, 단기 국공채 등 단기금융상품에 투자하는 펀드(자본시장법 제229조 제5호). 수시입출이 가능한 초단기 자금운용 상품.",머니마켓펀드;단기금융펀드;Money Market Fund;수시입출금 펀드,,high,자본시장법 제229조 제5호; https://casenote.kr/법령/자본시장과_금융투자업에_관한_법률/제229조; https://mofe.go.kr/sisa/dictionary/detail?idx=166
+공모펀드,or_attr_desc,혼합자산,1424,11,증권·부동산·특별자산 등 투자대상 자산의 비율 제한을 받지 않고 자유롭게 운용하는 펀드(자본시장법 제229조 제4호).,혼합자산펀드;멀티에셋;자유운용형,,high,자본시장법 제229조 제4호; https://casenote.kr/법령/자본시장과_금융투자업에_관한_법률/제229조
+공모펀드,or_attr_desc,특별자산,412,11,"펀드재산의 40% 초과(대통령령 비율)를 증권·부동산이 아닌 특별자산(선박, 항공기, 인프라, 원자재, 지식재산권 등)에 투자하는 펀드(자본시장법 제229조 제3호).",특별자산펀드;실물자산펀드;인프라펀드,,high,자본시장법 제229조 제3호; https://casenote.kr/법령/자본시장과_금융투자업에_관한_법률/제229조
+공모펀드,or_attr_desc,임대형,69,11,"부동산집합투자기구(자본시장법 제229조 제2호)의 하위 유형으로, 실물 부동산(오피스·물류센터 등)을 취득하여 임대수익과 매각차익을 추구하는 펀드.",부동산임대펀드;실물형 부동산펀드;리츠 유사,,medium,자본시장법 제229조 제2호; https://www.kbam.co.kr/board/view/551
+공모펀드,or_attr_desc,대출형,9,11,부동산 개발사업 시행사 등에 대한 대출(PF대출)로 운용하여 이자수익을 추구하는 부동산펀드 하위 유형.,PF펀드;프로젝트파이낸싱펀드;부동산대출채권펀드,,medium,자본시장법 제229조 제2호; https://www.kbam.co.kr/board/view/551
+공모펀드,ovrs_fd_desc,해외,51628,3,,,,,
+공모펀드,ovrs_fd_desc,국내,33107,3,,,,,
+공모펀드,ovrs_fd_desc,국내외혼합,10818,3,,,,,
+공모펀드,pers_corp_desc,해당없음,73054,3,,,,,
+공모펀드,pers_corp_desc,개인,17643,3,,,,,
+공모펀드,pers_corp_desc,법인,4856,3,,,,,
+공모펀드,pfiv_sale_cntl_tcd,00,95014,3,,,,,
+공모펀드,pfiv_sale_cntl_tcd,01,430,3,,,,,
+공모펀드,pfiv_sale_cntl_tcd,02,109,3,,,,,
+공모펀드,prvo_fd_desc,해당없음,95451,2,,,,,
+공모펀드,prvo_fd_desc,일반사모(2015년전),102,2,,,,,
+공모펀드,prvo_pbff_desc,공모,95451,2,,,,,
+공모펀드,prvo_pbff_desc,사모,102,2,,,,,
+공모펀드,sale_yn,판매중,76318,2,,,,,
+공모펀드,sale_yn,판매완료,19300,2,,,,,
+공모펀드,thco_sale_yn,Y,91594,2,"금투협 표준 16개 클래스 유형에 속하지 않는 기타 클래스로, 분류코드 값 'Y'에 대응.",기타 클래스,,medium,금융투자회사의 영업 및 업무에 관한 규정 시행세칙 별지 제15호; https://new-macro.com/2023/02/26/펀드의-종류2-종류형-펀드/
+공모펀드,thco_sale_yn,KRZ50226929C,1,2,,,,,
+공모펀드,trusc_xtn_itt_cd,00020054,20064,18,,,,,
+공모펀드,trusc_xtn_itt_cd,00020004,18156,18,,,,,
+공모펀드,trusc_xtn_itt_cd,00020027,16820,18,,,,,
+공모펀드,trusc_xtn_itt_cd,00020081,14100,18,,,,,
+공모펀드,trusc_xtn_itt_cd,00020088,9763,18,,,,,
+공모펀드,trusc_xtn_itt_cd,00020020,6764,18,,,,,
+공모펀드,trusc_xtn_itt_cd,00020003,3239,18,,,,,
+공모펀드,trusc_xtn_itt_cd,00020011,2091,18,,,,,
+공모펀드,trusc_xtn_itt_cd,00050004,2088,18,,,,,
+공모펀드,trusc_xtn_itt_cd,00020032,902,18,,,,,
+공모펀드,trusc_xtn_itt_cd,00020023,779,18,,,,,
+공모펀드,trusc_xtn_itt_cd,00020002,369,18,,,,,
+공모펀드,trusc_xtn_itt_cd,00160036,178,18,,,,,
+공모펀드,trusc_xtn_itt_cd,0016022,106,18,,,,,
+공모펀드,trusc_xtn_itt_cd,00020055,105,18,,,,,
+공모펀드,trusc_xtn_itt_cd,00160005,12,18,,,,,
+공모펀드,trusc_xtn_itt_cd,00160037,10,18,,,,,
+공모펀드,trusc_xtn_itt_cd,00160006,7,18,,,,,
+공모펀드,zrin_fd_ivst_risk_gcd,2,29251,7,,,,,
+공모펀드,zrin_fd_ivst_risk_gcd,3,16892,7,,,,,
+공모펀드,zrin_fd_ivst_risk_gcd,4,13103,7,,,,,
+공모펀드,zrin_fd_ivst_risk_gcd,5,9788,7,,,,,
+공모펀드,zrin_fd_ivst_risk_gcd,1,5771,7,,,,,
+공모펀드,zrin_fd_ivst_risk_gcd,6,2397,7,,,,,
+공모펀드,zrin_fd_ivst_risk_gcd,00020054,1,7,,,,,
+공모펀드,zrin_fd_ivst_risk_grd_nm,높은 위험,29088,9,,,,,
+공모펀드,zrin_fd_ivst_risk_grd_nm,다소 높은 위험,16892,9,,,,,
+공모펀드,zrin_fd_ivst_risk_grd_nm,보통 위험,13028,9,,,,,
+공모펀드,zrin_fd_ivst_risk_grd_nm,낮은 위험,9788,9,,,,,
+공모펀드,zrin_fd_ivst_risk_grd_nm,매우 높은 위험,5771,9,,,,,
+공모펀드,zrin_fd_ivst_risk_grd_nm,매우 낮은 위험,2397,9,,,,,
+공모펀드,zrin_fd_ivst_risk_grd_nm,높은위험,163,9,,,,,
+공모펀드,zrin_fd_ivst_risk_grd_nm,보통위험,75,9,,,,,
+공모펀드,zrin_fd_ivst_risk_grd_nm,06,1,9,,,,,

@@ -1,0 +1,57 @@
+﻿테이블,규칙ID,컬럼,영향행수,처리,비고
+국내채권,R1,PD_NM,1396,앞뒤 공백 제거,고정폭 패딩 존재 컬럼
+국내채권,R1,PD_ABRV_NM,41732,앞뒤 공백 제거,고정폭 패딩 존재 컬럼
+국내채권,R2,PD_ABRV_NM,296,공백/빈 문자열 → NULL,
+국내채권,R1,PD_ENG_NM,41737,앞뒤 공백 제거,고정폭 패딩 존재 컬럼
+국내채권,R2,PD_ENG_NM,298,공백/빈 문자열 → NULL,
+국내채권,R1,PD_ABRV_ENG_NM,41712,앞뒤 공백 제거,고정폭 패딩 존재 컬럼
+국내채권,R2,PD_ABRV_ENG_NM,298,공백/빈 문자열 → NULL,
+국내채권,R1,PD_PBCM,40243,앞뒤 공백 제거,고정폭 패딩 존재 컬럼
+국내채권,R1,BD_KND,40942,앞뒤 공백 제거,고정폭 패딩 존재 컬럼
+국내채권,R5,ISU_DT,336,날짜 파싱 불가(0 등) → NULL,
+국내채권,R5,ISU_DT,42055,YYYYMMDD → ISO 날짜(YYYY-MM-DD),
+국내채권,R5,MAT_DT,316,날짜 파싱 불가(0 등) → NULL,
+국내채권,R5,MAT_DT,42075,YYYYMMDD → ISO 날짜(YYYY-MM-DD),
+국내채권,R5,CRD_GRD_DT,2,날짜 파싱 불가(0 등) → NULL,
+국내채권,R5,CRD_GRD_DT,27563,YYYYMMDD → ISO 날짜(YYYY-MM-DD),
+국내채권,R5,PD_STD_INFO_UPDATE,31823,YYYYMMDD → ISO 날짜(YYYY-MM-DD),
+국내채권,R6,CURR_CD,1,센티널 '000' → NULL,
+국내채권,R7,drv_is_perpetual,4,영구채 플래그 생성,MAT_DT=99991231 센티널
+국내채권,R8,drv_is_matured,16180,만기 도래 플래그 생성,MAT_DT < 2026-07-11
+국내채권,R8,drv_is_buyable,325,매수가능 플래그 생성,BUYABLE_QUANTITY > 0 (업무 규칙 확정 전 잠정)
+국내채권,R9,drv_crd_grd_norm,2886,끝자리 '0'(플랫 표기) 제거,AA0→AA
+국내채권,R9,drv_crd_grd_rank,24750,등급 서열 rank 부여,"AAA=1 ~ D=20, 'AA 이상'=rank<=3"
+국내채권,R10,drv_evco_grd_*,24966,평가사 병기 등급 분해,개수·최저등급(스플릿 시 보수적 채택 관행)
+국내채권,R11,drv_risk_grade,58,위험등급 0(미분류) → NULL,1=매우 높은 위험 ~ 6=매우 낮은 위험
+국내ETF,R1,cu_base_index,1551,앞뒤 공백 제거,고정폭 패딩 존재 컬럼
+국내ETF,R2,cu_base_index,1551,공백/빈 문자열 → NULL,
+국내ETF,R1,pd_dvid_cycl,1551,앞뒤 공백 제거,고정폭 패딩 존재 컬럼
+국내ETF,R2,pd_dvid_cycl,1551,공백/빈 문자열 → NULL,
+국내ETF,R1,pd_exg_mkt_nm,1733,앞뒤 공백 제거,고정폭 패딩 존재 컬럼
+국내ETF,R1,pd_mkt_nm,1732,앞뒤 공백 제거,고정폭 패딩 존재 컬럼
+국내ETF,R12,"nru_mkt_diff_rt,nru_mkt_inav,pd_dvid_cycl,pd_sect_nm,ru_mkt_price,ru_mkt_volume",1734,전량 결측 컬럼 제거,결측+공백 100% 실측 확인 후 제거
+국내ETF,R13,du_chas_errt,1551,유지(무정보 의심),비결측값 전부 0 — 확인 전 순위·비교 사용 금지
+국내ETF,R13,du_diff_rt,1517,유지(무정보 의심),비결측값 전부 0 — 확인 전 순위·비교 사용 금지
+국내ETF,R13,pd_dvid_yield,1551,유지(무정보 의심),비결측값 전부 0 — 확인 전 순위·비교 사용 금지
+국내ETF,R14,drv_curr_cd,1732,통화코드 접두어 제거,"CURR_CD_KRW→KRW, CURR_CD_000→NULL"
+국내ETF,R14,drv_risk_grade,1734,위험등급 코드 → 1~6 정수,PD_RISK_GCD_11→1(매우 높은 위험)
+국내ETF,R15,du_upt_dt,1517,timestamp → ISO 날짜,
+해외ETF,R16,cu_base_index,2705,Lipper 센티널 문자열 → NULL,'Index is not provided...' 등 2종
+해외ETF,R17,cu_lev_fector,5646,전량 결측 컬럼 제거,배수 정보 100% 결측
+해외ETF,R17,du_er_1d,5388,무정보 컬럼 제거,"비결측 5,388건 전부 0"
+해외ETF,R18,drv_is_etn,59,플래그 파생(NULL=N),cu_etn_yn: 값이 있으면 전부 Y인 플래그성 컬럼
+해외ETF,R18,drv_is_inverse,171,플래그 파생(NULL=N),cu_inverse_short_yn: 값이 있으면 전부 Y인 플래그성 컬럼
+해외ETF,R19,du_nav_base_dt,5646,timestamp → ISO 날짜,
+공모펀드,R1,itm_abrv_nm,22,앞뒤 공백 제거,고정폭 패딩 존재 컬럼
+공모펀드,R1,itm_eng_nm,19,앞뒤 공백 제거,고정폭 패딩 존재 컬럼
+공모펀드,R1,itm_nm,6,앞뒤 공백 제거,고정폭 패딩 존재 컬럼
+공모펀드,R1,kofia_fd_ccd,10,앞뒤 공백 제거,고정폭 패딩 존재 컬럼
+공모펀드,R1,ksd_itm_no,36,앞뒤 공백 제거,고정폭 패딩 존재 컬럼
+공모펀드,R1,mtco_itm_no,34,앞뒤 공백 제거,고정폭 패딩 존재 컬럼
+공모펀드,R1,prfd_attr_cd,1670,앞뒤 공백 제거,고정폭 패딩 존재 컬럼
+공모펀드,R1,rptt_ksd_itm_no,33,앞뒤 공백 제거,고정폭 패딩 존재 컬럼
+공모펀드,R1,trusc_xtn_itt_cd,106,앞뒤 공백 제거,고정폭 패딩 존재 컬럼
+공모펀드,R20,(행 단위),1,도메인 위반 행 격리,컬럼 밀림 비정상 레코드 — 복구 전 적재 금지 (PROJECT_GUIDE 정제규칙 9)
+공모펀드,R21,kofia_fd_ccd,22131,'000...0'(20자리) 센티널 → NULL,
+공모펀드,R22,or_attr_desc,5436,유지(미변환 코드 보존),"'06' — 파생형 상품 코드 후보, 매핑 확정 전 NULL 변환 금지"
+공모펀드,R23,drv_risk_grade,77202,위험등급 정수 파생,1=매우 높은 위험 ~ 6=매우 낮은 위험. 등급명 문자열 대신 이 컬럼 사용

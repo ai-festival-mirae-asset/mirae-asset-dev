@@ -1,0 +1,208 @@
+﻿테이블ID,상품군,컬럼명,PK,타입,한글명,한글명_출처,설명,동의어,단위_포맷_규칙,신뢰도,검증상태,출처
+PRBD01N001,국내채권,PD_NO,,text,상품번호(종목코드),웹 리서치,"채권 종목을 고유하게 식별하는 상품 코드. PD_CTRY_CD가 KR/XS인 점으로 보아 ISIN(국제증권식별번호, 12자리) 체계 기반 표준코드로 추정된다.",종목코드;채권코드;ISIN;표준코드;상품코드;종목번호,텍스트 코드(ISIN 형식 추정: 국가코드 2자리+식별번호 9자리+검증숫자 1자리),medium,검증통과,"https://isin.krx.co.kr/ (KRX표준코드시스템), https://ko.wikipedia.org/wiki/국제_증권_식별_번호"
+PRBD01N001,국내채권,PD_EXG_MKT,,text,거래시장구분(장내/장외),웹 리서치,"해당 채권이 거래소(장내)에서 거래되는지, 증권사 창구를 통한 장외시장에서 거래되는지의 구분. 증권사 채권 화면의 '장내채권/장외채권' 구분과 동일하다.",장내채권;장외채권;시장구분;거래시장;장외;장내,'장내' 또는 '장외',high,검증통과,https://securities.miraeasset.com/mw/mks/mks4036/n01.do (미래에셋증권 채권안내: 장내/장외 구분)
+PRBD01N001,국내채권,PD_NM,,text,상품명(종목명),웹 리서치 (교차참조 일치: 상품명),채권의 정식 종목명. 예: '국민주택1종채권 20-01'처럼 채권 종류와 회차가 포함된다.,종목명;채권명;상품명;채권 이름,텍스트,high,검증통과,데이터 실측값(국민주택1종채권 20-01) 및 https://www.daishin.com/g.ds?m=1019&p=1210&v=797 (장외채권 화면의 '종목명' 항목)
+PRBD01N001,국내채권,PD_ABRV_NM,,text,상품약명(종목약칭),웹 리서치 (교차참조 일치: 상품약어명),채권 종목명의 축약 표기. HTS/MTS 화면 표시용 짧은 이름이다.,약칭;종목약명;축약명,텍스트,medium,검증통과,"약어 ABRV=abbreviation 해석(컬럼명 기반 추정, 데이터 원천 문서 미공개)"
+PRBD01N001,국내채권,PD_ENG_NM,,text,영문상품명,웹 리서치,채권 종목의 영문 정식 명칭.,영문명;영어 이름;english name,텍스트(영문),high,검증통과,약어 ENG_NM=English Name(자명한 표준 약어)
+PRBD01N001,국내채권,PD_ABRV_ENG_NM,,text,영문상품약명,웹 리서치,채권 종목의 영문 축약 명칭.,영문약칭;영문 약어명,텍스트(영문),medium,검증통과,약어 ABRV_ENG_NM=Abbreviated English Name(컬럼명 기반 추정)
+PRBD01N001,국내채권,PD_CTRY_CD,,text,상품국가코드(발행 국가코드),웹 리서치,"ISIN 체계상 발행 국가코드. KR은 한국거래소(예탁결제원) 부여 국내 발행분, XS는 유로클리어·클리어스트림 등 국제중앙예탁기구(ICSD)를 통해 발행된 국제채권(유로본드)을 뜻한다.",국가코드;발행국가;KR;XS;유로본드;외화채권 발행지,ISO 6166 국가코드 2자리(KR/XS),high,검증통과,"https://ko.wikipedia.org/wiki/국제_증권_식별_번호, https://www.isin.net/xs-isin/"
+PRBD01N001,국내채권,PD_PBCM,,text,발행기관명(발행회사),웹 리서치,"채권을 발행한 주체의 명칭. 실측값(한국주택금융공사, 한국산업은행, 하나캐피탈(주), 대한민국, 신한카드(주))이 모두 발행주체명이므로 발행기관 컬럼으로 확인된다. 약어 PBCM의 원어(publishing company 추정)는 미확인.",발행사;발행기관;발행주체;발행회사;발행처;누가 발행했는지,"텍스트(기관·회사명, 국채는 '대한민국')",high,검증통과,데이터 실측값(발행주체명) + https://home.imeritz.com/bond/BondInvtInfo.do (채권 발행주체 분류)
+PRBD01N001,국내채권,STD_PD_MCLS_NM,,text,표준상품중분류명,웹 리서치,"발행주체 기준의 채권 대분류. 국공채(국가·지자체), 특수채(특별법상 법인), 회사채(일반 기업·금융회사), 개인투자용국채(개인 전용 저축성 국채, 2024.6 도입), 외화채권-회사채/금융채(외화표시)로 구분된다.",채권종류;채권 분류;국공채;특수채;회사채;개인투자용국채;외화채권,'회사채'/'특수채'/'국공채'/'개인투자용국채'/'외화채권-회사채'/'외화채권-금융채',high,검증통과,"https://home.imeritz.com/bond/BondInvtInfo.do (발행주체별 채권 분류), https://securities.miraeasset.com/hks/hks4046/n01.do (개인투자용국채 안내)"
+PRBD01N001,국내채권,STD_PD_SCLS_NM,,text,표준상품소분류명,웹 리서치,"중분류(STD_PD_MCLS_NM) 하위의 세부 상품 분류(16개 값). 예컨대 국공채 내 국고채·지방채, 회사채 내 금융채·일반회사채 등의 세분류로 추정된다.",세부 분류;소분류;채권 세부종류,텍스트(16개 분류값),medium,검증통과,약어 SCLS=소분류(Small CLaSs) 해석 + 중분류-소분류 계층 구조(데이터 실측)
+PRBD01N001,국내채권,BD_KND,,text,채권종류,웹 리서치,채권의 세부 종목 유형(39개 값). 이표채·할인채·복리채 같은 이자지급방식 또는 국민주택채권·통안증권 등 종목 계열 구분으로 추정되며 정확한 값 체계는 데이터로 확인 필요.,채권 유형;채권 종류;이표채;할인채;복리채,텍스트(39개 값),medium,검증통과,약어 BD_KND=BonD KiND 해석 + https://home.imeritz.com/bond/BondInvtInfo.do (채권 종류 분류 일반론)
+PRBD01N001,국내채권,CURR_CD,,text,통화코드,웹 리서치 (교차참조 일치: 통화코드),"채권의 표시통화(ISO 4217 코드). KRW=원화, USD/EUR/JPY=외화표시 채권이며, '000'은 통화 미지정 센티널로 추정된다(공식 ISO 코드 아님).",통화;표시통화;원화채권;달러채권;외화채권 통화,"ISO 4217 3자리 코드(KRW/USD/EUR/JPY), '000'=미지정 추정",high,검증통과,ISO 4217 통화코드 표준 + 데이터 실측값('000'은 low)
+PRBD01N001,국내채권,ISU_BAL_AMT,,double precision,발행잔액,웹 리서치,해당 종목이 발행되어 아직 상환되지 않고 시장에 남아 있는 총액. 종목의 규모·유동성을 가늠하는 지표로 쓰인다.,발행잔액;발행규모;미상환잔액;상장잔액,"금액(표시통화 기준, 원/천원 단위 여부는 미확정)",high,검증통과,약어 ISU_BAL_AMT=ISsUe BALance AMounT + KOFIA 채권정보센터(bond.kofiabond.or.kr) 종목정보 항목 '발행잔액'
+PRBD01N001,국내채권,ISU_DT,,double precision,발행일,웹 리서치,채권이 발행된 날짜. 이자 기산과 만기 계산의 기준이 된다.,발행일자;발행날짜;언제 발행,YYYYMMDD 8자리 숫자(double로 저장),high,검증통과,약어 ISU_DT=ISsUe DaTe + 데이터 실측(YYYYMMDD 형식)
+PRBD01N001,국내채권,MAT_DT,,double precision,만기일,웹 리서치,원금이 상환되는 날짜. 값 99991231은 만기가 없는 영구채(신종자본증권 등)를 나타내는 센티널이다.,만기;만기일자;상환일;만기 언제;영구채,"YYYYMMDD 8자리 숫자, 99991231=영구채(무만기) 센티널",high,검증통과,약어 MAT_DT=MATurity DaTe + 데이터 실측(99991231 센티널)
+PRBD01N001,국내채권,SRFC_IRT,,double precision,표면이율(표면금리),웹 리서치,"채권 액면금액에 대해 발행 시 확정된 연 이자율(쿠폰금리)로, 이자소득세 과세의 기준이 된다. 할인채는 발행할인율로 표기되며, 실측 분포 0~34.277(중앙값 3.59)은 연 % 값과 부합한다.",표면금리;쿠폰금리;표면이자율;액면이자율;쿠폰;이표금리,연 %(예: 3.59 = 연 3.59%),high,검증통과,"약어 SRFC_IRT=SuRFaCe Interest RaTe + https://www.bondweb.co.kr/_help/05_guide_15.asp, 미래에셋증권 채권안내(표면이자율 정의)"
+PRBD01N001,국내채권,PD_EVCO_CRD_GRD,,text,평가사별 신용등급,웹 리서치,"복수의 신용평가회사(한국신용평가·한국기업평가·NICE신용평가 등)가 각각 부여한 신용등급을 콤마로 병기한 값(예: 'AAA, AAA, AAA'). 약어 EVCO=평가회사(EValuation COmpany)로 해석되며 병기 순서와 평가사 매칭은 미확인.",신용등급;평가사 등급;신평사 등급;복수 등급;등급 병기,"콤마 구분 텍스트(AAA~D, +/- 부호 포함)",medium,검증통과,https://www.suhyup-bank.com/ib20/mnu/PBM01333 (국내 신용평가 등급체계) + 데이터 실측(콤마 병기)
+PRBD01N001,국내채권,PD_RISK_GCD,,bigint,상품위험등급코드,웹 리서치,"금융소비자보호법상 투자성 상품 위험등급으로 1등급(매우 높은 위험)~6등급(매우 낮은 위험) 체계. 채권은 신용등급·유형에 따라 1등급(투기등급 BB+ 이하)~6등급(국고채 등)으로 산정되며, 값 0은 미분류·미산정으로 추정된다.",위험등급;상품위험도;투자위험등급;위험도;몇 등급 위험,"정수 0~6(1=매우 높은 위험, 6=매우 낮은 위험, 0=미분류 추정)",high,검증통과,"https://www.fsc.go.kr/po010101/79327 (금융위 투자성 상품 위험등급 산정 가이드라인), https://securities.miraeasset.com/hku/hku4028/p01.do"
+PRBD01N001,국내채권,PD_STD_INFO_UPDATE,,double precision,상품표준정보 갱신일자,웹 리서치,상품 표준정보(마스터 정보)가 마지막으로 갱신된 날짜로 추정된다. 웹에서 확인 불가한 내부 관리용 컬럼.,정보 갱신일;업데이트 일자;기준일,YYYYMMDD 8자리 숫자,low,검증대상외,컬럼명 직역 추정(웹 출처 없음)
+PRBD01N001,국내채권,BUY_YIELD,,double precision,매수수익률(세전),웹 리서치,"고객이 해당 채권을 매수할 때 적용되는 세전 연 수익률(만기수익률 개념)로, 증권사 장외채권 판매 화면의 '매수수익률/매매수익률' 항목에 대응한다. 결측 97.9%는 현재 판매(매수 가능) 중인 종목에만 값이 존재하기 때문으로 추정된다.",매수수익률;매매수익률;살 때 수익률;세전수익률;만기수익률;YTM,연 %,high,검증통과,"https://securities.miraeasset.com/hks/hks4054/v03.do (매수수익률 항목), https://www.daishin.com/g.ds?m=1019&p=1210&v=797 (수익률(연) 매매/세전 항목)"
+PRBD01N001,국내채권,CORP_PRETAX_YIELD,,double precision,법인 세전수익률,웹 리서치,법인 투자자 기준의 세전 연 수익률로 추정된다. 채권 이자소득 원천징수는 개인·법인 모두 소득세율 14%가 적용되나 법인은 지방소득세 처리 방식이 달라 개인용 컬럼과 별도로 관리되는 것으로 보인다.,법인 세전;법인 수익률;법인 기준 수익률,연 %,medium,검증통과,https://www.pwc.com/kr/ko/insights/issue-brief/one-point-tax-10.html (개인·법인 원천징수 14%) + 컬럼명 해석
+PRBD01N001,국내채권,CORP_AFTER_TAX_YIELD,,double precision,법인 세후수익률,웹 리서치,법인 투자자 기준으로 원천징수세를 차감한 후의 연 수익률로 추정된다. 개인(15.4%)과 달리 법인 원천징수 세율(14%) 기준으로 계산되는 것으로 보인다.,법인 세후;법인 세후 수익률,연 %,medium,검증통과,https://www.pwc.com/kr/ko/insights/issue-brief/one-point-tax-10.html + 컬럼명 해석
+PRBD01N001,국내채권,AFTER_TAX_YIELD,,double precision,세후수익률(개인),웹 리서치,개인 투자자 기준으로 이자소득세 15.4%(소득세 14%+지방소득세 1.4%) 원천징수를 반영한 후의 실질 연 수익률. 증권사 장외채권 화면의 '세후 수익률' 항목에 대응한다.,세후수익률;세후;세금 떼고 수익률;실수령 수익률,연 %,high,검증통과,"https://www.daishin.com/g.ds?m=1019&p=1210&v=797 (수익률(연) 세후 항목), https://m.joseilbo.com/news/view.htm?newsid=329028 (15.4% 세율 구성)"
+PRBD01N001,국내채권,PREF_TAX_YIELD,,double precision,세금우대수익률,웹 리서치,"세금우대(저율과세) 한도·계좌로 매수할 경우 적용되는 세후 연 수익률로 추정. 구 세금우대종합저축의 우대세율은 9.5%(소득세 9%+농특세 0.5%)였으나 2015년부터 비과세종합저축(이자소득 비과세)으로 대체되었고, 현행 저율과세는 상호금융 조합 예탁금(농특세 1.4%) 등 제도별로 세율이 다르다. 이 컬럼에 적용된 세율(9.5%인지 1.4%인지 기타인지)은 데이터·내부 명세로 확정해야 하며, 구 세금우대 계좌 보유 고객용 잔존 표시 항목일 가능성도 있다.",세금우대;세금우대수익률;우대세율 수익률;비과세종합저축 수익률,연 %,medium,정정반영,"https://econowide.com/1338 (세금우대 9.5% vs 일반 15.4%), https://www.suhyup-bank.com/ib20/mnu/PBM01728 (세금우대종합저축) | 검증정정: https://www.ytn.co.kr/_ln/0102_201408080004514723 (세금우대종합저축 폐지 보도), https://www.citibank.co.kr/MndMdssNtsv0100.act (비과세종합저축제도: 2015.1.1 신설, 세금우대종합저축 2014.12.31 판매종료)"
+PRBD01N001,국내채권,AVG_ANNUAL_TAX_YIELD,,double precision,연평균 세후수익률(추정),웹 리서치,"명칭상 연평균 기준 세후수익률로 추정되나, 실측값이 전부 0이어서 현재 미사용(미계산) 컬럼으로 보인다. 질의 응답에 사용하지 않는 것이 안전하다.",연평균 수익률;연환산 세후수익률,연 %(현재 전부 0),low,검증통과,"컬럼명 직역 추정 + 데이터 실측(전값 0, 웹 출처 없음)"
+PRBD01N001,국내채권,DEPO_EQUIV_YIELD_154,,double precision,예금환산수익률(이자소득세율 15.4% 기준),웹 리서치,"채권의 세후수익률을 이자소득세율 15.4%(소득세 14%+지방소득세 1.4%)로 세전 역산하여, 은행 예금금리와 직접 비교할 수 있게 만든 수익률. 접미사 154는 세율 15.4%를 의미하며 가설이 확인되었다.",예금환산수익률;은행환산수익률;환산수익률;예금으로 치면;정기예금 비교 수익률,연 %(세율 15.4% 적용 세전 환산),high,검증통과,"https://www.daishin.com/g.ds?m=1019&p=1210&v=797 (환산수익률 정의 각주: 세후수익률을 이자소득세율로 세전 역산), https://m.joseilbo.com/news/view.htm?newsid=329028 (15.4% 구성)"
+PRBD01N001,국내채권,BUYABLE_QUANTITY,,double precision,매수가능수량,웹 리서치,현재 증권사에서 고객이 매수할 수 있는 해당 채권의 잔여 수량. 증권사 장외채권 판매 화면의 '매수가능수량' 항목에 대응한다.,매수가능수량;살 수 있는 수량;잔여수량;판매수량,"수량(단위 미확정: 통상 액면 1,000원=1단위 또는 액면금액 기준)",high,검증통과,https://www.daishin.com/g.ds?m=1019&p=1210&v=797 (장외채권 화면 '매수가능수량' 컬럼)
+PRBD01N001,국내채권,REMAINING_DAYS,,double precision,잔존일수,웹 리서치,기준일(스냅샷일)부터 만기일까지 남은 일수. 잔존만기를 일 단위로 표현한 값이다.,잔존만기;잔존기간;남은 기간;만기까지 며칠;잔존일,일(day),high,검증통과,"https://securities.miraeasset.com/hks/hks4054/v03.do (잔존일수 항목), https://www.daishin.com/g.ds?m=1019&p=1210&v=797 (만기일(잔존기간))"
+PRBD01N001,국내채권,DUR,,double precision,듀레이션,웹 리서치,"채권 현금흐름(이자·원금)의 현재가치 가중평균 회수기간으로, 금리 변화에 대한 채권가격 민감도의 1차 지표. 값이 클수록 금리 변동 시 가격 변동폭이 크다.",듀레이션;duration;가중평균상환기간;금리민감도,년(year),high,검증통과,"미래에셋증권 채권안내(듀레이션 정의: 현금흐름 현재가치 가중평균 상환기간), https://m.kbam.co.kr/board/view/485"
+PRBD01N001,국내채권,COV,,double precision,컨벡시티(볼록성),웹 리서치,"금리 변화에 대한 채권가격의 2차(비선형) 민감도로, 듀레이션만으로 계산한 가격 변동의 오차를 보정하는 지표. DUR와 짝을 이루는 컬럼 구조상 convexity로 판단되며, 약어 COV 자체의 원어 표기는 미확인.",컨벡시티;볼록성;convexity;볼록도,무차원 수치(연 단위 제곱 기준),medium,검증통과,https://m.kbam.co.kr/board/view/485 (컨벡시티 정의: 듀레이션 보완 2차 지표) + DUR/COV 컬럼 쌍 구조(추정)
+PRBD01N001,국내채권,NDY_DUR,,double precision,익일 기준 듀레이션(추정),웹 리서치,"NDY_ 접두 5개 컬럼은 '익일(다음 영업일) 적용' 기준 민평 산출값으로 추정된다는 해석 방향 자체는 유지 가능하나, 근거는 이데일리 기사가 아니라 채권 시가평가의 발표일/적용일 관행이다. 본드웹 민평검색 도움말이 '적용일: 전일 발표된 민평데이타를 기준값으로 활용하는 날'로 명시하듯, 평가사 민평 데이터는 당일 발표분이 익일에 적용되는 구조이므로 기본 컬럼(당일 적용값)과 NDY_ 컬럼(익일 적용 예정값)의 쌍 구조와 부합한다. 다만 약어의 공식 정의는 미확인이므로 low 신뢰 유지 및 내부 데이터 명세 확인 필요.",익일 듀레이션;내일 기준 듀레이션,년(year),medium,정정반영,"컬럼명 추정(웹 미확인) + https://marketin.edaily.co.kr/News/Read?newsId=03522726638958128 (민평금리 산출 관행) | 검증정정: http://www.bondweb.co.kr/primeplushelp/help/2155.htm (민평검색 도움말: 발표일/적용일 구분 실재 확인), https://marketin.edaily.co.kr/News/Read?newsId=03522726638958128 (해당 기사에 당일/익일 관행 언급 부재 확인)"
+PRBD01N001,국내채권,NDY_COV,,double precision,익일 기준 컨벡시티(추정),웹 리서치,"익일(다음 영업일) 적용 기준 컨벡시티로 추정. 근거는 민평 데이터의 발표일/적용일 관행(전일 발표분을 익일 기준값으로 활용)이며, 컨벡시티('컨벡서티')가 듀레이션과 함께 민평 표준 제공 항목인 점은 본드웹 민평검색 항목 목록으로 확인된다. 약어 공식 정의는 내부 명세 확인 필요.",익일 컨벡시티;내일 기준 볼록성,무차원 수치,medium,정정반영,"컬럼명 추정(웹 미확인) | 검증정정: http://www.bondweb.co.kr/primeplushelp/help/2155.htm (민평 항목에 '컨벡서티, 듀레이션' 포함 및 적용일 정의)"
+PRBD01N001,국내채권,EVAL_PRICE,,double precision,평가가격(민평가격),웹 리서치,"민간채권평가회사(금융투자협회 등재 5개사: 키스자산평가·한국자산평가·나이스피앤아이·에프앤자산평가·이지자산평가)가 산출하는 시가평가 가격으로, 시장 관행상 통상 4사(KIS·한국·나이스P&I·에프앤) 평균이 기준으로 사용된다. 채권의 공정가치 기준가 역할을 한다는 본래 해석은 유효하다.",민평가;민평가격;평가가;시가평가 가격;공정가치;기준가격,"원(통상 액면 10,000원당 가격, 단위 미확정)",medium,정정반영,"https://www.kofia.or.kr/members/m_71/sub020203.do?srchCate=15 (민간채권평가 4사), https://marketin.edaily.co.kr/News/Read?newsId=03522726638958128 (민평 4사 평균 관행), https://www.koreaap.com/kor/valuation02_01.html | 검증정정: https://www.kofia.or.kr/members/m_71/sub020203.do?srchCate=15 (채권평가회사 5개사 등재 확인), https://www.etoday.co.kr/news/view/565690 (2012년 '민평 4사 시대' 개막: 4사 평균은 관행), https://marketin.edaily.co.kr/News/Read?newsId=03522726638958128 (2·3·4사 평균 혼용, 협회 4사 반영 권고)"
+PRBD01N001,국내채권,APPLIED_YIELD,,double precision,적용수익률(민평수익률),웹 리서치,"평가가격(EVAL_PRICE) 산출에 적용된 수익률로, 민간채권평가사 수익률(민평금리)의 평균에 해당한다. 금융투자협회 규정상 민평금리는 '2개 이상 채권평가사가 평가한 금리의 평균'으로 정의된다.",적용수익률;민평수익률;민평금리;평가수익률;시가평가 수익률,연 %(결측 25%),high,검증통과,https://marketin.edaily.co.kr/News/Read?newsId=03522726638958128 (민평금리 정의: 2개 이상 평가사 금리 평균)
+PRBD01N001,국내채권,DIRTY,,double precision,더티프라이스(경과이자 포함 가격),웹 리서치,"클린프라이스(경과이자 제외 고시가격)에 직전 이자지급일 이후 발생한 경과이자를 더한 가격으로, 매수자가 실제 지불하는 결제 가격이다.",더티프라이스;dirty price;확정가격;경과이자 포함 가격;실제 결제가격,"원(통상 액면 10,000원당 가격, 단위 미확정)",high,검증통과,"https://home.imeritz.com/bond/BondInvtInfo.do, https://txsi.hometax.go.kr/docs/customer/dictionary/view.jsp?word_id=2429 (경과이자 정의)"
+PRBD01N001,국내채권,NDY_EVAL_PRICE,,double precision,익일 기준 평가가격(추정),웹 리서치,"익일(다음 영업일) 적용 예정 민평 평가가격으로 추정. 채권 시가평가는 당일 발표된 민평 데이터가 익일 기준값으로 적용되는 구조(본드웹 민평검색 도움말의 '적용일' 정의)이므로 해석 방향은 정합적이나, 약어 자체는 내부 명세로 확정해야 한다.",익일 민평가격;내일 기준 평가가,"원(액면 10,000원당 추정)",medium,정정반영,컬럼명 추정(웹 미확인) | 검증정정: http://www.bondweb.co.kr/primeplushelp/help/2155.htm (적용일: 전일 발표된 민평데이타를 기준값으로 활용하는 날)
+PRBD01N001,국내채권,NDY_APPLIED_YIELD,,double precision,익일 기준 적용수익률(추정),웹 리서치,"익일(다음 영업일) 적용 예정 민평 적용수익률로 추정. 민평 데이터의 발표일/적용일 구분 관행이 정황 근거이며, 약어의 공식 정의는 내부 데이터 명세로 확인 필요.",익일 민평수익률;내일 적용수익률,연 %,medium,정정반영,컬럼명 추정(웹 미확인) | 검증정정: http://www.bondweb.co.kr/primeplushelp/help/2155.htm (발표일/적용일 구분 관행)
+PRBD01N001,국내채권,NDY_DIRTY,,double precision,익일 기준 더티프라이스(추정),웹 리서치,익일(다음 영업일) 적용 예정 경과이자 포함 가격(더티프라이스)으로 추정. 민평 발표일/적용일 관행이 정황 근거이며 약어는 내부 명세 확인 필요.,익일 더티프라이스;내일 결제가격,"원(액면 10,000원당 추정)",medium,정정반영,컬럼명 추정(웹 미확인) | 검증정정: http://www.bondweb.co.kr/primeplushelp/help/2155.htm (발표일/적용일 구분 관행)
+PRBD01N001,국내채권,CRD_GRD,,text,신용등급(대표),웹 리서치,"해당 채권의 대표 신용등급. 국내 신용평가 체계는 AAA~D에 +/- 부호를 붙여 우열을 표시하며, 실측값의 '0' 접미(AA0, A0, BBB0, C0)는 +/- 없는 무부호 등급(AA0=AA)을 전산 표기한 것으로 해석된다.",신용등급;등급;크레딧 등급;AA등급;신용도,"텍스트(AAA, AA+, AA0(=AA), AA-, ... , C0), '0'=무부호 등급 전산 표기(추정)",high,검증통과,"https://www.suhyup-bank.com/ib20/mnu/PBM01333 (국내 신용평가 등급체계: +/- 부호 우열), '0' 표기 자체는 medium(전산 관행 추정)"
+PRBD01N001,국내채권,CRD_GRD_DT,,double precision,신용등급 평가일자,웹 리서치,대표 신용등급(CRD_GRD)이 부여·변경된 평가 기준 일자로 추정된다. DT=날짜는 확실하나 어떤 이벤트(평가일/공시일/갱신일)인지는 미확인.,등급 평가일;신용등급 날짜;등급 부여일,YYYYMMDD 8자리 숫자,medium,검증통과,약어 CRD_GRD_DT=CReDit GRaDe DaTe 해석(이벤트 종류는 웹 미확인)
+PREF01N001,국내ETF,cu_base_index,,text,기초지수,스키마 제공,,,,high,,
+PREF01N001,국내ETF,cu_charge_etc_rt,,text,기타비용요율,스키마 제공,,,,high,,
+PREF01N001,국내ETF,cu_charge_rt,,text,총보수요율,스키마 제공,,,,high,,
+PREF01N001,국내ETF,cu_fund_mgmt_co,,text,운용사,스키마 제공,,,,high,,
+PREF01N001,국내ETF,cu_lev_fector,,text,배수,스키마 제공,,,,high,,
+PREF01N001,국내ETF,cu_strtegy,,text,운용전략,스키마 제공,,,,high,,
+PREF01N001,국내ETF,cu_upt_dt,,text,변동갱신일자,스키마 제공,,,,high,,
+PREF01N001,국내ETF,du_bpr,,numeric,기준가,스키마 제공,,,예시값: 9915.00,high,,
+PREF01N001,국내ETF,du_chas_errt,,numeric,추적오차율,스키마 제공,,,예시값: 0.26,high,,
+PREF01N001,국내ETF,du_clpr,,numeric,종가,스키마 제공,,,예시값: 9915.00,high,,
+PREF01N001,국내ETF,du_diff_rt,,numeric,괴리율,스키마 제공,,,예시값: 1.44,high,,
+PREF01N001,국내ETF,du_er_1d,,numeric,수익률_1D,스키마 제공,,,예시값: -0.44,high,,
+PREF01N001,국내ETF,du_er_1m,,numeric,수익률_1M,스키마 제공,,,예시값: 0.58,high,,
+PREF01N001,국내ETF,du_er_1y,,numeric,수익률_1Y,스키마 제공,,,예시값: 17.10,high,,
+PREF01N001,국내ETF,du_er_3m,,numeric,수익률_3M,스키마 제공,,,예시값: -0.03,high,,
+PREF01N001,국내ETF,du_er_6m,,numeric,수익률_6M,스키마 제공,,,예시값: 9.41,high,,
+PREF01N001,국내ETF,du_er_ytd,,numeric,수익률_YTD,스키마 제공,,,예시값: 2.88,high,,
+PREF01N001,국내ETF,du_hpr,,numeric,고가,스키마 제공,,,예시값: 9979.00,high,,
+PREF01N001,국내ETF,du_last_aum,,numeric,최종AUM,스키마 제공,,,예시값: 60720672000.00,high,,
+PREF01N001,국내ETF,du_last_nav,,numeric,최종NAV,스키마 제공,,,예시값: 9873.28,high,,
+PREF01N001,국내ETF,du_lpr,,numeric,시가,스키마 제공,"스키마 한글명은 '시가'이나 du_hpr(고가)·du_opr(해외ETF, open) 명명 관행상 lpr=low price(저가)의 오기 가능성. 8/6 확인 필요.",,예시값: 9905.00,medium,,
+PREF01N001,국내ETF,du_nav_rnf_amt,,numeric,전일NAV등락금액,스키마 제공,,,예시값: -161.91,high,,
+PREF01N001,국내ETF,du_nav_yday,,numeric,전일NAV,스키마 제공,,,예시값: 10035.19,high,,
+PREF01N001,국내ETF,du_upt_dt,,timestamp without time zone,일간갱신일자,스키마 제공,,,예시값: 20260225,high,,
+PREF01N001,국내ETF,du_val_1d,,numeric,일거래대금,스키마 제공,,,예시값: 810630570.00,high,,
+PREF01N001,국내ETF,du_val_1m,,numeric,일거래대금평균_1M,스키마 제공,,,예시값: 847009967.75,high,,
+PREF01N001,국내ETF,du_val_5d,,numeric,일거래대금평균_5D,스키마 제공,,,예시값: 683306859.40,high,,
+PREF01N001,국내ETF,du_vol_1d,,numeric,일거래량,스키마 제공,,,예시값: 81758.00,high,,
+PREF01N001,국내ETF,du_vol_avg_1m,,numeric,거래량평균_1M,스키마 제공,,,예시값: 87324.85,high,,
+PREF01N001,국내ETF,du_vol_avg_5d,,numeric,거래량평균_5D,스키마 제공,,,예시값: 69132.40,high,,
+PREF01N001,국내ETF,nru_mkt_diff_rt,,numeric,괴리율,스키마 제공,,,예시값: 0.00,high,,
+PREF01N001,국내ETF,nru_mkt_inav,,numeric,장중 iNAV,스키마 제공,,,예시값: 0.00,high,,
+PREF01N001,국내ETF,pd_abrv_nm,,text,상품약어명,스키마 제공,,,예시값: TIGER 엔비디아미국채커버드콜밸런스(합성),high,,
+PREF01N001,국내ETF,pd_circ_net_tamt,,numeric,유통순자산총액,스키마 제공,,,예시값: 61869000000.00,high,,
+PREF01N001,국내ETF,pd_circ_stk_cnt,,numeric,유통주식수,스키마 제공,,,예시값: 6150000.00,high,,
+PREF01N001,국내ETF,pd_curr_cd,,text,상품통화코드,스키마 제공,,,예시값: CURR_CD_KRW,high,,
+PREF01N001,국내ETF,pd_curr_nm,,text,상품통화명,스키마 제공,,,예시값: 한국원화,high,,
+PREF01N001,국내ETF,pd_divd_amt_pshr,,numeric,주당 배당금,스키마 제공,,,예시값: 0.00,high,,
+PREF01N001,국내ETF,pd_dvid_cycl,,text,당주기,스키마 제공,,,,high,,
+PREF01N001,국내ETF,pd_dvid_yield,,numeric,배당수익률,스키마 제공,,,예시값: 0.00,high,,
+PREF01N001,국내ETF,pd_exg_mkt_cd,PK,text,거래소코드,스키마 제공,,,예시값: EXG_MKT_NO_001,high,,
+PREF01N001,국내ETF,pd_exg_mkt_nm,,text,거래소명,스키마 제공,,,예시값: 유가증권,high,,
+PREF01N001,국내ETF,pd_grp_no,,text,상품군종류,스키마 제공,,,예시값: ETF,high,,
+PREF01N001,국내ETF,pd_itm_no,PK,text,상품번호,스키마 제공,,,예시값: KR70000D0009,high,,
+PREF01N001,국내ETF,pd_itm_no_ma,PK,text,상품번호_미래에셋,스키마 제공,,,예시값: A0000D0,high,,
+PREF01N001,국내ETF,pd_lst_price,,numeric,상품액면가,스키마 제공,,,예시값: 0.00,high,,
+PREF01N001,국내ETF,pd_lst_stk_cnt,,numeric,상품상장주식수,스키마 제공,,,예시값: 6200000.00,high,,
+PREF01N001,국내ETF,pd_lste_dt,,text,상품거래종료일자,스키마 제공,,,예시값: 99991231,high,,
+PREF01N001,국내ETF,pd_lstg_dt,,text,상품거래가능일자,스키마 제공,,,예시값: 20241217,high,,
+PREF01N001,국내ETF,pd_mkt_id,,text,상품거래시장코드,스키마 제공,,,예시값: STK,high,,
+PREF01N001,국내ETF,pd_mkt_nm,,text,상품거래시장,스키마 제공,,,예시값: 유가증권,high,,
+PREF01N001,국내ETF,pd_nav_pshr,,numeric,주당 순자산가치,스키마 제공,,,예시값: 0.00,high,,
+PREF01N001,국내ETF,pd_net_ast_pshr,,numeric,주당 순자산,스키마 제공,,,예시값: 0.00,high,,
+PREF01N001,국내ETF,pd_net_prft_pshr,,numeric,주당 순이익,스키마 제공,,,예시값: 0.00,high,,
+PREF01N001,국내ETF,pd_net_rt_ast_pshr,,numeric,주당 순자산비율,스키마 제공,,,예시값: 0.00,high,,
+PREF01N001,국내ETF,pd_net_tamt,,numeric,순자산총액,스키마 제공,,,예시값: 61716390155.00,high,,
+PREF01N001,국내ETF,pd_nm,,text,상품명,스키마 제공,,,예시값: 미래에셋 TIGER NVDA-UST커버드콜증권상장지수투자신탁(채권혼합-파생재간접형)(합성),high,,
+PREF01N001,국내ETF,pd_pen_risk_nm,,text,연금거래위험구분,스키마 제공,,,예시값: 안전자산,high,,
+PREF01N001,국내ETF,pd_pen_tr_yn,,text,연금거래가능여부,스키마 제공,,,예시값: Y,high,,
+PREF01N001,국내ETF,pd_risk_cd,,text,상품등급코드,스키마 제공,,,예시값: PD_RISK_GCD_13,high,,
+PREF01N001,국내ETF,pd_risk_nm,,text,상품등급명,스키마 제공,,,예시값: 다소높은위험(3등급),high,,
+PREF01N001,국내ETF,pd_sale_yn,,text,상품판매여부,스키마 제공,,,예시값: 1,high,,
+PREF01N001,국내ETF,pd_sect_cd,,text,ETF 섹터코드,스키마 제공,,,예시값: 2,high,,
+PREF01N001,국내ETF,pd_sect_nm,,text,ETF 섹터명,스키마 제공,,,,high,,
+PREF01N001,국내ETF,pd_spac_yn,,text,SPAC 여부,스키마 제공,,,예시값: N,high,,
+PREF01N001,국내ETF,pd_stk_cnt,,numeric,상장주식수,스키마 제공,,,예시값: 6150000.00,high,,
+PREF01N001,국내ETF,pd_tr_yn,,text,상품거래정지혀부,스키마 제공,,,예시값: 0,high,,
+PREF01N001,국내ETF,ru_mkt_price,,numeric,현재가,스키마 제공,,,예시값: 0.00,high,,
+PREF01N001,국내ETF,ru_mkt_volume,,numeric,거래량,스키마 제공,,,예시값: 0.00,high,,
+PREF01N001,국내ETF,wu_core_yn,,text,핵심ETF여부,스키마 제공,,,,high,,
+PREF01N001,국내ETF,wu_inv_ast_type,,text,투자자산군,스키마 제공,,,,high,,
+PREF01N001,국내ETF,wu_inv_rgn,,text,투자지역,스키마 제공,,,,high,,
+PREF01N001,국내ETF,wu_upt_dt,,text,주간갱신일자,스키마 제공,,,,high,,
+PREF02N001,해외ETF,cu_base_index,,text,기초지수,국내ETF 스키마 교차참조,,,,high,,
+PREF02N001,해외ETF,cu_charge_rt,,numeric,총보수요율,국내ETF 스키마 교차참조,,,,high,,
+PREF02N001,해외ETF,cu_etn_yn,,text,ETN여부,약어 해석(추정),상장지수증권(ETN) 여부. 값이 있는 59건만 Y이며 NULL은 N으로 해석(플래그성 컬럼).,ETN;상장지수증권,"Y만 존재, NULL=N 규칙",high,,
+PREF02N001,해외ETF,cu_fund_mgmt_co,,text,운용사,국내ETF 스키마 교차참조,,,,high,,
+PREF02N001,해외ETF,cu_index_repl_mthd,,text,지수복제방식,약어 해석(추정),"기초지수 복제 방식. Optimized(부분복제·최적화), Full(완전복제), Swap(스왑 합성복제), Other(기타).",복제방식;실물복제;합성복제;완전복제,"Optimized/Swap/Full/Other, 결측 58.2%",high,,
+PREF02N001,해외ETF,cu_index_tracking_yn,,text,지수추종여부,약어 해석(추정),패시브 지수추종 상품 여부. Y만 존재하며 NULL은 액티브 등 비추종으로 해석 필요(결측 58.2%와 동시 발생 유의).,패시브;인덱스추종;지수추종,"Y만 존재, NULL 해석 주의",medium,,
+PREF02N001,해외ETF,cu_inverse_short_yn,,text,인버스여부,약어 해석(추정),"인버스(역방향) 상품 여부. 값이 있는 171건만 Y, NULL은 N으로 해석(플래그성 컬럼).",인버스;숏;역방향,"Y만 존재, NULL=N 규칙",high,,
+PREF02N001,해외ETF,cu_lev_fector,,numeric,배수,국내ETF 스키마 교차참조,,,,high,,
+PREF02N001,해외ETF,cu_strtegy,,text,운용전략,국내ETF 스키마 교차참조,,,,high,,
+PREF02N001,해외ETF,cu_upt_dt,,text,변동갱신일자,국내ETF 스키마 교차참조,,,,high,,
+PREF02N001,해외ETF,du_base_dt_match_yn,,text,기준일자일치여부,약어 해석(추정),가격(종가) 기준일과 NAV 기준일의 일치 여부로 추정. 거의 전 종목 N.,기준일 일치,Y/N,low,,
+PREF02N001,해외ETF,du_bpr,,numeric,기준가,국내ETF 스키마 교차참조,,,,high,,
+PREF02N001,해외ETF,du_clpr,,numeric,종가,국내ETF 스키마 교차참조,,,,high,,
+PREF02N001,해외ETF,du_clpr_base_dt,,text,종가기준일자,약어 해석(추정),종가(du_clpr)가 산출된 기준 일자.,종가 기준일,날짜 텍스트,high,,
+PREF02N001,해외ETF,du_clpr_src,,text,종가데이터출처,약어 해석(추정),종가 값의 원천 시스템 경로(내부 테이블명). 전 행 동일값 'pd65n101.tday_clpr'.,데이터 출처,내부 시스템 경로,high,,
+PREF02N001,해외ETF,du_diff_rt,,numeric,괴리율,국내ETF 스키마 교차참조,,,,high,,
+PREF02N001,해외ETF,du_er_1d,,numeric,수익률_1D,국내ETF 스키마 교차참조,,,,high,,
+PREF02N001,해외ETF,du_hpr,,numeric,고가,국내ETF 스키마 교차참조,,,,high,,
+PREF02N001,해외ETF,du_last_aum,,numeric,최종AUM,국내ETF 스키마 교차참조,,,,high,,
+PREF02N001,해외ETF,du_last_nav,,numeric,최종NAV,국내ETF 스키마 교차참조,,,,high,,
+PREF02N001,해외ETF,du_lpr,,numeric,시가,국내ETF 스키마 교차참조,교차참조 한글명 '시가'는 lpr=low price(저가)의 오기 가능성 있음. 8/6 확인 필요.,,,medium,,
+PREF02N001,해외ETF,du_nav_base_dt,,timestamp without time zone,NAV기준일자,약어 해석(추정),최종 NAV(du_last_nav)가 산출된 기준 일자.,NAV 기준일;기준가 일자,timestamp,high,,
+PREF02N001,해외ETF,du_opr,,numeric,시가(Open),약어 해석(추정),당일 시초가(open price). 주의: 국내ETF 스키마는 du_lpr을 '시가'로 제공하는데 hpr(고가)/lpr/opr 관행상 lpr은 저가(low)의 오기 가능성이 있어 8/6 확인 필요.,시가;시초가,가격(거래통화),medium,,
+PREF02N001,해외ETF,du_upt_dt,,text,일간갱신일자,국내ETF 스키마 교차참조,,,,high,,
+PREF02N001,해외ETF,du_val_1d,,numeric,일거래대금,국내ETF 스키마 교차참조,,,,high,,
+PREF02N001,해외ETF,du_vol_1d,,numeric,일거래량,국내ETF 스키마 교차참조,,,,high,,
+PREF02N001,해외ETF,pd_abrv_nm,,text,상품약어명,국내ETF 스키마 교차참조,,,,high,,
+PREF02N001,해외ETF,pd_curr_cd,,text,상품통화코드,국내ETF 스키마 교차참조,,,,high,,
+PREF02N001,해외ETF,pd_exg_mkt_cd,,text,거래소코드,국내ETF 스키마 교차참조,,,,high,,
+PREF02N001,해외ETF,pd_grp_no,,text,상품군종류,국내ETF 스키마 교차참조,,,,high,,
+PREF02N001,해외ETF,pd_isin_cd,,text,ISIN코드,약어 해석(추정),"국제증권식별번호(ISO 6166, 12자리).",ISIN;국제증권코드,12자리 코드,high,,
+PREF02N001,해외ETF,pd_itm_no,PK,text,상품번호,국내ETF 스키마 교차참조,,,,high,,
+PREF02N001,해외ETF,pd_itm_no_ma,,text,상품번호_미래에셋,국내ETF 스키마 교차참조,,,,high,,
+PREF02N001,해외ETF,pd_lipper_id,,text,Lipper식별자,약어 해석(추정),LSEG Lipper(펀드 데이터 벤더)의 상품 식별자. 이 테이블의 cu_* 항목들이 Lipper 원천임을 시사한다.,Lipper ID;리퍼,텍스트 코드,high,,
+PREF02N001,해외ETF,pd_lstg_dt,,text,상품거래가능일자,국내ETF 스키마 교차참조,,,,high,,
+PREF02N001,해외ETF,pd_lst_price,,numeric,상품액면가,국내ETF 스키마 교차참조,,,,high,,
+PREF02N001,해외ETF,pd_lst_stk_cnt,,numeric,상품상장주식수,국내ETF 스키마 교차참조,,,,high,,
+PREF02N001,해외ETF,pd_mkt_id,,text,상품거래시장코드,국내ETF 스키마 교차참조,,,,high,,
+PREF02N001,해외ETF,pd_nm,,text,상품명,국내ETF 스키마 교차참조,,,,high,,
+PREF02N001,해외ETF,pd_sale_yn,,text,상품판매여부,국내ETF 스키마 교차참조,,,,high,,
+PREF02N001,해외ETF,pd_trd_ccy,,text,거래통화,약어 해석(추정),실제 매매가 이루어지는 통화. 전량 USD.,거래통화;결제통화,ISO 4217,high,,
+PREF02N001,해외ETF,pd_tr_yn,,text,상품거래정지혀부,국내ETF 스키마 교차참조,,,,high,,
+PREF02N001,해외ETF,pd_us_cik,,text,미국SEC CIK번호,약어 해석(추정),미국 증권거래위원회(SEC) EDGAR 공시 식별번호(Central Index Key).,CIK;SEC 번호,숫자 코드,high,,
+PREF02N001,해외ETF,ru_mkt_price,,numeric,현재가,국내ETF 스키마 교차참조,,,,high,,
+PREF02N001,해외ETF,ru_mkt_volume,,numeric,거래량,국내ETF 스키마 교차참조,,,,high,,
+PREF02N001,해외ETF,wu_core_yn,,text,핵심ETF여부,국내ETF 스키마 교차참조,,,,high,,
+PREF02N001,해외ETF,wu_inv_ast_type,,text,투자자산군,국내ETF 스키마 교차참조,,,,high,,
+PREF02N001,해외ETF,wu_inv_rgn,,text,투자지역,국내ETF 스키마 교차참조,,,,high,,
+PREF02N001,해외ETF,wu_upt_dt,,text,주간갱신일자,국내ETF 스키마 교차참조,,,,high,,
+PRFD01N001,공모펀드,bmrk_eng_nm,,text,벤치마크영문명,스키마 제공,,,예시값: CALL,high,,
+PRFD01N001,공모펀드,bmrk_nm,,text,벤치마크명,스키마 제공,,,예시값: CALL,high,,
+PRFD01N001,공모펀드,curr_cd,,text,통화코드,스키마 제공,,,예시값: KRW,high,,
+PRFD01N001,공모펀드,exchdg_yn,,text,환헤지여부,스키마 제공,,,예시값: N,high,,
+PRFD01N001,공모펀드,fd_estb_ctry_cd,,text,펀드설립국가코드,스키마 제공,,,예시값: 000,high,,
+PRFD01N001,공모펀드,fd_ivst_rgn_desc,,text,펀드투자지역구분코드 설명,스키마 제공,,,예시값: 국내,high,,
+PRFD01N001,공모펀드,fd_mm18_ern_r,,numeric,펀드 18개월수익률,스키마 제공,,,예시값: 4.85,high,,
+PRFD01N001,공모펀드,fd_mm1_ern_r,,numeric,펀드 1개월수익률,스키마 제공,,,예시값: 0.26,high,,
+PRFD01N001,공모펀드,fd_mm3_ern_r,,numeric,펀드 3개월수익률,스키마 제공,,,예시값: 0.78,high,,
+PRFD01N001,공모펀드,fd_mm6_ern_r,,numeric,펀드 6개월수익률,스키마 제공,,,예시값: 1.46,high,,
+PRFD01N001,공모펀드,fd_nast_suma,,numeric,펀드 순자산,스키마 제공,,,예시값: 2390679722503.0000,high,,
+PRFD01N001,공모펀드,fd_set_pcd,,text,펀드설정유형코드,스키마 제공,,,예시값: 10,high,,
+PRFD01N001,공모펀드,fd_wk1_ern_r,,numeric,펀드 1주일수익률,스키마 제공,,,예시값: 0.09,high,,
+PRFD01N001,공모펀드,fd_yr1_ern_r,,numeric,펀드 1년수익률,스키마 제공,,,예시값: 2.93,high,,
+PRFD01N001,공모펀드,fd_yr2_ern_r,,numeric,펀드 2년수익률,스키마 제공,,,예시값: 6.93,high,,
+PRFD01N001,공모펀드,fd_yr3_ern_r,,numeric,펀드 3년수익률,스키마 제공,,,예시값: 13.57,high,,
+PRFD01N001,공모펀드,fd_yr5_ern_r,,numeric,펀드 5년수익률,스키마 제공,,,예시값: 18.87,high,,
+PRFD01N001,공모펀드,frc_bpr_itm_yn,,text,외화기준가종목여부,스키마 제공,,,예시값: 0,high,,
+PRFD01N001,공모펀드,fss_itm_no,,text,금융감독원종목번호,스키마 제공,,,예시값: 0010173C4558,high,,
+PRFD01N001,공모펀드,hdge_fd_yn,,text,헤지펀드여부,스키마 제공,,,예시값: 0,high,,
+PRFD01N001,공모펀드,int_dvd_desc,,text,이자배당구분코드 설명,스키마 제공,,,예시값: 배당,high,,
+PRFD01N001,공모펀드,itm_abrv_nm,,text,종목약어명,스키마 제공,,,예시값: 삼성 베스트 MMF 법인 제1호,high,,
+PRFD01N001,공모펀드,itm_eabrv_nm,,text,종목영문약어명,스키마 제공,,,예시값: KB China A-share Sec,high,,
+PRFD01N001,공모펀드,itm_eng_nm,,text,종목영문명,스키마 제공,,,예시값: 삼성 베스트 MMF 법인 제1호,high,,
+PRFD01N001,공모펀드,itm_nm,,text,종목명,스키마 제공,,,예시값: 삼성 베스트 MMF 법인 제1호,high,,
+PRFD01N001,공모펀드,itm_no,PK,text,종목번호,스키마 제공,,,예시값: KR5014410050,high,,
+PRFD01N001,공모펀드,kofia_fd_ccd,,text,금융투자협회펀드분류코드,스키마 제공,,,예시값: 1EE11Z1200101ZZZZZZ6,high,,
+PRFD01N001,공모펀드,ksd_itm_no,,text,예탁원종목번호,스키마 제공,,,예시값: KRZ500626190,high,,
+PRFD01N001,공모펀드,mtco_itm_no,,text,운용사종목번호,스키마 제공,,,예시값: 0109913,high,,
+PRFD01N001,공모펀드,ofsfd_yn,,text,역외펀드여부,스키마 제공,,,예시값: 0,high,,
+PRFD01N001,공모펀드,or_attr_desc,,text,운용속성구분코드 설명,스키마 제공,,,예시값: MMF,high,,
+PRFD01N001,공모펀드,or_co_xtn_itt_cd,,text,운용회사대외기관코드,스키마 제공,,,예시값: 00040010,high,,
+PRFD01N001,공모펀드,ovrs_fd_desc,,text,해외펀드구분코드 설명,스키마 제공,,,예시값: 국내,high,,
+PRFD01N001,공모펀드,pers_corp_desc,,text,개인법인구분코드 설명,스키마 제공,,,예시값: 법인,high,,
+PRFD01N001,공모펀드,pfiv_sale_cntl_tcd,,text,전문투자자판매제어구분코드,스키마 제공,,,예시값: 00,high,,
+PRFD01N001,공모펀드,prfd_attr_cd,PK,text,펀드별속성코드,스키마 제공,,,예시값: V101,high,,
+PRFD01N001,공모펀드,prvo_fd_desc,,text,사모펀드구분코드 설명,스키마 제공,,,예시값: 해당없음,high,,
+PRFD01N001,공모펀드,prvo_pbff_desc,,text,사모/공모구분코드 설명,스키마 제공,,,예시값: 공모,high,,
+PRFD01N001,공모펀드,rptt_ksd_itm_no,,text,대표예탁원종목번호,스키마 제공,,,예시값: 030200109913,high,,
+PRFD01N001,공모펀드,sale_yn,,text,판매여부,스키마 제공,,,예시값: 판매중,high,,
+PRFD01N001,공모펀드,std_itm_no,,text,표준종목번호,스키마 제공,,,예시값: KR5214272621,high,,
+PRFD01N001,공모펀드,thco_sale_yn,,text,당사판매여부,스키마 제공,,,예시값: Y,high,,
+PRFD01N001,공모펀드,trusc_xtn_itt_cd,,text,수탁회사대외기관코드,스키마 제공,,,예시값: 00050004,high,,
+PRFD01N001,공모펀드,zrin_fd_ivst_risk_gcd,PK,text,제로인펀드투자위험등급코드,스키마 제공,,,예시값: 6,high,,
+PRFD01N001,공모펀드,zrin_fd_ivst_risk_grd_nm,,text,제로인펀드투자위험등급명,스키마 제공,,,예시값: 매우 낮은 위험,high,,

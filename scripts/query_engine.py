@@ -16,6 +16,7 @@ TABLES = {
     "domestic_etf": "domestic_etf_clean.csv",
     "overseas_etf": "overseas_etf_clean.csv",
     "fund_master": "fund_master.csv",
+    "product_unified": "product_unified.csv",  # 상품군 교차 질의용 (scripts/build_unified_view.py로 생성)
 }
 
 

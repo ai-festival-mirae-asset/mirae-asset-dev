@@ -1,0 +1,49 @@
+# Environment / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Node (if any frontend/tooling)
+node_modules/
+npm-debug.log*
+
+# Logs
+*.log
+logs/
+
+# Local databases / dumps
+*.sqlite3
+*.db
+pgdata/
+*.dump
+
+# Docker local overrides
+docker-compose.override.yml
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Personal scratch / local-only files
+scratch/
+notes/
+*.local.md

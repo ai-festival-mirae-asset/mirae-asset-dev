@@ -9,13 +9,23 @@
 실행: python profile_data.py
 """
 from pathlib import Path
+import os
 import sys
 
 import numpy as np
 import pandas as pd
 
 HERE = Path(__file__).resolve().parent          # 전처리/프로파일링/
-DATA = HERE.parent.parent / "datasets"          # repo 루트의 원본 xlsx
+# 원본 xlsx 위치: 기본은 repo 루트의 datasets/ (커밋 대상 아님 — .gitignore).
+# 데이터를 저장소 밖에 두는 경우 MIRAE_DATASETS 환경변수로 지정한다.
+DATA = Path(os.environ.get("MIRAE_DATASETS") or HERE.parent.parent / "datasets")
+
+if not DATA.is_dir():
+    sys.exit(
+        f"원본 데이터 폴더를 찾을 수 없습니다: {DATA}\n"
+        "  · 대회에서 받은 xlsx 8개를 repo 루트의 datasets/ 에 넣거나,\n"
+        "  · 환경변수 MIRAE_DATASETS 에 원본 폴더 경로를 지정하세요."
+    )
 
 TABLES = {
     "국내채권": ("PRBD01N001", "PRBD01N001_국내채권마스터_20260711_datarows.xlsx", 42394),

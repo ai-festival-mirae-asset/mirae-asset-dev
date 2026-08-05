@@ -1,0 +1,15 @@
+# 원본 데이터 — 참가자 전원이 동일 파일을 보유하므로 저장소에 담지 않는다.
+# 로컬 datasets/ 에 두거나, 환경변수 MIRAE_DATASETS 로 다른 경로를 지정한다.
+datasets/
+
+# 파이썬
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# OS / 편집기
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

@@ -2,7 +2,7 @@
 
 > 작성 기준일: 2026-08-04(화) · 예선 마감 2026-09-06(일) · **D-33** · **v2.1 — 8/4 아키텍처·기술스택·규정 리서치 + Tier1 사전·전처리 1차 반영**
 > 팀 구성: 3인 (개발·기획 겸임, 경험 있는 개발자 보유) · 원칙: **성능 최우선** · 개발 방식: 공동 repo + 개인 브랜치 → 비교 통합
-> 관련 문서: 팀 공동 실행 가이드 [PROJECT_GUIDE.md](PROJECT_GUIDE.md) · 작업 로그 [memory.md](memory.md) — 이 문서는 개인 브랜치(papuagigi) 관점의 전략 로드맵이다. 아키텍처 선택지(DuckDB+Function Calling vs PostgreSQL+Text-to-SQL)는 브랜치 비교로 검증 후 통합한다(5장 공통 계약 참조).
+> 관련 문서: 팀 공동 실행 가이드 [PROJECT_GUIDE.md (main 브랜치)](https://github.com/ai-festival-mirae-asset/mirae-asset-dev/blob/main/PROJECT_GUIDE.md) · 작업 로그 [memory.md](memory.md) — 이 문서는 개인 브랜치(papuagigi) 관점의 전략 로드맵이다. 아키텍처 선택지(DuckDB+Function Calling vs PostgreSQL+Text-to-SQL)는 브랜치 비교로 검증 후 통합한다(5장 공통 계약 참조).
 
 ---
 

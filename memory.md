@@ -1,7 +1,7 @@
 # Project Memory
 
-> 마지막 갱신: 2026-08-04  
-> 상세 실행 가이드: [`PROJECT_GUIDE.md`](./PROJECT_GUIDE.md)
+> 마지막 갱신: 2026-08-05  
+> 이 파일은 개인 브랜치 `papuagigi`의 작업 기록이다. 팀 공동 실행 가이드는 [main 브랜치 `PROJECT_GUIDE.md`](https://github.com/ai-festival-mirae-asset/mirae-asset-dev/blob/main/PROJECT_GUIDE.md)에 있다.
 
 ## 사용 규칙
 
@@ -24,16 +24,17 @@
 - 구현 상태: 데이터 원본만 존재하며 애플리케이션 코드와 실행 환경은 아직 없음
 - 데이터 기준: schema 추출일 2026-07-11, 총 145,393개 원본 행
 - 일정: 2026-09-06 마감, 2026-09-07~09-20 API 상시 운영 예상
-- 검색 인덱스: Lance manifest는 불완전하지만 SQL 베이스라인의 blocker는 아님
+- 검색 인덱스: Lance manifest는 불완전(fragment 누락)하여 이 브랜치에서 제거함. SQL 베이스라인의 blocker는 아님
+- 브랜치 정책: `papuagigi`는 main과 분리해 개인 산출물만 담는다. main에서 상속한 `datasets/`·`manifest/`·`PROJECT_GUIDE.md`는 제거했고, 통합 시점에 main으로 합친다
 
 ## 산출물 상태
 
 | 산출물 | 상태 | 위치/메모 |
 |---|---|---|
 | 프로젝트 설명 | 최소 | `README.md` |
-| 프로젝트 실행 가이드 | 완료 | `PROJECT_GUIDE.md` |
+| 프로젝트 실행 가이드 | 완료 | main 브랜치 `PROJECT_GUIDE.md` (이 브랜치에는 두지 않음) |
 | 연속 작업 기록 | 사용 중 | `memory.md` |
-| Excel 원본/스키마 | 확보 | `datasets/` 8개 파일 |
+| Excel 원본/스키마 | 확보 | 로컬 `datasets/` 8개 파일 — 커밋 대상 아님(.gitignore). `MIRAE_DATASETS`로 경로 변경 가능 |
 | 데이터 프로파일링 코드 | 완료 | `전처리/프로파일링/` (재실행 가능 스크립트·컬럼별 CSV) |
 | 해석 메타데이터 사전 | 완료 | `외부데이터/사전/` 9종 — 컬럼 207개 전체 해석, 별칭·등급·코드·지수 사전, 출처·검증상태 포함 |
 | 전처리 파이프라인 | 1차 완료 | `전처리/preprocess.py` → `전처리/처리결과/` CSV 4종 + quarantine 1행 + 규칙 리포트 56건 |
@@ -42,14 +43,15 @@
 | 정제 데이터(DB) | 미착수 | PostgreSQL 적재를 기본안으로 결정. 스테이징 CSV는 확보됨 |
 | Text-to-SQL 베이스라인 | 미착수 | 2주 차 내 `/answer` 확보 목표 |
 | 답변 가능성 판정기 | 미착수 | coverage와 불가 사유를 구조화해야 함 |
-| 완전한 Lance 인덱스 | 선택 | fragment 누락. 해외 ETF 전략은 pgvector 재생성 가능 |
+| 완전한 Lance 인덱스 | 폐기 | fragment 누락으로 복원 불가 → `manifest/` 제거. 해외 ETF 전략은 pgvector로 재생성 |
 | 에이전트/API 코드 | 미착수 | HyperCLOVA X, LLM 호출 최대 2회 목표 |
 | 평가셋/자동 테스트 | 미착수 | 대표 질문부터 정의 필요 |
 
 ## 확인된 사실
 
-### Manifest
+### Manifest (2026-08-05 이 브랜치에서 제거 — 조사 결과만 보존)
 
+- 파일 자체는 main 브랜치에 남아 있다: `git show main:manifest/2.manifest`
 - `manifest/2.manifest`는 텍스트 설정이 아니라 Lance 바이너리 manifest다.
 - Lance `0.20.0`, 저장 형식 `2.0`으로 기록되어 있다.
 - 스키마는 `id: string`, `text: string`, `vector: float[1536]`, `attributes: string`이다.
@@ -160,6 +162,14 @@
 - 결정: 해외 ETF 기초지수 센티널 2종 → null 정규화, `or_attr_desc='06'` 보존 유지, 상품군 공통 `drv_risk_grade`(1~6) 파생으로 위험등급 통일, 신용등급은 `drv_crd_grd_rank`(AAA=1~D=20)로 서열화
 - blocker: `NDY_*` 공식 정의, `CRD_GRD` 대표값 규칙, 금액 단위 미확인 — 8/6 설명회 질문 리스트로 정리(`외부데이터/수집_요약.md` 5장)
 - 다음: PostgreSQL DDL 작성과 적재(fund master/attribute 분리), taxonomy_mapping seed에 값사전·코드표 활용
+
+### 2026-08-05 — 브랜치 분리 정리 (main 상속 파일 제거)
+
+- 목표: `papuagigi`를 main·타 브랜치와 분리해 개인 산출물만 담는 브랜치로 만든다
+- 변경: `PROJECT_GUIDE.md`·`manifest/` 삭제, `datasets/` 추적 해제(`.gitignore`, 디스크에는 유지), `.gitignore` 신규, 두 스크립트에 `MIRAE_DATASETS` 환경변수 지원과 원본 폴더 부재 시 안내 메시지 추가, `README.md` 개편, 끊어진 참조(PROJECT_GUIDE·datasets·manifest) 정리
+- 검증: `preprocess.py`·`profile_data.py` 재실행으로 동일 산출물 확인. `git ls-files`에 datasets/manifest/PROJECT_GUIDE 없음 확인
+- 결정: 원본 xlsx는 참가자 전원 보유 → 저장소에 담지 않는다. 삭제 파일은 main에 그대로 있으므로 `git show main:<경로>`로 언제든 조회 가능
+- 다음: PostgreSQL DDL 작성과 적재(fund master/attribute 분리)
 
 ## 로그 추가 템플릿
 

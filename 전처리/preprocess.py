@@ -3,6 +3,8 @@
 금융상품 4종 마스터 전처리 파이프라인 (1차)
 
 입력 : datasets/*.xlsx (원본 datarows 4종 + schema 4종)
+       원본은 참가자 전원이 보유하므로 저장소에 커밋하지 않는다(.gitignore).
+       repo 루트의 datasets/ 에 두거나, 환경변수 MIRAE_DATASETS 로 경로를 지정한다.
 출력 : 전처리/처리결과/<테이블ID>_<상품군>_전처리.csv   (전처리 완료 데이터)
        전처리/처리결과/quarantine_PRFD01N001_비정상행.csv (격리 행)
        전처리/처리결과/전처리_리포트.csv                  (규칙별 영향 행수)
@@ -15,7 +17,8 @@
   3. 모든 규칙은 규칙ID와 영향 행수를 리포트로 남긴다 (전처리_리포트.csv).
   4. 재실행 가능(멱등): 같은 입력이면 항상 같은 출력.
 
-근거 문서 : 전처리/데이터_전처리_방법.md / 외부데이터/수집_요약.md / PROJECT_GUIDE.md
+근거 문서 : 전처리/데이터_전처리_방법.md / 외부데이터/수집_요약.md
+            (팀 공동 가이드 PROJECT_GUIDE.md는 main 브랜치에 있다)
 실행      : python 전처리/preprocess.py  (repo 루트에서, 또는 전처리/ 안에서 python preprocess.py)
 """
 import os
@@ -29,9 +32,19 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
 HERE = os.path.dirname(os.path.abspath(__file__))   # 전처리/
 ROOT = os.path.dirname(HERE)                        # repo 루트
-DS = os.path.join(ROOT, "datasets")
+# 원본 xlsx 위치: 기본은 repo 루트의 datasets/ (커밋 대상 아님).
+# 데이터를 저장소 밖에 두는 경우 MIRAE_DATASETS 환경변수로 지정한다.
+DS = os.environ.get("MIRAE_DATASETS") or os.path.join(ROOT, "datasets")
 OUT = os.path.join(HERE, "처리결과")
 os.makedirs(OUT, exist_ok=True)
+
+if not os.path.isdir(DS):
+    sys.exit(
+        f"원본 데이터 폴더를 찾을 수 없습니다: {DS}\n"
+        "  · 대회에서 받은 xlsx 8개를 repo 루트의 datasets/ 에 넣거나,\n"
+        "  · 환경변수 MIRAE_DATASETS 에 원본 폴더 경로를 지정하세요.\n"
+        "  (원본은 참가자 전원이 보유하므로 저장소에 커밋하지 않습니다)"
+    )
 
 AS_OF = "2026-07-11"  # 데이터 스냅샷 기준일
 
@@ -308,7 +321,7 @@ def process_fund():
                            index=False, encoding="utf-8-sig")
         df = df[~bad].copy()
     log_rule(name, "R20", "(행 단위)", len(quarantined), "도메인 위반 행 격리",
-             "컬럼 밀림 비정상 레코드 — 복구 전 적재 금지 (PROJECT_GUIDE 정제규칙 9)")
+             "컬럼 밀림 비정상 레코드 — 복구 전 적재 금지 (팀 가이드 정제규칙 9)")
 
     df = cast_numeric(df, types, name)
 
@@ -317,7 +330,7 @@ def process_fund():
     df["kofia_fd_ccd"] = df["kofia_fd_ccd"].replace({"0" * 20: None})
     log_rule(name, "R21", "kofia_fd_ccd", n, "'000...0'(20자리) 센티널 → NULL")
 
-    # R22: or_attr_desc '06'은 결측으로 버리지 않고 보존 (파생형 코드 후보 — PROJECT_GUIDE)
+    # R22: or_attr_desc '06'은 결측으로 버리지 않고 보존 (파생형 코드 후보 — 팀 가이드)
     n06 = int((df["or_attr_desc"] == "06").sum())
     log_rule(name, "R22", "or_attr_desc", n06, "유지(미변환 코드 보존)",
              "'06' — 파생형 상품 코드 후보, 매핑 확정 전 NULL 변환 금지")

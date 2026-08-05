@@ -50,6 +50,17 @@ def enrich() -> pd.DataFrame:
     merged.loc[has_provided, "expense_ratio_source"] = "provided"
     merged.loc[fill_mask, "expense_ratio_source"] = FEE_SOURCE
 
+    # 기초지수: 제공 커버리지 3.3%(58/1,734)로 거의 없음. KRX와 겹치는 건 2건뿐이라
+    # 상충 빈도가 무의미해 별도 플래그 없이 결측만 채움(보수와 동일 원칙: 제공값 유지).
+    has_provided_idx = merged["cu_base_index"].notna()
+    has_krx_idx = merged["base_index_krx"].notna()
+    merged["base_index_filled"] = merged["cu_base_index"]
+    idx_fill_mask = (~has_provided_idx) & has_krx_idx
+    merged.loc[idx_fill_mask, "base_index_filled"] = merged.loc[idx_fill_mask, "base_index_krx"]
+    merged["base_index_source"] = None
+    merged.loc[has_provided_idx, "base_index_source"] = "provided"
+    merged.loc[idx_fill_mask, "base_index_source"] = FEE_SOURCE
+
     return merged
 
 
@@ -63,6 +74,11 @@ if __name__ == "__main__":
     n_conflict = enriched["fee_conflict"].sum()
     total_available = enriched["expense_ratio_filled"].notna().sum()
 
-    print(f"제공 데이터 유지: {n_provided}건 / KRX로 결측 보강: {n_filled}건")
-    print(f"총보수 커버리지: {total_available}/{len(enriched)} ({total_available/len(enriched):.1%})")
-    print(f"제공값과 KRX값이 상충하는 건(값은 안 바꾸고 플래그만): {n_conflict}건")
+    print(f"[총보수] 제공 데이터 유지: {n_provided}건 / KRX로 결측 보강: {n_filled}건")
+    print(f"[총보수] 커버리지: {total_available}/{len(enriched)} ({total_available/len(enriched):.1%})")
+    print(f"[총보수] 제공값과 KRX값이 상충하는 건(값은 안 바꾸고 플래그만): {n_conflict}건")
+
+    idx_available = enriched["base_index_filled"].notna().sum()
+    idx_filled = (enriched["base_index_source"] == FEE_SOURCE).sum()
+    print(f"[기초지수] KRX로 결측 보강: {idx_filled}건")
+    print(f"[기초지수] 커버리지: {idx_available}/{len(enriched)} ({idx_available/len(enriched):.1%})")

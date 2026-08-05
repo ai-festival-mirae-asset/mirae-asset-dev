@@ -3,8 +3,8 @@
 결측률·공백문자열·고유값·타입 트랩을 실측한다. 재실행 가능(멱등).
 
 산출물 (이 스크립트와 같은 폴더):
-  - 프로파일링_국내채권.csv / 국내ETF / 해외ETF / 공모펀드  (컬럼별 상세)
-  - 프로파일링_요약.md  (팀 공유용 요약 + 트랩 검증 결과)
+  - profiling_kr_bond.csv / kr_etf / global_etf / public_fund  (컬럼별 상세)
+  - PROFILING_SUMMARY.md  (팀 공유용 요약 + 트랩 검증 결과)
 
 실행: python profile_data.py
 """
@@ -15,7 +15,7 @@ import sys
 import numpy as np
 import pandas as pd
 
-HERE = Path(__file__).resolve().parent          # 전처리/프로파일링/
+HERE = Path(__file__).resolve().parent          # preprocessing/profiling/
 # 원본 xlsx 위치: 기본은 repo 루트의 datasets/ (커밋 대상 아님 — .gitignore).
 # 데이터를 저장소 밖에 두는 경우 MIRAE_DATASETS 환경변수로 지정한다.
 DATA = Path(os.environ.get("MIRAE_DATASETS") or HERE.parent.parent / "datasets")
@@ -33,6 +33,10 @@ TABLES = {
     "해외ETF": ("PREF02N001", "PREF02N001_해외ETF마스터_20260711_datarows.xlsx", 5646),
     "공모펀드": ("PRFD01N001", "PRFD01N001_공모펀드마스터_20260711_datarows.xlsx", 95619),
 }
+
+# 출력 파일명용 상품군 영문 슬러그 (표시용 한글명은 요약 문서 내용에 그대로 유지)
+SLUG = {"국내채권": "kr_bond", "국내ETF": "kr_etf",
+        "해외ETF": "global_etf", "공모펀드": "public_fund"}
 
 
 def col(df: pd.DataFrame, name: str):
@@ -80,7 +84,7 @@ def main() -> None:
     md.append("# 4종 마스터 데이터 프로파일링 요약")
     md.append("")
     md.append("> 실행일 2026-08-04 · 데이터 기준일 2026-07-11 스냅샷 · 스크립트 `profile_data.py` (재실행 가능)")
-    md.append("> 컬럼별 상세는 같은 폴더의 `프로파일링_<상품군>.csv` 참조 (Excel에서 바로 열림)")
+    md.append("> 컬럼별 상세는 같은 폴더의 `profiling_<상품군>.csv` 참조 (Excel에서 바로 열림)")
     md.append("")
 
     overview = []
@@ -93,7 +97,7 @@ def main() -> None:
         df = pd.read_excel(path, engine="calamine")
         dfs[name] = df
         prof = profile_table(df)
-        out_csv = HERE / f"프로파일링_{name}.csv"
+        out_csv = HERE / f"profiling_{SLUG[name]}.csv"
         prof.to_csv(out_csv, index=False, encoding="utf-8-sig")
 
         n, ncol = len(df), df.shape[1]
@@ -202,8 +206,8 @@ def main() -> None:
         "5. 수익률 컬럼 NULL 처리 규칙 문서화 (채권 7종 수익률·ETF 기간 체계 차이 포함)", "",
     ]
     final_md = md[:5] + header + md[5:]
-    (HERE / "프로파일링_요약.md").write_text("\n".join(final_md), encoding="utf-8")
-    print("[완료] 프로파일링_요약.md + CSV 4종 생성", flush=True)
+    (HERE / "PROFILING_SUMMARY.md").write_text("\n".join(final_md), encoding="utf-8")
+    print("[완료] PROFILING_SUMMARY.md + CSV 4종 생성", flush=True)
 
 
 if __name__ == "__main__":

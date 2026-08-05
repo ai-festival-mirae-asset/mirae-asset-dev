@@ -7,20 +7,21 @@
 ## 폴더 구조
 
 ```
-├── 전처리/                        ── 제공 데이터를 다루기 위한 작업
-│   ├── 데이터_전처리_방법.md         ▸ 무엇을·왜 이렇게 처리했는지 (먼저 읽을 것)
-│   ├── preprocess.py                ▸ 전처리 스크립트 (재실행 가능)
-│   ├── 처리결과/                    ▸ 전처리된 CSV 4종 + 격리 행 + 규칙 리포트
-│   └── 프로파일링/                  ▸ 전처리 이전의 실태 조사 (결측률·고유값 실측)
+├── preprocessing/                    ── 제공 데이터를 다루기 위한 작업
+│   ├── PREPROCESSING_METHOD.md         ▸ 무엇을·왜 이렇게 처리했는지 (먼저 읽을 것)
+│   ├── preprocess.py                   ▸ 전처리 스크립트 (재실행 가능)
+│   ├── processed/                      ▸ 전처리된 CSV 4종 + 격리 행 + 규칙 리포트
+│   └── profiling/                      ▸ 전처리 이전의 실태 조사 (결측률·고유값 실측)
 │
-├── 외부데이터/                     ── 제공 데이터를 해석하기 위한 자료
-│   ├── 외부데이터_수집_방법.md       ▸ 무엇을·왜·어디서 수집했는지 (먼저 읽을 것)
-│   ├── 수집_요약.md                 ▸ 수집 결과 요약 + 8/6 설명회 질문 리스트
-│   ├── 사전/                        ▸ 컬럼·값·별칭·등급·코드·지수 사전 9종
-│   └── _원본/                       ▸ 리서치 원본 JSON (출처·재현용)
+├── external_data/                    ── 제공 데이터를 해석하기 위한 자료
+│   ├── COLLECTION_METHOD.md            ▸ 무엇을·왜·어디서 수집했는지 (먼저 읽을 것)
+│   ├── COLLECTION_SUMMARY.md           ▸ 수집 결과 요약 + 8/6 설명회 질문 리스트
+│   ├── dictionaries/                   ▸ 컬럼·값·별칭·등급·코드·지수 사전 9종
+│   └── _raw/                           ▸ 리서치 원본 JSON (출처·재현용)
 │
-├── memory.md                     연속 작업 기록
-└── 금융상품Agent_프로젝트_로드맵.md   전략 로드맵 (개인 브랜치 관점)
+├── datasets/                         원본 xlsx 8개 — 로컬 전용, 커밋 안 됨
+├── memory.md                         연속 작업 기록
+└── ROADMAP.md                        전략 로드맵 (개인 브랜치 관점)
 ```
 
 ## 실행 방법
@@ -39,15 +40,15 @@ export MIRAE_DATASETS="/path/to/금융상품"
 **2) 전처리 실행**
 
 ```bash
-python 전처리/preprocess.py
+python preprocessing/preprocess.py
 ```
 
-`전처리/처리결과/`에 전처리 CSV 4종이 생성된다. 같은 입력이면 항상 같은 출력(멱등)이라 몇 번 돌려도 안전하다.
+`preprocessing/processed/`에 전처리 CSV 4종이 생성된다. 같은 입력이면 항상 같은 출력(멱등)이라 몇 번 돌려도 안전하다.
 
 **3) 원본 실태 조사 (선택)**
 
 ```bash
-python 전처리/프로파일링/profile_data.py
+python preprocessing/profiling/profile_data.py
 ```
 
 ## main 브랜치에 있는 것

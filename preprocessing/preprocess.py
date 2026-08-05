@@ -5,21 +5,21 @@
 입력 : datasets/*.xlsx (원본 datarows 4종 + schema 4종)
        원본은 참가자 전원이 보유하므로 저장소에 커밋하지 않는다(.gitignore).
        repo 루트의 datasets/ 에 두거나, 환경변수 MIRAE_DATASETS 로 경로를 지정한다.
-출력 : 전처리/처리결과/<테이블ID>_<상품군>_전처리.csv   (전처리 완료 데이터)
-       전처리/처리결과/quarantine_PRFD01N001_비정상행.csv (격리 행)
-       전처리/처리결과/전처리_리포트.csv                  (규칙별 영향 행수)
+출력 : preprocessing/processed/<테이블ID>_<상품군>_processed.csv (전처리 완료 데이터)
+       preprocessing/processed/quarantine_PRFD01N001.csv       (격리 행)
+       preprocessing/processed/preprocessing_report.csv        (규칙별 영향 행수)
 
 원칙
   1. 원본 컬럼은 삭제·변형을 최소화하고(전량 무정보 컬럼 제외), 해석이 필요한
      정규화 값은 drv_* 파생 컬럼으로 추가한다. 원본 값 자체는 datasets/에 보존된다.
   2. 결측은 메꾸지 않고 "판별"한다. 센티널(무의미 값)을 NULL로 통일해
      IS NULL 필터가 작동하게 만드는 것이 목적이다.
-  3. 모든 규칙은 규칙ID와 영향 행수를 리포트로 남긴다 (전처리_리포트.csv).
+  3. 모든 규칙은 규칙ID와 영향 행수를 리포트로 남긴다 (preprocessing_report.csv).
   4. 재실행 가능(멱등): 같은 입력이면 항상 같은 출력.
 
-근거 문서 : 전처리/데이터_전처리_방법.md / 외부데이터/수집_요약.md
+근거 문서 : preprocessing/PREPROCESSING_METHOD.md / external_data/COLLECTION_SUMMARY.md
             (팀 공동 가이드 PROJECT_GUIDE.md는 main 브랜치에 있다)
-실행      : python 전처리/preprocess.py  (repo 루트에서, 또는 전처리/ 안에서 python preprocess.py)
+실행      : python preprocessing/preprocess.py  (repo 루트에서, 또는 preprocessing/ 안에서 python preprocess.py)
 """
 import os
 import re
@@ -30,12 +30,12 @@ import pandas as pd
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
-HERE = os.path.dirname(os.path.abspath(__file__))   # 전처리/
+HERE = os.path.dirname(os.path.abspath(__file__))   # preprocessing/
 ROOT = os.path.dirname(HERE)                        # repo 루트
 # 원본 xlsx 위치: 기본은 repo 루트의 datasets/ (커밋 대상 아님).
 # 데이터를 저장소 밖에 두는 경우 MIRAE_DATASETS 환경변수로 지정한다.
 DS = os.environ.get("MIRAE_DATASETS") or os.path.join(ROOT, "datasets")
-OUT = os.path.join(HERE, "처리결과")
+OUT = os.path.join(HERE, "processed")
 os.makedirs(OUT, exist_ok=True)
 
 if not os.path.isdir(DS):
@@ -55,7 +55,11 @@ TABLES = {
     "PRFD01N001": ("공모펀드", "PRFD01N001_공모펀드마스터_20260711_datarows.xlsx", "PRFD01N001_공모펀드마스터_schema.xlsx"),
 }
 
-# 신용등급 서열 (외부데이터/사전/사전_신용등급.csv): AAA=1(최상) ~ D=20
+# 출력 파일명용 상품군 영문 슬러그 (표시용 한글명은 리포트 내용에 그대로 유지)
+SLUG = {"국내채권": "kr_bond", "국내ETF": "kr_etf",
+        "해외ETF": "global_etf", "공모펀드": "public_fund"}
+
+# 신용등급 서열 (external_data/dictionaries/credit_rating.csv): AAA=1(최상) ~ D=20
 CRD_RANK = {g: i + 1 for i, g in enumerate(
     ["AAA", "AA+", "AA", "AA-", "A+", "A", "A-", "BBB+", "BBB", "BBB-",
      "BB+", "BB", "BB-", "B+", "B", "B-", "CCC", "CC", "C", "D"])}
@@ -222,7 +226,7 @@ def process_bond():
 
     assert len(df) == 42394, f"행수 불일치: {len(df)}"
     assert df["PD_NO"].is_unique, "PD_NO 유일성 위반"
-    df.to_csv(os.path.join(OUT, f"{tid}_국내채권_전처리.csv"), index=False, encoding="utf-8-sig")
+    df.to_csv(os.path.join(OUT, f"{tid}_{SLUG[name]}_processed.csv"), index=False, encoding="utf-8-sig")
     print(f"{name}: {len(df)}행 × {len(df.columns)}컬럼 저장")
 
 
@@ -260,7 +264,7 @@ def process_kr_etf():
 
     assert len(df) == 1734, f"행수 불일치: {len(df)}"
     assert df["pd_itm_no"].is_unique, "pd_itm_no 유일성 위반"
-    df.to_csv(os.path.join(OUT, f"{tid}_국내ETF_전처리.csv"), index=False, encoding="utf-8-sig")
+    df.to_csv(os.path.join(OUT, f"{tid}_{SLUG[name]}_processed.csv"), index=False, encoding="utf-8-sig")
     print(f"{name}: {len(df)}행 × {len(df.columns)}컬럼 저장")
 
 
@@ -298,7 +302,7 @@ def process_gl_etf():
 
     assert len(df) == 5646, f"행수 불일치: {len(df)}"
     assert df["pd_itm_no"].is_unique, "pd_itm_no 유일성 위반"
-    df.to_csv(os.path.join(OUT, f"{tid}_해외ETF_전처리.csv"), index=False, encoding="utf-8-sig")
+    df.to_csv(os.path.join(OUT, f"{tid}_{SLUG[name]}_processed.csv"), index=False, encoding="utf-8-sig")
     print(f"{name}: {len(df)}행 × {len(df.columns)}컬럼 저장")
 
 
@@ -317,7 +321,7 @@ def process_fund():
     )
     quarantined = df[bad]
     if len(quarantined):
-        quarantined.to_csv(os.path.join(OUT, "quarantine_PRFD01N001_비정상행.csv"),
+        quarantined.to_csv(os.path.join(OUT, "quarantine_PRFD01N001.csv"),
                            index=False, encoding="utf-8-sig")
         df = df[~bad].copy()
     log_rule(name, "R20", "(행 단위)", len(quarantined), "도메인 위반 행 격리",
@@ -342,7 +346,7 @@ def process_fund():
 
     assert len(df) + len(quarantined) == 95619, "행수 보존 위반"
     assert not df.duplicated(subset=["itm_no", "prfd_attr_cd"]).any(), "(itm_no, prfd_attr_cd) 유일성 위반"
-    df.to_csv(os.path.join(OUT, f"{tid}_공모펀드_전처리.csv"), index=False, encoding="utf-8-sig")
+    df.to_csv(os.path.join(OUT, f"{tid}_{SLUG[name]}_processed.csv"), index=False, encoding="utf-8-sig")
     print(f"{name}: {len(df)}행 × {len(df.columns)}컬럼 저장 (+격리 {len(quarantined)}행)")
 
 
@@ -352,6 +356,6 @@ if __name__ == "__main__":
     process_gl_etf()
     process_fund()
     rep = pd.DataFrame(report)
-    rep.to_csv(os.path.join(OUT, "전처리_리포트.csv"), index=False, encoding="utf-8-sig")
-    print(f"\n전처리_리포트.csv: {len(rep)}건 규칙 기록")
+    rep.to_csv(os.path.join(OUT, "preprocessing_report.csv"), index=False, encoding="utf-8-sig")
+    print(f"\npreprocessing_report.csv: {len(rep)}건 규칙 기록")
     print("완료 →", OUT)

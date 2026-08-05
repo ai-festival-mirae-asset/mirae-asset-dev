@@ -64,9 +64,15 @@ def from_domestic_etf(df: pd.DataFrame) -> pd.DataFrame:
     out["item_id"] = df["pd_itm_no"]
     out["name"] = df["pd_nm"]
     out["source_row_key"] = "pd_itm_no=" + df["pd_itm_no"].astype(str)
-    out["expense_ratio"] = df["cu_charge_rt"]
-    out["expense_ratio_available"] = df["expense_ratio_available"]
-    out["expense_ratio_source"] = out["expense_ratio_available"].map({True: "provided", False: None})
+    # scripts/enrich_domestic_etf_fees.py가 만든 컬럼(결측만 KRX로 보강, 제공값은 안 덮어씀). 없으면 원본만 사용.
+    if "expense_ratio_filled" in df.columns:
+        out["expense_ratio"] = df["expense_ratio_filled"]
+        out["expense_ratio_available"] = df["expense_ratio_filled"].notna()
+        out["expense_ratio_source"] = df["expense_ratio_source"]
+    else:
+        out["expense_ratio"] = df["cu_charge_rt"]
+        out["expense_ratio_available"] = df["expense_ratio_available"]
+        out["expense_ratio_source"] = out["expense_ratio_available"].map({True: "provided", False: None})
     out["aum"] = df["du_last_aum"]
     out["aum_available"] = df["du_last_aum"].notna()
     out["return_1y"] = df["du_er_1y"]

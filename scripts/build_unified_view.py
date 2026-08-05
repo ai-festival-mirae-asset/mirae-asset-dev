@@ -20,6 +20,7 @@ COMMON_COLS = [
     "risk_available",
     "expense_ratio",
     "expense_ratio_available",
+    "expense_ratio_source",
     "aum",
     "aum_available",
     "return_1y",
@@ -50,6 +51,7 @@ def from_bond(df: pd.DataFrame) -> pd.DataFrame:
     # 채권은 총보수/AUM/1년수익률 개념이 ETF·펀드와 다르므로 강제로 채우지 않음
     out["expense_ratio"] = pd.NA
     out["expense_ratio_available"] = False
+    out["expense_ratio_source"] = None
     out["aum"] = pd.NA
     out["aum_available"] = False
     out["return_1y"] = pd.NA
@@ -64,6 +66,7 @@ def from_domestic_etf(df: pd.DataFrame) -> pd.DataFrame:
     out["source_row_key"] = "pd_itm_no=" + df["pd_itm_no"].astype(str)
     out["expense_ratio"] = df["cu_charge_rt"]
     out["expense_ratio_available"] = df["expense_ratio_available"]
+    out["expense_ratio_source"] = out["expense_ratio_available"].map({True: "provided", False: None})
     out["aum"] = df["du_last_aum"]
     out["aum_available"] = df["du_last_aum"].notna()
     out["return_1y"] = df["du_er_1y"]
@@ -78,6 +81,7 @@ def from_overseas_etf(df: pd.DataFrame) -> pd.DataFrame:
     out["source_row_key"] = "pd_itm_no=" + df["pd_itm_no"].astype(str)
     out["expense_ratio"] = df["cu_charge_rt"]
     out["expense_ratio_available"] = df["expense_ratio_available"]
+    out["expense_ratio_source"] = out["expense_ratio_available"].map({True: "provided", False: None})
     out["aum"] = df["du_last_aum"]
     out["aum_available"] = df["du_last_aum"].notna()
     # 해외ETF에는 1년수익률에 해당하는 컬럼이 없음(du_hpr/du_lpr은 고가/저가일 뿐 수익률 아님) -> 결측 유지
@@ -91,9 +95,16 @@ def from_fund(df: pd.DataFrame) -> pd.DataFrame:
     out["item_id"] = df["itm_no"]
     out["name"] = df["itm_nm"]
     out["source_row_key"] = "itm_no=" + df["itm_no"].astype(str)
-    # 공모펀드는 보수 정보 자체가 없음(과제 자료에 명시, 검증됨)
-    out["expense_ratio"] = pd.NA
-    out["expense_ratio_available"] = False
+    # 주최 측 제공 데이터엔 보수 정보가 없음(검증됨). scripts/enrich_fund_fees.py가 채운
+    # 외부(KOFIA) 보수만 있으면 사용하고, 없으면 결측 유지 — 항상 출처를 구분해서 표시한다.
+    if "fee_mgmt_pct" in df.columns:
+        out["expense_ratio"] = df["fee_mgmt_pct"]
+        out["expense_ratio_available"] = df["fee_available"]
+        out["expense_ratio_source"] = df["fee_source"]
+    else:
+        out["expense_ratio"] = pd.NA
+        out["expense_ratio_available"] = False
+        out["expense_ratio_source"] = None
     out["aum"] = df["fd_nast_suma"]
     out["aum_available"] = df["fd_nast_suma"].notna()
     out["return_1y"] = df["fd_yr1_ern_r"]

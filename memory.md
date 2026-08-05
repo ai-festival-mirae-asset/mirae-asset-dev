@@ -171,6 +171,15 @@
 - 결정: 원본 xlsx는 참가자 전원 보유 → 저장소에 담지 않는다. 삭제 파일은 main에 그대로 있으므로 `git show main:<경로>`로 언제든 조회 가능
 - 다음: PostgreSQL DDL 작성과 적재(fund master/attribute 분리)
 
+### 2026-08-05 — dev-kyung 브랜치 교차검증 및 반영
+
+- 목표: dev-kyung 브랜치 산출물(`PROJECT_GUIDE.md`, `reports/DATA_QUALITY_REPORT.md`, `pipeline/`, `tests/`, `config/`)을 정독해 이 브랜치 대비 우위 항목을 가려내고 문서에 반영한다
+- 변경: `ROADMAP.md` v2.2 — "8/5 브랜치 교차검증" 장 신설(실측 정정 A / 신규 발견 B / 설계 채택 C / 판단 유지 D), 1장 상품군별 `[8/5 정정]` 인라인 반영, 2장 ⑤를 답변 가능성 상태 8종으로 격상, S1·S2·S4 작업표와 8/6 질문 리스트 보강. `preprocessing/PREPROCESSING_METHOD.md` 6장 신설 — R8 정정(만기 16,496→16,180, `MAT_DT=0` 오포함)과 신규 규칙 R24~R30 정의
+- 검증: dev-kyung 수치는 `DATA_QUALITY_REPORT.md` 기준 문서 대조로 수용(코드 재실행 검증은 preprocess.py 반영 시). 주요 정정 — `REMAINING_DAYS` 기준일은 행별 `PD_STD_INFO_UPDATE`(중앙값 137일 지연), 국내ETF 총보수 양수 67건뿐, 국내ETP 1,155행은 299행(`KR70193M0005`)의 손상 중복, 유효 `itm_no` 11,138, `(itm_no, prfd_attr_cd)` 2컬럼 유일
+- 결정: 아키텍처(파라미터화 도구 + FC)는 유지, 브랜치별 정답률 비교로 최종 판단. dev-kyung에서 채택 — 답변 가능성 상태 머신 8종(coverage 분모=eligible 집합), `time_policy.py` 모듈 이식(as_of_date 이원화), 구조화 retrieved_context + 직렬화 어댑터, HCX 단일 provider 코드 강제, immutable release 운영, 요구사항 추적표, taxonomy 매핑 계약, `manual_overrides.csv` 패턴, 파이프라인 단위 테스트·SHA-256 결정성 검증
+- blocker: 총보수 0(국내 150·해외 363)의 의미, 손상 행 2건 정정본, 활성 상품 만기일 부재, 마감 후 장애 대응 허용 범위 — 8/6 질문 리스트에 추가됨
+- 다음: `preprocess.py`에 R24~R30 및 R8 정정 구현, dev-kyung `pipeline/time_policy.py`+테스트 이식, S0 공통 계약 4종 초안에 answerability 스키마 포함
+
 ## 로그 추가 템플릿
 
 새 작업은 아래 형식을 복사해 `작업 로그`의 가장 최근 항목 아래에 추가한다.

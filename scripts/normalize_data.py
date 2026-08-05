@@ -116,6 +116,12 @@ def normalize_domestic_etf() -> pd.DataFrame:
     df["risk_grade"] = df["pd_risk_cd"].str.extract(r"(\d)$").astype(float)
     df["risk_available"] = df["risk_grade"].notna()
 
+    # pd_itm_no 접두사가 ETF/ETN을 완전히 구분함 (KRX ETF/ETN 종목정보 파일과 대조해 검증됨,
+    # 교차매칭 0건). KR7=ETF 1,201건, KRG=ETN 532건, 그 외 1건(코드가 'KR'뿐인 깨진 행)은 미분류.
+    df["instrument_type"] = None
+    df.loc[df["pd_itm_no"].str.startswith("KR7", na=False), "instrument_type"] = "ETF"
+    df.loc[df["pd_itm_no"].str.startswith("KRG", na=False), "instrument_type"] = "ETN"
+
     for col in ["du_clpr", "pd_nav_pshr", "du_last_aum", "cu_charge_rt"]:
         df[col] = pd.to_numeric(df[col], errors="coerce")
     df["expense_ratio_available"] = df["cu_charge_rt"].notna()

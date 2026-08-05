@@ -10,6 +10,7 @@
 - [x] 정규화 파이프라인 (`scripts/normalize_data.py`) — 죽은 컬럼 제외, 위험등급 표준화, 공모펀드 master/attribute 분리, quarantine
 - [x] 지역·자산군 taxonomy 매핑 (`scripts/build_taxonomy_mapping.py`, 104값: 92 mapped / 11 ambiguous / 1 unmapped)
 - [x] `product_unified` 상품군 교차 뷰 (`scripts/build_unified_view.py`, 60,912행)
+- [x] 외부 데이터 보강 4건 (`EXTERNAL_DATA_PLAN.md`): 공모펀드 총보수(KOFIA, 65.5%), 국내ETF 총보수(KRX, 65.4%)·기초지수(68.5%), 국내ETF ETF/ETN 구분(코드 접두사 규칙 확정, 100%). 제공값-외부값 상충 시 항상 제공값 유지 + 플래그
 
 **질의 · API**
 - [x] 조건 필터·정렬 질의 엔진 (`scripts/query_engine.py`)
@@ -28,7 +29,8 @@
 - [ ] 답변가능성 8개 상태로 확장 (현재 4개, `ambiguous_condition`/`insufficient_condition`/`stale_or_inactive`/`invalid_data` 미구현)
 - [ ] 대표 질의 세트 (20개+) 및 기대 결과 정의
 - [ ] 해외ETF 운용전략 의미검색 (벡터)
-- [ ] 국내ETF ETF/ETN 구분 — 신뢰할 컬럼 못 찾음 (미해결 open item)
+- [ ] 국내채권 회사채 신용등급 보강 (45% 결측, 신용평가사 데이터 필요 — 접근성 불확실)
+- [ ] taxonomy 공식 분류체계 대조 (현재 11 ambiguous / 1 unmapped, 급하지 않음)
 
 **인프라**
 - [ ] DB 이전 (CSV → PostgreSQL 또는 DuckDB), read-only 권한, 인덱스

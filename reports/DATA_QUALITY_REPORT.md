@@ -91,6 +91,8 @@
 - `risk_grade` 1~6과 `risk_available`을 분리했다.
 - `BUYABLE_QUANTITY` 미제공과 0을 구분하고 `is_buyable_observed`를 만들었다.
 - 원본 `REMAINING_DAYS`의 기준일은 `source_remaining_days_as_of`로 보존했다.
+- 신용등급 무부호 표기를 정규화하고 `credit_grade_norm`, `credit_grade_rank`(AAA=1~D=20), `credit_grade_available`을 생성했다. `CRD_GRD`는 무부호 등급을 `AA0`·`A0`·`BBB0`으로 쓰고 `PD_EVCO_CRD_GRD`는 같은 등급 집합을 `AA`·`A`·`BBB`로 써서, 두 컬럼의 등급 집합 대응만으로 플랫 표기가 확정된다. 정규화 전 문자열 매칭으로는 “AA 이상”이 15,431건이지만 정규화 후 `rank<=3`은 17,144건으로 `AA0` 1,713건이 회복된다. `C`와 `C0`가 함께 존재하는 137건은 잠정적으로 C로 두고 품질 이력에 `ambiguous_grade_code`로 남겼다.
+- `PD_EVCO_CRD_GRD`의 평가사별 등급 병기를 `evaluator_grade_count`, `evaluator_grade_worst`, `evaluator_grade_worst_rank`, `evaluator_grade_split`으로 분해했다. 비공백 24,966건 중 22,605건이 병기이고 평가사 간 등급이 갈리는 행은 286건이다. 불일치 시 보수적으로 최저등급을 채택하며, 병기 순서와 평가사 매칭은 미확인이라 순서에 의미를 부여하지 않는다.
 - 사용자 확인 보강값은 [`config/manual_overrides.csv`](../config/manual_overrides.csv)에 기록하고 원본 `MAT_DT`, `SRFC_IRT`, `PD_PBCM`은 공란 그대로 보존했다.
 - `XS3067881758`은 `dataset_scope_exception_partial_currency`로 표시한다. 일반·국제채권 조회에서는 명시적으로 포함할 수 있지만 국내발행채권 기본 검색과 통화 조건 검색에서는 제외한다. `default_search_eligible=False`, `international_bond_search_eligible=True`, `general_bond_search_eligible=True`로 분리했다.
 
@@ -150,7 +152,9 @@
 8. 위험등급 컬럼이 전혀 없다. 해외 ETF 저위험 검색은 공식 데이터만으로 답변 불가다.
 9. 총보수는 전 행에 있지만 0이 363건이다. 공식 관측값으로 보존하되 실제 무보수인지 미수집인지 추가 확인이 필요하다.
 10. 운용전략은 5,638건에 있고 5,566개가 고유해 의미 검색에 적합하다.
+12. `cu_base_index`는 공백이 8건뿐이라 커버리지 99.9%로 보이지만 실제로는 Lipper 센티널 2종이 문자열로 들어 있다. `Index is not provided by Management Company` 1,984건 + `Index is not available on Lipper Database` 721건 = 2,705건(47.9%)이 결측이며 실질 유효 기초지수는 2,933건(51.9%)뿐이다. 센티널을 값으로 두면 `IS NULL`이 작동하지 않아 “확인할 수 없음”으로 답해야 할 질의에 센티널 문장을 지수명처럼 답하게 된다.
 11. 일간 데이터가 추출일보다 30일 이상 오래된 행이 252건이다. 가격·거래량 순위에서는 신선도 조건을 적용해야 한다.
+13. 값이 한쪽만 관측되는 플래그 4종의 결측 의미가 서로 다르다. `cu_etn_yn`은 Y 59건이 `pd_grp_no='ETN'` 59건과 행 단위로 완전히 일치해 결측을 N으로 확정할 수 있다. 반면 `cu_inverse_short_yn`은 Y가 171건인데 상품명에 `Inverse`·`Short`·`Bear` 표기가 있는 행이 306건이고 그중 플래그가 Y인 행은 167건뿐이다. 결측을 N으로 접으면 인버스로 보이는 139건을 “인버스 아님”으로 단정하게 된다. `cu_index_tracking_yn`(Y 2,360 / 결측 3,286)과 `wu_core_yn`(관측값 N 103건뿐)도 결측 의미를 확정할 수 없다.
 
 ### 적용한 개선
 
@@ -160,6 +164,8 @@
 - 해외 위험등급은 `risk_available=false`로 명시했다.
 - `market_data_lag_days`, `market_data_within_30_days`를 생성했다.
 - AUM은 양수 관측값 5,451건만 집계 대상으로 삼았다.
+- Lipper 센티널 2,705건을 null로 변환하고 `base_index_sentinel`, `base_index_available`을 생성했다. 센티널 값과 건수는 품질 이력에 남겼고, 정제본에 센티널 문자열이 하나도 남지 않는지 reconciliation assertion으로 고정했다.
+- 플래그 4종은 독립 근거가 있을 때만 결측을 반대값으로 접는다. `cu_etn_yn`은 `pd_grp_no`와 교차 검증해 `is_etn_flagged`를 확정했고, 나머지 3종은 unknown을 유지한 뒤 `field_policy`에서 `observed_only_no_negation`으로 표시해 “관측된 Y만 대상으로 하고 결측의 부재를 단정하지 않는다”를 조회 규칙으로 못 박았다.
 
 ## 7. 공모펀드 상세
 

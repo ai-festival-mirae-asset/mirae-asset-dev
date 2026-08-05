@@ -1,6 +1,6 @@
 # Project Memory
 
-> 마지막 갱신: 2026-08-04
+> 마지막 갱신: 2026-08-05
 > 상세 실행 가이드: [`PROJECT_GUIDE.md`](./PROJECT_GUIDE.md)
 
 ## 사용 규칙
@@ -48,6 +48,8 @@
 | 완전한 Lance 인덱스 | 선택 | 기존 manifest도 현재 없음. 해외 ETF 전략은 pgvector 재생성 가능 |
 | 에이전트/API 코드 | 미착수 | HyperCLOVA X, LLM 호출 최대 2회 목표 |
 | 평가셋/자동 테스트 | 미착수 | 대표 질문부터 정의 필요 |
+| 해석 메타데이터 사전 9종 | 협업자 보유·차용 예정 | `papuagigi` 브랜치 `외부데이터/사전/`. 컬럼사전 207행(전 컬럼 커버)·값사전 423행·별칭 110행 등. `term_dictionary`로 적재 |
+| 브랜치 통합 계약 4종 | 미합의 | 도구 스키마·DB 스키마·응답 4필드·공용 회귀 러너. 세 브랜치 합의 필요 |
 
 ## 확인된 사실
 
@@ -99,6 +101,11 @@
 - 해외 ETF `cu_strtegy`는 5,638행에 값이 있고 비결측 고유 문서가 5,566개다.
 - 해외 ETF 핵심 필드가 대부분 빈 8행, ISIN만 빠진 추가 1행, 통화·상품분류 충돌 1행과 괴리율 `37585` 오류 1건이 있다.
 - 해외 ETF 일간 데이터가 추출일보다 30일 이상 오래된 행은 252건이다.
+- 해외 ETF `cu_base_index`는 결측 8건으로 보이지만 Lipper 센티널 2종(`Index is not provided by Management Company` 1,984 + `Index is not available on Lipper Database` 721 = 2,705건, 47.9%)이 문자열로 들어 있다. 실질 유효 기초지수는 2,933건(51.9%)뿐이다. 2026-08-05 papuagigi 브랜치 주장을 원본으로 재검증해 일치를 확인했다.
+- 해외 ETF 플래그 컬럼은 관측 분포가 서로 다르다. `cu_etn_yn`은 Y 59건, `cu_inverse_short_yn`은 Y 171건만 있어 null=N으로 해석 가능하지만, `wu_core_yn`은 N 103건만 있고 `cu_index_tracking_yn`은 Y 2,360건에 공백 3,286건이라 같은 규칙을 적용할 수 없다.
+- 채권 `CRD_GRD`의 끝자리 `0`은 무부호(플랫) 표기다. `AA0` 1,713건은 `AA`와 같은 등급이고 끝자리 0 표기는 전체 2,886건, 공백은 17,644건이다. 정규화 없이 “AA 이상”을 걸면 1,713건이 누락된다. `C0` 137건의 실체는 미확인이다.
+- 채권 `PD_EVCO_CRD_GRD`는 평가사별 등급 콤마 병기다. 비공백 24,966건 중 22,605건이 콤마를 포함한다(예: `AAA, AAA, AAA`). 병기 순서와 평가사 매칭은 미확인이다.
+- 국내 ETF `pd_pen_risk_nm`의 위험자산 788 + 안전자산 214 = 1,002건이 `pd_pen_tr_yn='Y'` 1,002건과 정확히 일치하고 교차표가 완전한 대각선이다. 따라서 `pd_pen_risk_nm='N'` 732건은 결측이 아니라 연금거래 불가를 뜻한다.
 - 공모펀드: 원본 95,619행 중 유효 95,618행이며 유효 `itm_no` 11,138개다. 유효 `(itm_no, prfd_attr_cd)`는 유일하다.
 - 동일 공모펀드 `itm_no` 그룹에서 달라지는 컬럼은 trim 기준 `prfd_attr_cd` 하나뿐이며 평균 8.584행, 최대 16행이다.
 - 공모펀드 `or_attr_desc='06'`은 5,436행, 686개 상품이며 미매핑 코드로 보존해야 한다.
@@ -140,11 +147,19 @@
 - 공식 스냅샷은 `source_origin=official_snapshot`으로 표시하고 외부 보강 데이터보다 우선한다.
 - 요청에 명시적 기준일이 없으면 `datetime.now(ZoneInfo("Asia/Seoul")).date()`를 한 번 확정한다. 동일 요청의 SQL·계산·답변은 같은 `as_of_date`를 쓰고 응답에 노출한다.
 - 사람이 승인한 상품명 해석은 `config/manual_overrides.csv`의 파생 필드에만 적용하고 원본 공란은 보존한다.
+- 외부 데이터는 3-Tier로 운용한다. Tier1 해석 메타데이터(사전·코드표·별칭)는 적극 수집, Tier2 결측 값 보강은 08-06 이후 별도 테이블+출처 컬럼으로만, Tier3 시세·수익률 대체는 금지한다. 사전은 결측을 메꾸는 자산이 아니라 결측을 정확히 판별하기 위한 자산이다.
+- papuagigi 브랜치 `외부데이터/사전/` 9종을 `term_dictionary` 적재원으로 차용하고 `신뢰도`·`검증상태`·`출처` 컬럼을 그대로 보존한다.
+- schema `Sheet2_Sample`의 `axis_*`는 주최 측이 남긴 교차 질의용 공통 축 힌트로 해석하고 `product_axis` 테이블로 구현한다.
+- 파생 boolean은 원본 결측을 `false`로 접지 않고 null로 유지한다. 결측을 “아니오”로 단정하지 않는다.
+- 전량 무정보 컬럼은 삭제하지 않고 `field_policy`의 `unavailable`/`reject_query`로 차단한다. 원본 보존 원칙을 우선하되, 도구가 컬럼을 선택할 때 오인하지 않도록 정책 파일을 도구 스키마 생성의 입력으로 쓴다.
 - 채권의 국내/국제 범위는 파일명이나 발행자 국적이 아니라 ISIN 등록 범위로 분리한다. `XS3067881758`은 국내채권 기본 검색에서 제외하고 국제·일반 채권 조회에서만 명시적으로 포함한다.
 - 09-06 전 immutable release를 배포하고 commit SHA, image digest, dependency lock, 설정 checksum을 보관한다.
 
 ## 열린 결정 및 blocker
 
+- [ ] 브랜치 통합 계약 4종(도구 JSON Schema, DB 스키마, 응답 4필드 내부 형식, 평가셋+공용 회귀 러너)을 세 브랜치가 합의해 고정해야 함. 계약 없이 각자 개발하면 통합 시점에 우열 비교가 불가능하다
+- [ ] 채권 `CRD_GRD`의 `C0` 137건이 진짜 C등급인지 무등급·평가중지 코드 오버로딩인지 확인 후 rank 매핑해야 함
+- [ ] `PD_EVCO_CRD_GRD` 콤마 병기 순서와 평가사 매칭 확인 필요. 확인 전까지 순서에 의미를 부여하지 않고 최저등급만 사용
 - [ ] 08-06 설명회 예시 질의를 확인해 사용자 시나리오와 우선순위를 확정해야 함
 - [ ] PDF에 빠진 구체적인 평가 지표와 가중치를 08-06 설명회에서 확인해야 함
 - [ ] 09-06 이후 허용되는 모니터링·재시작·장애 복구 범위를 주최 측에 확인해야 함
@@ -234,6 +249,24 @@
 - `XS`는 발행자 국적이 아니라 국제발행·예탁 범위이므로 `security_registration_scope=international_isin`과 `dataset_scope_exception_partial_currency`로 표시했다.
 - 해당 행은 국내채권 기본 검색에서 제외하고 `international_bond_search_eligible`과 `general_bond_search_eligible`에만 남겼다.
 - 실제 통화와 국내 마스터 포함 사유는 확인 항목으로 유지하고 reconciliation assertion을 14개로 늘렸다.
+
+### 2026-08-05 — 국내 ETP 재검증과 협업자 브랜치 플로우 차용
+
+- 목표: 품질 보고서 5장(국내 ETF·ETN)의 주장 검증, 협업자 브랜치의 더 나은 플로우 차용
+- 변경: 5장 확인된 문제를 10개에서 14개로 확장(종료일의 사후 기록 성격, `99991231`의 실제 의미, `-100`의 종가 0 유래, `-100`↔종료 불일치 114건). Excel 1,155행이 299행 `KR70193M0005`의 손상된 스텁임을 규명해 5장 3번과 9장을 수정. `PROJECT_GUIDE.md`에 3-Tier 외부 데이터 정책, 정제 규칙 22~26, assertion 4종, `term_dictionary`·`product_axis` 테이블, 브랜치 통합 계약 4종을 추가
+- 검증: 협업자 주장 6종(Lipper 센티널 2,705건, `AA0` 1,713건, `PD_EVCO_CRD_GRD` 콤마 22,605건, 연금 플래그 1,002건 일치, 해외 플래그 분포, 국내 ETF 기초지수 trim 전후 1,609→58)을 원본 xlsx로 전수 재계산해 전부 일치 확인
+- 결정: 전량 무정보 컬럼은 협업자처럼 삭제하지 않고 `field_policy` 차단을 유지. 대신 정책 파일을 도구 스키마 생성 입력으로 사용
+- blocker: 브랜치 통합 계약 4종 미합의. `C0` 137건과 `PD_EVCO_CRD_GRD` 병기 순서 미확인
+- 다음: 사전 9종을 `term_dictionary`로 적재
+
+### 2026-08-05 — 차용 규칙 22~26 파이프라인 구현
+
+- 목표: 협업자 규칙을 우리 프레임(이슈 로그·field_policy·assertion·테스트) 안에서 구현
+- 변경: `CREDIT_GRADE_RANK`(AAA=1~D=20)와 `LIPPER_INDEX_SENTINELS` 상수, `normalize_credit_grade`·`credit_grade_rank`·`normalize_observed_flag` 헬퍼 추가. 채권에 `credit_grade_norm`·`credit_grade_rank`·`evaluator_grade_*` 4종, 해외 ETF에 `base_index_sentinel`·`base_index_available`·플래그 4종, 국내 ETP에 `is_pension_tradable`·`pension_asset_class` 생성. `field_policy`에 7행 추가
+- 검증: reconciliation assertion 14→22개, 단위 테스트 7→15건 전부 통과. 재실행 산출물 SHA-256 일치
+- 결정: 결측을 반대값으로 접는 것은 **독립 컬럼으로 교차 검증된 경우에만** 허용한다. `cu_etn_yn`은 `pd_grp_no='ETN'` 59건과 행 단위로 일치해 접었고, `cu_inverse_short_yn`은 상품명에 인버스 표기가 있는 306건 중 Y가 167건뿐이라 접지 않고 unknown을 유지했다. 협업자 문서는 두 컬럼 모두 접으라고 했으나 우리 데이터가 후자를 반증한다
+- 결정: 국내 ETP·공모펀드의 `is_sale_available`·`is_suspended`가 결측을 `false`로 접던 것을 NA 유지로 바로잡았다. 현재 결측 0건이라 산출물 수치는 불변이며 `derived_booleans_preserve_missing` assertion으로 재발을 막는다. 거래정지 여부가 불명인 상품은 거래 가능으로 단정하지 않고 기본 검색에서 제외한다
+- blocker: `C0` 137건 의미 미확정(잠정 C로 정규화, 품질 이력에 기록)
 
 ## 로그 추가 템플릿
 

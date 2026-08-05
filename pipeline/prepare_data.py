@@ -81,6 +81,38 @@ RISK_LABELS = {
 
 DATE_SENTINELS = {"0", "00000000", "10001231", "99991231"}
 
+# 신용등급 서열. 원본 CRD_GRD는 무부호(플랫) 등급을 끝자리 0으로 표기하고
+# (AA0·A0·BBB0), PD_EVCO_CRD_GRD는 같은 등급 집합을 부호 없이 표기한다(AA·A·BBB).
+# 두 컬럼의 등급 집합이 정확히 대응하므로 플랫 표기는 외부 근거 없이 원본만으로 확정된다.
+CREDIT_GRADE_RANK = {
+    "AAA": 1,
+    "AA+": 2,
+    "AA": 3,
+    "AA-": 4,
+    "A+": 5,
+    "A": 6,
+    "A-": 7,
+    "BBB+": 8,
+    "BBB": 9,
+    "BBB-": 10,
+    "BB+": 11,
+    "BB": 12,
+    "BB-": 13,
+    "B+": 14,
+    "B": 15,
+    "B-": 16,
+    "CCC": 17,
+    "CC": 18,
+    "C": 19,
+    "D": 20,
+}
+
+# Lipper 데이터베이스가 기초지수 부재를 나타내는 문자열. 값이 아니라 결측이다.
+LIPPER_INDEX_SENTINELS = (
+    "Index is not provided by Management Company",
+    "Index is not available on Lipper Database",
+)
+
 
 def clean_text(value: Any) -> Any:
     if value is None or value is pd.NA:
@@ -105,6 +137,63 @@ def date_token(value: Any) -> Any:
     if " " in text:
         text = text.split(" ", 1)[0]
     return text.replace("-", "")
+
+
+def normalize_credit_grade(value: Any) -> Any:
+    """무부호 표기 `AA0`을 `AA`로 정규화한다. `AAA`·`CCC`처럼 0이 없는 값은 그대로 둔다."""
+    value = clean_text(value)
+    if value is pd.NA:
+        return pd.NA
+    text = str(value).upper()
+    if re.fullmatch(r"[A-D]{1,3}0", text):
+        return text[:-1]
+    return text
+
+
+def credit_grade_rank(values: pd.Series) -> pd.Series:
+    return pd.to_numeric(values.map(CREDIT_GRADE_RANK), errors="coerce").astype("Int64")
+
+
+def normalize_observed_flag(
+    frame: pd.DataFrame,
+    column: str,
+    positive: str,
+    code: str,
+    issues: IssueLog,
+    *,
+    corroborating: pd.Series | None = None,
+    corroboration_note: str = "",
+) -> pd.Series:
+    """한쪽 값만 관측되는 플래그의 결측을 반대값으로 접을지 판정한다.
+
+    "관측값이 Y뿐이니 null은 N이다"는 추론일 뿐이다. 이 함수는 독립 컬럼으로 교차 검증된
+    경우에만 결측을 접고, 그렇지 않으면 결측을 unknown으로 유지한다. 근거 없이 접으면
+    "값이 없다"가 "아니다"로 둔갑해 조용히 오답이 된다.
+    """
+    observed = set(frame[column].dropna().unique())
+    positive_mask = frame[column].eq(positive)
+    if observed != {positive}:
+        issues.add(
+            code,
+            "flag_fill_rule_not_applicable",
+            "warning",
+            "keep_null_as_unknown",
+            f"관측값이 {{{positive}}}가 아니라 {sorted(observed)}여서 결측을 반대값으로 접지 않았습니다.",
+            column=column,
+        )
+        return positive_mask.where(frame[column].notna(), pd.NA)
+    if corroborating is not None and not bool((positive_mask ^ corroborating).any()):
+        return positive_mask
+    issues.add(
+        code,
+        "flag_fill_needs_corroboration",
+        "warning",
+        "keep_null_as_unknown",
+        f"관측값이 {positive}뿐이지만 독립 근거가 없어 결측을 반대값으로 접지 않았습니다. "
+        + (corroboration_note or f"결측 {int(frame[column].isna().sum())}건은 unknown으로 유지합니다."),
+        column=column,
+    )
+    return positive_mask.where(frame[column].notna(), pd.NA)
 
 
 def sha256(path: Path) -> str:
@@ -416,6 +505,68 @@ def prepare_bond(
         frame["buyable_quantity"].notna(), pd.NA
     )
     frame["source_remaining_days_as_of"] = frame["pd_std_info_update"]
+
+    frame["credit_grade_norm"] = frame["crd_grd"].map(normalize_credit_grade)
+    frame["credit_grade_rank"] = credit_grade_rank(frame["credit_grade_norm"])
+    frame["credit_grade_available"] = frame["credit_grade_rank"].notna()
+    unmapped = frame["credit_grade_norm"].notna() & frame["credit_grade_rank"].isna()
+    for value in frame.loc[unmapped, "credit_grade_norm"].drop_duplicates():
+        first = frame.index[unmapped & frame["credit_grade_norm"].eq(value)][0]
+        issues.add(
+            spec.code,
+            "unmapped_credit_grade",
+            "warning",
+            "exclude_from_grade_comparison",
+            "서열표에 없는 신용등급이어서 등급 비교에서 제외합니다.",
+            source_row_number=int(frame.at[first, "source_row_number"]),
+            item_id=frame.at[first, "pd_no"],
+            column="crd_grd",
+            observed_value=value,
+        )
+    flat_c = frame["crd_grd"].eq("C0")
+    if bool(flat_c.any()):
+        first = frame.index[flat_c][0]
+        issues.add(
+            spec.code,
+            "ambiguous_grade_code",
+            "warning",
+            "treat_as_c_pending_confirmation",
+            "원본에 `C`와 `C0`가 함께 존재해 `C0`가 무부호 C인지 별도 코드인지 확정되지 않았습니다. "
+            f"잠정적으로 C로 정규화한 행이 {int(flat_c.sum())}건입니다.",
+            source_row_number=int(frame.at[first, "source_row_number"]),
+            item_id=frame.at[first, "pd_no"],
+            column="crd_grd",
+            observed_value="C0",
+        )
+
+    evaluator_grades = (
+        frame["pd_evco_crd_grd"]
+        .astype("string")
+        .str.split(",")
+        .map(
+            lambda parts: [normalize_credit_grade(part) for part in parts]
+            if isinstance(parts, list)
+            else parts
+        )
+    )
+    frame["evaluator_grade_count"] = evaluator_grades.map(
+        lambda parts: len([p for p in parts if p is not pd.NA]) if isinstance(parts, list) else 0
+    ).astype("Int64")
+    frame["evaluator_grade_worst_rank"] = evaluator_grades.map(
+        lambda parts: max(
+            (CREDIT_GRADE_RANK[p] for p in parts if p in CREDIT_GRADE_RANK), default=None
+        )
+        if isinstance(parts, list)
+        else None
+    ).astype("Int64")
+    rank_to_grade = {rank: grade for grade, rank in CREDIT_GRADE_RANK.items()}
+    frame["evaluator_grade_worst"] = frame["evaluator_grade_worst_rank"].map(rank_to_grade)
+    frame["evaluator_grade_split"] = evaluator_grades.map(
+        lambda parts: len({p for p in parts if p in CREDIT_GRADE_RANK}) > 1
+        if isinstance(parts, list)
+        else False
+    )
+
     frame["currency_available"] = frame["curr_cd"].notna() & ~frame["curr_cd"].eq("000")
     frame["country_code_semantics"] = "country_or_market_code"
     frame.loc[frame["pd_ctry_cd"].eq("XS"), "country_code_semantics"] = (
@@ -534,8 +685,35 @@ def prepare_domestic_etp(
     frame["expense_ratio_available"] = frame["expense_ratio"].notna()
     frame["aum"] = frame["pd_net_tamt"].where(frame["pd_net_tamt"].gt(0))
     frame["aum_available"] = frame["aum"].notna()
-    frame["is_sale_available"] = frame["pd_sale_yn"].eq("1")
-    frame["is_suspended"] = frame["pd_tr_yn"].eq("1")
+    frame["is_sale_available"] = frame["pd_sale_yn"].eq("1").where(
+        frame["pd_sale_yn"].notna(), pd.NA
+    )
+    frame["is_suspended"] = frame["pd_tr_yn"].eq("1").where(
+        frame["pd_tr_yn"].notna(), pd.NA
+    )
+
+    # 연금 플래그: pd_pen_risk_nm의 위험/안전자산 건수와 pd_pen_tr_yn='Y' 건수가 일치하면
+    # pd_pen_risk_nm='N'은 위험구분 결측이 아니라 연금거래 불가를 뜻한다.
+    pension_classified = frame["pd_pen_risk_nm"].isin(["위험자산", "안전자산"])
+    pension_tradable = frame["pd_pen_tr_yn"].eq("Y")
+    if int(pension_classified.sum()) == int(pension_tradable.sum()) and not bool(
+        (pension_classified ^ pension_tradable).any()
+    ):
+        frame["is_pension_tradable"] = pension_tradable
+        frame["pension_asset_class"] = frame["pd_pen_risk_nm"].where(pension_classified)
+    else:
+        frame["is_pension_tradable"] = pd.NA
+        frame["pension_asset_class"] = pd.NA
+        issues.add(
+            spec.code,
+            "pension_flag_cross_check_failed",
+            "warning",
+            "keep_null_as_unknown",
+            "pd_pen_risk_nm의 자산구분 건수와 pd_pen_tr_yn='Y' 건수가 더 이상 일치하지 않아 "
+            "'N'=연금거래불가 해석을 적용하지 않았습니다.",
+            column="pd_pen_risk_nm",
+        )
+
     listing_end = pd.to_datetime(frame["pd_lste_dt"], errors="coerce")
     frame["listing_status"] = "unknown"
     frame.loc[frame["listing_end_is_open"], "listing_status"] = "active_open_ended"
@@ -549,7 +727,18 @@ def prepare_domestic_etp(
     )
     frame["quality_status"] = "usable"
     active = frame["listing_status"].isin(["active_open_ended", "active_until_date"])
-    frame["default_search_eligible"] = active & ~frame["is_suspended"]
+    suspension_unknown = frame["is_suspended"].isna()
+    if bool(suspension_unknown.any()):
+        issues.add(
+            spec.code,
+            "suspension_unknown",
+            "warning",
+            "exclude_from_default_search",
+            "거래정지 여부를 알 수 없는 상품은 거래 가능으로 단정하지 않고 기본 검색에서 제외합니다. "
+            f"해당 행 {int(suspension_unknown.sum())}건.",
+            column="pd_tr_yn",
+        )
+    frame["default_search_eligible"] = active & ~frame["is_suspended"].fillna(True).astype(bool)
     return frame, quarantine
 
 
@@ -564,6 +753,60 @@ def prepare_overseas_etf(
             issues,
             item_column="pd_itm_no",
         )
+
+    # Lipper 센티널은 결측을 문자열로 표현한 값이다. 남겨두면 IS NULL이 작동하지 않아
+    # "확인할 수 없음"으로 답해야 할 기초지수 질의에 센티널 문장을 지수명처럼 답하게 된다.
+    sentinel_index = frame["cu_base_index"].isin(LIPPER_INDEX_SENTINELS)
+    for value in frame.loc[sentinel_index, "cu_base_index"].drop_duplicates():
+        matched = sentinel_index & frame["cu_base_index"].eq(value)
+        first = frame.index[matched][0]
+        issues.add(
+            spec.code,
+            "sentinel_string_as_missing",
+            "warning",
+            "set_null_in_clean_layer",
+            f"기초지수 부재를 나타내는 Lipper 센티널이어서 null로 변환했습니다. 해당 행 {int(matched.sum())}건.",
+            source_row_number=int(frame.at[first, "source_row_number"]),
+            item_id=frame.at[first, "pd_itm_no"],
+            column="cu_base_index",
+            observed_value=value,
+        )
+    frame["base_index_sentinel"] = sentinel_index
+    frame.loc[sentinel_index, "cu_base_index"] = pd.NA
+    frame["base_index_available"] = frame["cu_base_index"].notna()
+
+    # cu_etn_yn만 독립 근거가 있다. Y 59건이 pd_grp_no='ETN' 59건과 행 단위로 완전히
+    # 일치하므로 결측을 N으로 접어도 새로운 주장을 만들지 않는다.
+    frame["is_etn_flagged"] = normalize_observed_flag(
+        frame,
+        "cu_etn_yn",
+        "Y",
+        spec.code,
+        issues,
+        corroborating=frame["pd_grp_no"].eq("ETN"),
+    )
+    frame["is_inverse_or_short"] = normalize_observed_flag(
+        frame,
+        "cu_inverse_short_yn",
+        "Y",
+        spec.code,
+        issues,
+        corroboration_note=(
+            "상품명에 Inverse/Short/Bear 표기가 있는 306건 중 플래그가 Y인 행은 167건뿐이라, "
+            "결측을 N으로 접으면 인버스로 보이는 139건을 '인버스 아님'으로 단정하게 됩니다."
+        ),
+    )
+    frame["is_core_product"] = normalize_observed_flag(
+        frame, "wu_core_yn", "Y", spec.code, issues
+    )
+    frame["is_index_tracking"] = normalize_observed_flag(
+        frame,
+        "cu_index_tracking_yn",
+        "Y",
+        spec.code,
+        issues,
+        corroboration_note="Y 2,360건에 결측 3,286건이라 결측이 '추종 안 함'인지 미수집인지 구분할 수 없습니다.",
+    )
 
     impossible_diff = frame["du_diff_rt"].abs().gt(100)
     for index in frame.index[impossible_diff.fillna(False)]:
@@ -716,7 +959,9 @@ def prepare_public_fund(
     valid["risk_grade"] = risk.where(risk.between(1, 6))
     valid["risk_label_std"] = valid["risk_grade"].map(RISK_LABELS)
     valid["risk_available"] = valid["risk_grade"].notna()
-    valid["is_sale_available"] = valid["sale_yn"].eq("판매중")
+    valid["is_sale_available"] = valid["sale_yn"].eq("판매중").where(
+        valid["sale_yn"].notna(), pd.NA
+    )
     valid["is_our_company_sale_available"] = valid["thco_sale_yn"].eq("Y").where(
         valid["thco_sale_yn"].notna(), pd.NA
     )
@@ -824,6 +1069,26 @@ def field_policy(
     )
     add(
         "PRBD01N001",
+        "crd_grd",
+        "partial",
+        len(bond),
+        int(bond["credit_grade_available"].sum()),
+        "compare_by_rank",
+        "무부호 표기(AA0 등)를 정규화한 뒤 credit_grade_rank로 비교합니다. 'AA 이상'은 rank<=3입니다. "
+        "C0의 의미는 미확정이라 잠정적으로 C로 취급하고 품질 이력에 남겼습니다.",
+    )
+    add(
+        "PRBD01N001",
+        "pd_evco_crd_grd",
+        "partial",
+        len(bond),
+        int(bond["evaluator_grade_worst_rank"].notna().sum()),
+        "use_worst_grade",
+        "평가사별 등급 콤마 병기를 분해했습니다. 평가사 간 불일치 시 보수적으로 최저등급을 씁니다. "
+        "병기 순서와 평가사 매칭이 미확인이라 순서에 의미를 부여하지 않습니다.",
+    )
+    add(
+        "PRBD01N001",
         "remaining_days",
         "stale_source_field",
         len(bond),
@@ -916,6 +1181,37 @@ def field_policy(
         "compare_observed_only",
         "양수 AUM 관측값만 집계합니다.",
     )
+    add(
+        "PREF02N001",
+        "cu_base_index",
+        "partial",
+        len(overseas),
+        int(overseas["base_index_available"].sum()),
+        "compare_observed_only",
+        "Lipper 센티널 2종을 null로 변환한 뒤의 실질 커버리지입니다. 센티널을 값으로 두면 "
+        "기초지수 결측이 8건으로 보이지만 실제로는 2,705건이 더 결측입니다.",
+    )
+    for column, note in (
+        (
+            "cu_inverse_short_yn",
+            "결측을 N으로 접을 독립 근거가 없어 unknown으로 유지합니다. 인버스 조건 검색은 "
+            "관측된 Y만 대상으로 하고 결측 행의 부재를 단정하지 않습니다.",
+        ),
+        (
+            "cu_index_tracking_yn",
+            "Y 2,360건에 결측 3,286건이라 결측의 의미를 확정할 수 없습니다.",
+        ),
+        ("wu_core_yn", "관측값이 N뿐이라 Y의 부재를 확인할 수 없습니다."),
+    ):
+        add(
+            "PREF02N001",
+            column,
+            "partial_needs_review",
+            len(overseas),
+            int(overseas[column].notna().sum()),
+            "observed_only_no_negation",
+            note,
+        )
     for column, status in (
         ("du_er_1d", "unavailable"),
         ("du_diff_rt", "unavailable"),
@@ -1047,6 +1343,61 @@ def build_reconciliation(
             domestic["listing_status"].eq("ended_before_extract"), "default_search_eligible"
         ].any(),
         "overseas_implausible_diff_removed": not overseas["du_diff_rt"].abs().gt(100).any(),
+        "overseas_index_sentinels_removed": not overseas["cu_base_index"]
+        .isin(LIPPER_INDEX_SENTINELS)
+        .any(),
+        "overseas_index_sentinel_count_matches_flag": int(
+            overseas["base_index_sentinel"].sum()
+        )
+        == int(
+            raw_frames["PREF02N001"]["cu_base_index"]
+            .map(clean_text)
+            .isin(LIPPER_INDEX_SENTINELS)
+            .sum()
+        ),
+        "bond_flat_credit_grades_normalized": not clean_frames["PRBD01N001"][
+            "credit_grade_norm"
+        ]
+        .dropna()
+        .astype(str)
+        .str.fullmatch(r"[A-D]{1,3}0")
+        .any(),
+        "bond_credit_grade_rank_covers_observed": not (
+            clean_frames["PRBD01N001"]["credit_grade_norm"].notna()
+            & clean_frames["PRBD01N001"]["credit_grade_rank"].isna()
+        ).any(),
+        "bond_aa_or_better_includes_flat_aa": int(
+            (clean_frames["PRBD01N001"]["credit_grade_rank"] <= 3).sum()
+        )
+        == int(
+            clean_frames["PRBD01N001"]["crd_grd"].isin(["AAA", "AA+", "AA", "AA0"]).sum()
+        ),
+        "bond_evaluator_grade_count_matches_raw": int(
+            clean_frames["PRBD01N001"]["evaluator_grade_count"].sum()
+        )
+        == int(
+            raw_frames["PRBD01N001"]["PD_EVCO_CRD_GRD"]
+            .map(clean_text)
+            .dropna()
+            .astype(str)
+            .str.count(",")
+            .add(1)
+            .sum()
+        ),
+        "domestic_pension_flag_cross_check": int(
+            domestic["pension_asset_class"].notna().sum()
+        )
+        == int(domestic["is_pension_tradable"].fillna(False).astype(bool).sum()),
+        "derived_booleans_preserve_missing": all(
+            int(clean_frames[code][derived].isna().sum())
+            == int(clean_frames[code][source].isna().sum())
+            for code, source, derived in (
+                ("PREF01N001", "pd_tr_yn", "is_suspended"),
+                ("PREF01N001", "pd_sale_yn", "is_sale_available"),
+                ("PREF02N001", "cu_inverse_short_yn", "is_inverse_or_short"),
+                ("PRFD01N001", "sale_yn", "is_sale_available"),
+            )
+        ),
         "bond_scope_exceptions_excluded_from_domestic_default": not clean_frames[
             "PRBD01N001"
         ].loc[
@@ -1146,6 +1497,24 @@ def build_reconciliation(
             ),
             "overseas_default_search_eligible_count": int(
                 overseas["default_search_eligible"].sum()
+            ),
+            "overseas_base_index_sentinel_count": int(
+                overseas["base_index_sentinel"].sum()
+            ),
+            "overseas_base_index_available_count": int(
+                overseas["base_index_available"].sum()
+            ),
+            "bond_credit_grade_available_count": int(
+                clean_frames["PRBD01N001"]["credit_grade_available"].sum()
+            ),
+            "bond_credit_grade_aa_or_better_count": int(
+                (clean_frames["PRBD01N001"]["credit_grade_rank"] <= 3).sum()
+            ),
+            "bond_evaluator_grade_split_count": int(
+                clean_frames["PRBD01N001"]["evaluator_grade_split"].sum()
+            ),
+            "domestic_pension_tradable_count": int(
+                domestic["is_pension_tradable"].fillna(False).astype(bool).sum()
             ),
             "fund_master_count": len(clean_frames["PRFD01N001"]),
             "fund_risk_available_count": int(

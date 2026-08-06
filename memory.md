@@ -48,7 +48,7 @@
 | 완전한 Lance 인덱스 | 선택 | 기존 manifest도 현재 없음. 해외 ETF 전략은 pgvector 재생성 가능 |
 | 에이전트/API 코드 | 미착수 | HyperCLOVA X, LLM 호출 최대 2회 목표 |
 | 평가셋/자동 테스트 | 미착수 | 대표 질문부터 정의 필요 |
-| 해석 메타데이터 사전 9종 | 협업자 보유·차용 예정 | `papuagigi` 브랜치 `외부데이터/사전/`. 컬럼사전 207행(전 컬럼 커버)·값사전 423행·별칭 110행 등. `term_dictionary`로 적재 |
+| 해석 메타데이터 사전 9종 | 차용·검증 완료 | `외부데이터/사전/` 1,018항. `pipeline/load_dictionary.py`로 `artifacts/data/reference/term_dictionary.csv` 생성. 원본 대조 error 0건 |
 | 브랜치 통합 계약 4종 | 미합의 | 도구 스키마·DB 스키마·응답 4필드·공용 회귀 러너. 세 브랜치 합의 필요 |
 
 ## 확인된 사실
@@ -176,7 +176,8 @@
 - [ ] 국가 단위 지역값과 광역 지역값을 어떤 수준으로 통합할지 결정 필요
 - [ ] `BUYABLE_QUANTITY > 0`을 채권의 `is_tradable`로 볼지 업무 규칙 확정 필요
 - [ ] “위험등급이 낮은” 질의를 항상 5~6으로 해석할지 매번 역질문할지 결정 필요
-- [ ] 부분 coverage에서 모집단 답변을 거부할 최소 coverage 정책 결정 필요
+- [ ] 부분 coverage에서 모집단 답변을 거부할 최소 coverage 정책 결정 필요. `answerability.assess(min_coverage=...)` 기구는 구현했고 임계값만 미정이다. 기본값 `None`(임계 없음)이며 국내 ETF 기초지수 0.18%가 시금석 사례다
+- [ ] 공식 응답 5개 필드 외에 `answerability` 같은 추가 최상위 필드를 넣어도 되는지 08-06 확인 필요. jhnam 브랜치는 이미 추가해 운영 중이다
 - [ ] ETF-공모펀드 중복 상품의 표시/연결 단위 결정 필요
 - [ ] 실시간 시세 또는 외부 API 연동 필요 여부 미정
 - [ ] HyperCLOVA X 모델/호출 계약과 임베딩 모델 확정 필요
@@ -267,6 +268,38 @@
 - 결정: 결측을 반대값으로 접는 것은 **독립 컬럼으로 교차 검증된 경우에만** 허용한다. `cu_etn_yn`은 `pd_grp_no='ETN'` 59건과 행 단위로 일치해 접었고, `cu_inverse_short_yn`은 상품명에 인버스 표기가 있는 306건 중 Y가 167건뿐이라 접지 않고 unknown을 유지했다. 협업자 문서는 두 컬럼 모두 접으라고 했으나 우리 데이터가 후자를 반증한다
 - 결정: 국내 ETP·공모펀드의 `is_sale_available`·`is_suspended`가 결측을 `false`로 접던 것을 NA 유지로 바로잡았다. 현재 결측 0건이라 산출물 수치는 불변이며 `derived_booleans_preserve_missing` assertion으로 재발을 막는다. 거래정지 여부가 불명인 상품은 거래 가능으로 단정하지 않고 기본 검색에서 제외한다
 - blocker: `C0` 137건 의미 미확정(잠정 C로 정규화, 품질 이력에 기록)
+
+### 2026-08-05 — 해석 메타데이터 사전 적재와 원본 대조 검증
+
+- 목표: papuagigi 브랜치 사전 9종을 가져와 원본 스냅샷과 대조 검증 후 적재
+- 변경: `외부데이터/` 12개 파일을 dev-kyung으로 가져옴. `pipeline/load_dictionary.py` 신규 — 3가지 형태(컬럼 207·값 423·개념 388)를 `term_dictionary.csv` 1,018행으로 통합하고, 컬럼사전 양방향 대조·값사전 건수 대조·신용등급 서열 커버리지·값 역방향 커버리지를 검증
+- 검증: 컬럼사전이 4개 데이터셋 207컬럼을 **양방향 100%** 커버. 값사전 423항의 값 존재와 건수가 원본과 **전부 일치**. 관측 신용등급이 전부 서열표에 존재. assertion 3종 통과, 단위 테스트 17건 통과
+- 발견: 값사전의 유일한 빈틈은 공모펀드 `zrin_fd_ivst_risk_gcd`의 센티널 문자열 `NULL` 18,416건 미수록. 이 컬럼의 값 설명 커버리지가 80.74%이고 나머지 85개 컬럼은 100%다
+- 결정: 사전 error(값 부재·건수 불일치·컬럼 불일치)는 파이프라인을 실패시키고, warning(사전에 없는 관측값)은 커버리지로 남긴다
+- 다음: `zrin_fd_ivst_risk_gcd='NULL'` 센티널 항목을 값사전에 추가할지 협업자와 합의. PostgreSQL `term_dictionary` DDL 작성
+
+### 2026-08-05 — jhnam 브랜치 리뷰와 답변 가능성 판정 계층 도입
+
+- 목표: jhnam 브랜치(`app/`·`scripts/`)에서 우리에게 없는 스펙을 차용
+- 변경: `pipeline/answerability.py` 신규. `field_policy.csv`(데이터 계층)와 대상 행을 결합해 `answerable`/`partial_coverage`/`unsupported_field`/`no_matching_rows` 4상태를 판정한다. `rank()`는 비교 필수 컬럼이 모두 관측된 행만 남기고 정렬한다
+- 차용: jhnam의 4상태 모델, `think_trace` 도구 이벤트 형식, LLM 교체 지점(`parse_question`/`render_answer`)만 분리하고 필터·정렬은 항상 코드가 계산하는 구조
+- 교정: jhnam은 `available_count`를 컬럼별 최솟값으로 계산해 실제 비교 가능 행보다 크게 나온다. 우리는 교집합으로 계산한다. 국내 활성 ETF에서 총보수·AUM을 함께 요구하면 최솟값 방식은 67 또는 1,136이 나오지만 교집합은 67이고 1,072건이 제외된다
+- 교정: jhnam은 컬럼 존재 여부만 확인해 전량 0 컬럼도 통과시킨다. 우리는 `field_policy`의 `reject_query`를 `unsupported_field`로 판정한다
+- 추가: `COLUMN_POLICY_ALIASES`로 파생 컬럼(`expense_ratio`)을 정책 컬럼(`cu_charge_rt`)에 연결한다. 이 대응이 없으면 정책이 조용히 무시된다
+- 검증: 단위 테스트 32건 통과. 실데이터에서 총보수·AUM 질의는 `partial_coverage`(67/1,139, 주의 문구 2개), 추적오차율 질의는 `unsupported_field`, 기초지수 질의는 `min_coverage=0.05`에서 `unsupported_field`로 판정됨
+- 미차용: jhnam의 taxonomy 매핑 실물(`data_clean/taxonomy_mapping.csv`)은 우리 seed와 스키마가 거의 같고 내용이 채워져 있으나, 사람 승인 원칙에 따라 자동 반영하지 않았다
+
+### 2026-08-05 — 상품군 교차 통합 뷰 구현과 jhnam 자산 반입
+
+- 목표: `PROJECT_GUIDE` 5장에 명세만 있던 `product_unified`를 실제로 구현하고, jhnam에서 가져올 수 있는 파일을 전부 반입
+- 변경: `pipeline/build_unified_view.py` 신규. 4개 정제 테이블을 60,911행 공통 계층으로 합친다. 상품군 6종(BOND 42,394 / DOMESTIC_ETF 1,201 / DOMESTIC_ETN 532 / OVERSEAS_ETF 5,587 / OVERSEAS_ETN 59 / FUND 11,138)
+- 설계: 지표마다 값·`_available`·`_source`·`_as_of` 4종을 함께 싣는다. 상품군에 개념이 없는 지표는 0이 아니라 결측으로 두고 사유를 `_source`에 남긴다(`not_applicable_for_product_type` / `column_absent_in_source`)
+- 설계: 기준일을 지표별로 분리했다. 추출일은 2026-07-11이지만 국내 총보수·AUM 기준일은 2026-06-15, 해외 AUM 기준일은 2026-06-14다. 공모펀드는 개별 기준일 컬럼이 없어 `_as_of`가 null이다
+- 설계: taxonomy 표준코드는 비우고 `unmapped` 상태와 원본값을 함께 싣는다. 승인 전 매핑을 확정처럼 내려보내지 않는다
+- 검증: 단위 테스트 42건 통과. `_available=true`인데 값이 없는 행 0건, 상품군별 키 중복 0건을 assertion으로 고정
+- 반입: `manifest/2.manifest`(삭제 상태였던 Lance manifest 복구), `manifest/과제소개_금융상품Agent.md`, `external_data/펀드별 보수비용비교_20260805.xls`(KOFIA 원본 7.7MB), `config/taxonomy_mapping_proposal.csv`, `reference/jhnam/` 12개 파일
+- 확인: taxonomy 제안본 104행이 우리 seed 102행을 **전부 덮는다**(mapped 92·ambiguous 11·unmapped 1). ambiguous 11건은 `Global Ex US`, `Hong Kong`, `North America`, `재간접` 등 실제로 판단이 필요한 항목이다
+- blocker: taxonomy 제안본은 승인 전까지 파이프라인에 연결하지 않는다. ambiguous 11건 판단 필요
 
 ## 로그 추가 템플릿
 

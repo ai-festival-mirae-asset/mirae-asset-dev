@@ -1,7 +1,11 @@
+import tempfile
 import unittest
 from datetime import date, datetime, timezone
+from pathlib import Path
 
 import pandas as pd
+
+from pipeline.load_dictionary import PRODUCT_GROUP_TO_CODE, read_dictionary
 
 from pipeline.prepare_data import (
     CREDIT_GRADE_RANK,
@@ -106,6 +110,22 @@ class ObservedFlagUnitTests(unittest.TestCase):
         self.assertEqual(
             issues.frame()["issue_code"].tolist(), ["flag_fill_rule_not_applicable"]
         )
+
+
+class DictionaryLoaderUnitTests(unittest.TestCase):
+    def test_bom_and_padding_are_stripped(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "사전.csv"
+            path.write_text("﻿분류,키,한글명\n  등급 ,  AA0  ,무부호\n", encoding="utf-8")
+            frame = read_dictionary(path)
+            self.assertEqual(list(frame.columns), ["분류", "키", "한글명"])
+            self.assertEqual(frame.loc[0, "키"], "AA0")
+            self.assertEqual(frame.loc[0, "분류"], "등급")
+
+    def test_product_group_maps_to_dataset_code(self) -> None:
+        self.assertEqual(PRODUCT_GROUP_TO_CODE["국내채권"], "PRBD01N001")
+        self.assertEqual(PRODUCT_GROUP_TO_CODE["해외ETF"], "PREF02N001")
+        self.assertEqual(len(PRODUCT_GROUP_TO_CODE), 4)
 
 
 class TimePolicyUnitTests(unittest.TestCase):

@@ -47,3 +47,6 @@ desktop.ini
 scratch/
 notes/
 *.local.md
+
+# Regenerable pipeline output (run scripts/normalize_data.py etc. to rebuild)
+data_clean/

@@ -1,0 +1,51 @@
+ko,en_terms,note
+반도체,semiconductor;chip,벡터 오답 실측 케이스(로보틱스 1위) — lexical anchor 필수. M-13/H-04
+로봇,robot;robotics,휴머노이드 포함. M-26
+로보틱스,robot;robotics,
+휴머노이드,humanoid;robot,M-26
+인공지능,artificial intelligence;AI,
+배당,dividend;income,M-12/H-18
+소형주,small cap;small-cap;smallcap,M-11 (WisdomTree U.S. SmallCap 실측)
+대형주,large cap;large-cap,
+성장주,growth,
+가치주,value,
+2차전지,battery;lithium,
+배터리,battery;lithium,
+전기차,electric vehicle;EV,
+바이오,bio;biotech;pharmaceutical;health,H-22
+헬스케어,healthcare;health care,
+우주항공,aerospace;space;defense,H-02/M-24
+방산,defense;aerospace,M-20
+방위산업,defense;aerospace,
+조선,shipbuilding;shipbuilder,H-21 (국내 상품명 위주 — 해외 서술은 드묾)
+리츠,REIT;real estate,H-07
+부동산,real estate;REIT,
+금,gold;precious metal,H-25 — 1글자라 문맥어(금 투자·금에) 결합 시만 anchor 로 사용
+원자재,commodity;commodities;natural resources,H-25
+원유,oil;crude;energy,
+에너지,energy,
+친환경,clean energy;renewable;ESG,
+신재생,renewable;clean energy,
+태양광,solar,
+풍력,wind,
+은행,bank;financial,
+금융,financial;finance,
+기술주,technology;tech,
+나스닥,Nasdaq;NASDAQ,H-24
+코스닥,KOSDAQ,국내 전용 — 해외 서술 anchor 아님
+채권,bond;fixed income;treasury,
+국채,treasury;government bond;sovereign,
+회사채,corporate bond;credit,
+하이일드,high yield;high-yield,
+커버드콜,covered call;buywrite,H-11/H-20
+인버스,inverse;short,H-16
+레버리지,leverage;leveraged;2X,H-16
+미국,U.S.;United States;US;America,지역
+중국,China;Chinese,지역. M-03/H-27
+일본,Japan;Japanese,지역
+인도,India;Indian,지역. L-19/M-30
+유럽,Europe;European,지역
+신흥국,emerging market;emerging markets,지역
+베트남,Vietnam,지역
+브라질,Brazil,지역
+양자컴퓨팅,quantum computing;quantum,M-28

@@ -1,0 +1,23 @@
+{
+  "_설명": "미확정 해석 정책 룩업 (S2_PLAN §2 — '미확정 정책 전면 룩업화'). 주최 Q&A 확정 시 이 파일만 교체(무배포). 9/6 이후 코드 변경 금지 규정 대비.",
+
+  "rating_at_or_above_includes_minus": false,
+  "_rating": "'AA 이상' 해석 — false: 문자 그대로(rank<=3, AA- 미포함) / true: 등급대 포함(rank<=4). **8/14 사용자 확정: 문자 그대로.** 'AA급/AA등급대 이상' 표현은 별도 인식해 AA- 포함(라우터 band 처리). 채택 해석은 답변에 항상 명시.",
+
+  "low_risk_grades": [5, 6],
+  "high_risk_grades": [1, 2],
+  "_risk": "위험등급 1=매우 높음 ~ 6=매우 낮음(실측). '낮은 위험'=5~6, '높은 위험'=1~2 해석 — 답변에 해석 기준 명시.",
+
+  "coverage_partial_threshold_pct": 30.0,
+  "_coverage": "필드 커버리지가 이 값 미만이면 partial(한계 문구 의무).",
+
+  "buyable_rule": "drv_is_buyable",
+  "_buyable": "매수가능 판정 — drv_is_buyable 파생 플래그 채택(§8.4 미확정, 기준을 답변에 명시).",
+
+  "recent_window_months": 6,
+  "_recent": "'최근' 해석 — 기준일(7/11) 직전 N개월. H-28/H-02 계열.",
+
+  "default_limit": 10,
+  "trap_similar_suggest_limit": 3,
+  "_trap": "미존재 개체/상품 질의에서 '이것을 찾으셨나요' 유사 후보 제시 상한 — 안내까지만, 존재 근거 아님."
+}

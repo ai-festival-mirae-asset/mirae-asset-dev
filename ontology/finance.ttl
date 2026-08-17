@@ -1,0 +1,364 @@
+# ============================================================================
+# 미래에셋증권 AI Festival — 금융상품 도메인 온톨로지 (초안 v0.1, 2026-08-11)
+#
+# 무엇: 제공 데이터 4종(국내채권·국내ETF·해외ETF·공모펀드)을 하나의 언어로
+#       질의하기 위한 클래스·관계·제약 정의. 소스코드 필수 제출물(ROADMAP §1·§3).
+# 왜  : ① 용어 표준화(운용사=자산운용사=AMC) ② 저장 전 무결성 검증(등급 범위,
+#       ETF/ETN disjoint, 단일 운용사) ③ 역관계·상위클래스 추론("미래에셋자산운용이
+#       운용하는 모든 ETF") ④ 런타임 통제 계층(프롬프트 주입) — 8/6 설명회 확정.
+#
+# 어휘 출처: external_data/dictionaries/ 사전 9종(컬럼 207개 해석·별칭·등급·코드) +
+#            schema 샘플의 axis_* 힌트(공통 분류 축) + 8/6 설명회 테크 세션.
+# 인스턴스 추출: kg/build_kg.py 가 이 어휘로 전처리 CSV 4종 → N-Triples 를 생성한다.
+#   범위형 제약(등급 1~6 등)은 owl 로 표현하기 장황하므로 build_kg.py 가 적재 전
+#   코드로 검증하고 위반을 kg/output/build_report.json 에 집계한다. SHACL(pyshacl)
+#   도입 여부는 8/8 총검토 안건(ROADMAP §8.1).
+#
+# Competency Questions (이 온톨로지가 답을 표현할 수 있어야 하는 질문):
+#   CQ1. TIGER 200의 운용사는?                              — mf:managedBy      [S1 DoD]
+#   CQ2. 미래에셋자산운용이 운용하는 모든 ETF는?             — mf:manages (역관계)
+#   CQ3. 위험등급 3 이하 국내ETF 중 1년 수익률 상위 5개는?   — mf:riskGrade + mf:return1y
+#   CQ4. KODEX 200의 기초지수는?                            — mf:tracksIndex
+#   CQ5. 신용등급 AA 이상 회사채는?                          — mf:creditRatingRank + mf:bondClass
+#   CQ6. 삼성전자가 포함된 ETF는?                            — mf:holdsConstituent   [8/13 활성화]
+#   CQ7. 에코프로의 상장 자회사를 편입한 ETF의 운용사는?      — [부분] CQ6 가동 + mf:subsidiaryOf 후속
+#   트랩. 신용등급 AAAA 채권은? → 값 도메인(AAA~D) 밖 — "존재하지 않음"이 정답.
+#
+# URI 정책:
+#   스키마   mf:  = https://ai-festival-mirae-asset.github.io/ontology/finance#
+#   인스턴스 mfr: = https://ai-festival-mirae-asset.github.io/resource/
+#     상품:   mfr:bond/{PD_NO} · mfr:kr-etf/{pd_itm_no} · mfr:global-etf/{pd_itm_no}
+#             · mfr:fund/{itm_no}
+#     회사:   mfr:company/{원시명 슬러그} (공모펀드는 mfr:company/code-{기관코드})
+#     지수:   mfr:index/{원시명 슬러그}
+#   회사·지수 노드는 원시 표기 기준이다 — "미래에셋"(국내ETF)과 "미래에셋자산운용"은
+#   현 단계에서 별개 노드이며, 별칭 사전 기반 entity resolution 은 후속 작업(§후속).
+# ============================================================================
+
+@prefix mf:   <https://ai-festival-mirae-asset.github.io/ontology/finance#> .
+@prefix mfr:  <https://ai-festival-mirae-asset.github.io/resource/> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+<https://ai-festival-mirae-asset.github.io/ontology/finance>
+    a owl:Ontology ;
+    rdfs:label "금융상품 온톨로지"@ko ;
+    owl:versionInfo "0.2 — 2026-08-13 구성종목 확장 (0.1: 2026-08-11 초안). 데이터 기준일 2026-07-11 스냅샷 · 구성종목은 2026-07-10(직전 거래일, KRX)" ;
+    rdfs:comment "제공 마스터 4종 + 비정형 수집물(KRX 구성종목 등)을 지식그래프로 연결하기 위한 스키마. 결측은 트리플을 만들지 않는다 — 값이 없는 것은 '확인할 수 없음' 답변의 근거다."@ko .
+
+# ---------------------------------------------------------------------------
+# 1. 클래스 — 상품 계층
+# ---------------------------------------------------------------------------
+
+mf:FinancialProduct a owl:Class ;
+    rdfs:label "금융상품"@ko ;
+    rdfs:comment "모든 상품의 공통 상위클래스. 공통 속성(productId·riskGrade·region·assetClass 등)의 도메인 — schema 샘플 axis_* 힌트의 '상품군을 넘나드는 공통 축'을 클래스 계층으로 구현한다."@ko .
+
+mf:Bond a owl:Class ;
+    rdfs:subClassOf mf:FinancialProduct ;
+    rdfs:label "채권"@ko ;
+    rdfs:comment "국내채권 마스터(PRBD01N001). 발행 주체(issuedBy)·만기·표면금리·신용등급을 가진다."@ko .
+
+mf:ExchangeTradedProduct a owl:Class ;
+    rdfs:subClassOf mf:FinancialProduct ;
+    rdfs:label "상장지수상품(ETP)"@ko ;
+    rdfs:comment "거래소 상장 상품의 상위클래스. 국내ETF 마스터의 30.7%는 ETF가 아니라 ETN이므로(실측) 하위에서 반드시 구분한다."@ko .
+
+mf:ETF a owl:Class ;
+    rdfs:subClassOf mf:ExchangeTradedProduct ;
+    rdfs:label "상장지수펀드(ETF)"@ko ;
+    owl:disjointWith mf:ETN ;
+    rdfs:comment "한 상품이 ETF이면서 ETN일 수 없다(disjoint). 'ETF 추천' 질의에 ETN이 섞이면 오답 — 이 제약이 근거."@ko .
+
+mf:ETN a owl:Class ;
+    rdfs:subClassOf mf:ExchangeTradedProduct ;
+    rdfs:label "상장지수증권(ETN)"@ko .
+
+mf:PublicFund a owl:Class ;
+    rdfs:subClassOf mf:FinancialProduct ;
+    rdfs:label "공모펀드"@ko ;
+    rdfs:comment "공모펀드 마스터(PRFD01N001). 인스턴스는 itm_no 단위 마스터이며 클래스(판매 속성) 행은 shareClassCount 로 요약한다 — 동일 itm_no 그룹에서 달라지는 컬럼은 prfd_attr_cd 뿐임이 검증되어 있다(8/5)."@ko .
+
+# 상품군 간 disjoint — 교차 질의 시 상품군 오분류 방지
+mf:Bond owl:disjointWith mf:ExchangeTradedProduct , mf:PublicFund .
+mf:ExchangeTradedProduct owl:disjointWith mf:PublicFund .
+
+# ---------------------------------------------------------------------------
+# 2. 클래스 — 참여자·참조 개체
+# ---------------------------------------------------------------------------
+
+mf:Organization a owl:Class ;
+    rdfs:label "기관"@ko .
+
+mf:ManagementCompany a owl:Class ;
+    rdfs:subClassOf mf:Organization ;
+    rdfs:label "운용사"@ko ;
+    rdfs:comment "용어 표준화: 운용사 = 자산운용사 = AMC(Asset Management Company). ETN은 발행 증권사가 이 자리에 온다(원천 컬럼 cu_fund_mgmt_co). 공모펀드는 기관코드만 제공되어(or_co_xtn_itt_cd) 명칭 없는 코드 노드로 적재한다."@ko .
+
+mf:Issuer a owl:Class ;
+    rdfs:subClassOf mf:Organization ;
+    rdfs:label "발행기관"@ko ;
+    rdfs:comment "채권 발행 주체(PD_PBCM). 국채는 '대한민국'. ManagementCompany 와 disjoint 가 아니다 — 같은 기관이 발행도 운용도 할 수 있다."@ko .
+
+mf:Index a owl:Class ;
+    rdfs:label "지수"@ko ;
+    rdfs:comment "ETP의 기초지수(cu_base_index)와 펀드의 벤치마크(bmrk_nm). 국내ETF는 실효 커버리지 0.18%라 대부분 노드가 없다 — 없음이 곧 '확인할 수 없음'의 근거."@ko .
+
+# ---------------------------------------------------------------------------
+# 3. 객체 프로퍼티 (관계)
+# ---------------------------------------------------------------------------
+
+mf:managedBy a owl:ObjectProperty , owl:FunctionalProperty ;
+    rdfs:domain mf:FinancialProduct ;
+    rdfs:range  mf:ManagementCompany ;
+    rdfs:label "…에 의해 운용된다"@ko ;
+    owl:inverseOf mf:manages ;
+    rdfs:comment "FunctionalProperty = 하나의 상품은 정확히 하나의 운용 주체를 가진다(법령 — 8/6 설명회). 역관계 manages 로 CQ2(운용사→상품 목록) 추론이 성립한다."@ko .
+
+mf:manages a owl:ObjectProperty ;
+    rdfs:domain mf:ManagementCompany ;
+    rdfs:range  mf:FinancialProduct ;
+    rdfs:label "…을 운용한다"@ko ;
+    owl:inverseOf mf:managedBy .
+
+mf:issuedBy a owl:ObjectProperty , owl:FunctionalProperty ;
+    rdfs:domain mf:Bond ;
+    rdfs:range  mf:Issuer ;
+    rdfs:label "…에 의해 발행되었다"@ko ;
+    owl:inverseOf mf:issues .
+
+mf:issues a owl:ObjectProperty ;
+    rdfs:domain mf:Issuer ;
+    rdfs:range  mf:Bond ;
+    rdfs:label "…을 발행했다"@ko ;
+    owl:inverseOf mf:issuedBy .
+
+mf:tracksIndex a owl:ObjectProperty ;
+    rdfs:domain mf:ExchangeTradedProduct ;
+    rdfs:range  mf:Index ;
+    rdfs:label "…지수를 추종한다"@ko .
+
+mf:hasBenchmark a owl:ObjectProperty ;
+    rdfs:domain mf:PublicFund ;
+    rdfs:range  mf:Index ;
+    rdfs:label "…을 벤치마크로 한다"@ko .
+
+# ---------------------------------------------------------------------------
+# 4. 데이터 프로퍼티 — 공통 축 (axis_* 힌트 대응)
+# ---------------------------------------------------------------------------
+
+mf:productId a owl:DatatypeProperty , owl:FunctionalProperty ;
+    rdfs:domain mf:FinancialProduct ; rdfs:range xsd:string ;
+    rdfs:label "상품번호"@ko ;
+    rdfs:comment "원천 키: 채권 PD_NO · ETP pd_itm_no · 펀드 itm_no. 모든 답변의 근거(source row) 역추적 키."@ko .
+
+mf:isin a owl:DatatypeProperty ;
+    rdfs:domain mf:FinancialProduct ; rdfs:range xsd:string ;
+    rdfs:label "ISIN 코드"@ko ;
+    rdfs:comment "해외ETF는 공백 9행·중복 50그룹이 실측되어 키로 쓰지 않는다(키는 productId)."@ko .
+
+mf:sourceTable a owl:DatatypeProperty ;
+    rdfs:domain mf:FinancialProduct ; rdfs:range xsd:string ;
+    rdfs:label "출처 테이블"@ko ;
+    rdfs:comment "근거 표시(필수 규칙) 지원 — 테이블 ID(PRBD01N001 등). 데이터 기준일은 2026-07-11 스냅샷이며 필드별 실제 기준일이 다를 수 있다(ROADMAP §5)."@ko .
+
+mf:productGroup a owl:DatatypeProperty ;
+    rdfs:domain mf:FinancialProduct ; rdfs:range xsd:string ;
+    rdfs:label "상품군"@ko ;
+    rdfs:comment "국내채권·국내ETF·해외ETF·공모펀드 — 제공 테이블 기준 상품군 표기."@ko .
+
+mf:shortName a owl:DatatypeProperty ;
+    rdfs:domain mf:FinancialProduct ; rdfs:range xsd:string ;
+    rdfs:label "약칭"@ko .
+
+mf:riskGrade a owl:DatatypeProperty , owl:FunctionalProperty ;
+    rdfs:domain mf:FinancialProduct ; rdfs:range xsd:integer ;
+    rdfs:label "위험등급"@ko ;
+    rdfs:comment "정수 1~6 (1=매우 높은 위험, 6=매우 낮은 위험 — drv_risk_grade 통일 규칙). 범위 밖 값은 적재 전 거부한다(무결성 — '99등급'이라고 답하느니 없다고 답하는 게 낫다). 설명회 발언은 1~5였으나 데이터 실측 1~6을 우선한다(ROADMAP §8.4). 해외ETF는 원천에 위험등급이 없어 이 속성이 없다 = '확인할 수 없음' 케이스."@ko .
+
+mf:expenseRatio a owl:DatatypeProperty ;
+    rdfs:domain mf:FinancialProduct ; rdfs:range xsd:decimal ;
+    rdfs:label "총보수요율(%)"@ko ;
+    rdfs:comment "원천 cu_charge_rt. 값 0 이 무보수인지 미수집인지 미확정(Q&A 문의 중 — §8.3)이므로 랭킹 시 주의."@ko .
+
+mf:aum a owl:DatatypeProperty ;
+    rdfs:domain mf:FinancialProduct ; rdfs:range xsd:decimal ;
+    rdfs:label "AUM"@ko ;
+    rdfs:comment "du_last_aum. ETN 은 전량 0 이 실측되어 적재하지 않는다 — ETN 규모는 netAssets(pd_net_tamt)를 쓴다."@ko .
+
+mf:netAssets a owl:DatatypeProperty ;
+    rdfs:domain mf:FinancialProduct ; rdfs:range xsd:decimal ;
+    rdfs:label "순자산총액"@ko .
+
+mf:currency a owl:DatatypeProperty ;
+    rdfs:domain mf:FinancialProduct ; rdfs:range xsd:string ;
+    rdfs:label "통화"@ko .
+
+mf:tradingCurrency a owl:DatatypeProperty ;
+    rdfs:domain mf:ExchangeTradedProduct ; rdfs:range xsd:string ;
+    rdfs:label "거래통화"@ko .
+
+mf:assetClass a owl:DatatypeProperty ;
+    rdfs:domain mf:FinancialProduct ; rdfs:range xsd:string ;
+    rdfs:label "투자자산군"@ko ;
+    rdfs:comment "원시값 보존(wu_inv_ast_type 등). 상품군별 표기·언어가 달라 표준화는 taxonomy 매핑 계약(사람 검토·버전 관리) 확정 후 SKOS 개념 체계로 승격한다(§후속)."@ko .
+
+mf:region a owl:DatatypeProperty ;
+    rdfs:domain mf:FinancialProduct ; rdfs:range xsd:string ;
+    rdfs:label "투자지역"@ko ;
+    rdfs:comment "원시값 보존(wu_inv_rgn·fd_ivst_rgn_desc). 표준화는 assetClass 와 동일하게 후속."@ko .
+
+mf:listingStatus a owl:DatatypeProperty ;
+    rdfs:domain mf:FinancialProduct ; rdfs:range xsd:string ;
+    rdfs:label "상장상태"@ko ;
+    rdfs:comment "active / delisted / suspended (drv_listing_status). 기본 검색은 active 만 — 거래종료 212건 혼재 실측."@ko .
+
+mf:listedDate a owl:DatatypeProperty ;
+    rdfs:domain mf:FinancialProduct ; rdfs:range xsd:date ;
+    rdfs:label "상장일(거래가능일)"@ko .
+
+mf:delistedDate a owl:DatatypeProperty ;
+    rdfs:domain mf:FinancialProduct ; rdfs:range xsd:date ;
+    rdfs:label "거래종료일"@ko .
+
+mf:return1y a owl:DatatypeProperty ;
+    rdfs:domain mf:FinancialProduct ; rdfs:range xsd:decimal ;
+    rdfs:label "1년 수익률(%)"@ko ;
+    rdfs:comment "거래종료 상품의 -100% 가짜 수익률은 전처리에서 이미 NULL 처리됨(R27)."@ko .
+
+mf:returnYtd a owl:DatatypeProperty ;
+    rdfs:domain mf:FinancialProduct ; rdfs:range xsd:decimal ;
+    rdfs:label "YTD 수익률(%)"@ko ;
+    rdfs:comment "YTD = 2026-01-01 ~ 데이터 기준일(2026-07-11) 수익률로 해석한다(8/6 확정 비즈니스 규칙)."@ko .
+
+# ---------------------------------------------------------------------------
+# 5. 데이터 프로퍼티 — 채권 전용
+# ---------------------------------------------------------------------------
+
+mf:bondClass a owl:DatatypeProperty ;
+    rdfs:domain mf:Bond ; rdfs:range xsd:string ;
+    rdfs:label "채권 대분류"@ko ;
+    rdfs:comment "STD_PD_MCLS_NM: 국공채/특수채/회사채/개인투자용국채/외화채권-회사채/외화채권-금융채."@ko .
+
+mf:bondKind a owl:DatatypeProperty ;
+    rdfs:domain mf:Bond ; rdfs:range xsd:string ;
+    rdfs:label "채권종류"@ko .
+
+mf:issueDate a owl:DatatypeProperty ;
+    rdfs:domain mf:Bond ; rdfs:range xsd:date ;
+    rdfs:label "발행일"@ko .
+
+mf:maturityDate a owl:DatatypeProperty ;
+    rdfs:domain mf:Bond ; rdfs:range xsd:date ;
+    rdfs:label "만기일"@ko ;
+    rdfs:comment "영구채(원천 센티널 99991231)는 만기일 트리플을 만들지 않고 isPerpetual=true 로 표기. 잔존만기는 저장하지 않는다 — 요청 시점에 재계산(pipeline/time_policy.py)."@ko .
+
+mf:maturityStatus a owl:DatatypeProperty ;
+    rdfs:domain mf:Bond ; rdfs:range xsd:string ;
+    rdfs:label "만기상태"@ko ;
+    rdfs:comment "active / matured / matures_on_snapshot / unknown (drv_maturity_status, 기준일 스냅샷 기준). 기본 검색은 active 만 — 38%가 이미 만기 실측."@ko .
+
+mf:isPerpetual a owl:DatatypeProperty ;
+    rdfs:domain mf:Bond ; rdfs:range xsd:boolean ;
+    rdfs:label "영구채 여부"@ko .
+
+mf:isBuyable a owl:DatatypeProperty ;
+    rdfs:domain mf:Bond ; rdfs:range xsd:boolean ;
+    rdfs:label "매수가능 여부(파생)"@ko ;
+    rdfs:comment "drv_is_buyable. 'BUYABLE_QUANTITY>0 = 매수가능' 업무 규칙은 미확정(§8.4) — 확정 전 참고 속성."@ko .
+
+mf:couponRate a owl:DatatypeProperty ;
+    rdfs:domain mf:Bond ; rdfs:range xsd:decimal ;
+    rdfs:label "표면이율(연 %)"@ko .
+
+mf:creditRating a owl:DatatypeProperty ;
+    rdfs:domain mf:Bond ; rdfs:range xsd:string ;
+    rdfs:label "신용등급(정규화)"@ko ;
+    rdfs:comment "drv_crd_grd_norm — AAA~D, 무부호 플랫 표기(AA0→AA) 정규화 완료. 값 도메인 밖 등급(예: AAAA)은 존재하지 않는다 — 트랩 방어의 근거."@ko .
+
+mf:creditRatingRank a owl:DatatypeProperty ;
+    rdfs:domain mf:Bond ; rdfs:range xsd:integer ;
+    rdfs:label "신용등급 서열"@ko ;
+    rdfs:comment "AAA=1 ~ D=20 (credit_rating.csv). 'AA 이상' = rank ≤ 4."@ko .
+
+# ---------------------------------------------------------------------------
+# 6. 데이터 프로퍼티 — ETP·펀드 전용
+# ---------------------------------------------------------------------------
+
+mf:isInverse a owl:DatatypeProperty ;
+    rdfs:domain mf:ExchangeTradedProduct ; rdfs:range xsd:boolean ;
+    rdfs:label "인버스 여부"@ko ;
+    rdfs:comment "해외ETF drv_is_inverse — 플래그성 컬럼(채워진 것만 Y, NULL=N 해석 규칙)."@ko .
+
+mf:isIncompleteRecord a owl:DatatypeProperty ;
+    rdfs:domain mf:FinancialProduct ; rdfs:range xsd:boolean ;
+    rdfs:label "핵심 필드 희소 행"@ko ;
+    rdfs:comment "해외ETF drv_incomplete_core=true 8행 — 기본 랭킹에서 제외 태깅."@ko .
+
+mf:fundAttribute a owl:DatatypeProperty ;
+    rdfs:domain mf:PublicFund ; rdfs:range xsd:string ;
+    rdfs:label "운용속성"@ko ;
+    rdfs:comment "or_attr_desc: 주식형·채권형·MMF·재간접 등."@ko .
+
+mf:managementCompanyCode a owl:DatatypeProperty ;
+    rdfs:domain mf:PublicFund ; rdfs:range xsd:string ;
+    rdfs:label "운용회사 기관코드"@ko ;
+    rdfs:comment "or_co_xtn_itt_cd — 공모펀드는 운용사 명칭이 원천에 없어 코드만 적재. 코드→명칭 해석은 entity resolution 후속 과제."@ko .
+
+mf:shareClassCount a owl:DatatypeProperty ;
+    rdfs:domain mf:PublicFund ; rdfs:range xsd:integer ;
+    rdfs:label "판매 클래스 수"@ko ;
+    rdfs:comment "동일 itm_no 의 (itm_no, prfd_attr_cd) 행 수 — 평균 8.6개. 집계 중복 방지의 근거."@ko .
+
+mf:isOnSale a owl:DatatypeProperty ;
+    rdfs:domain mf:FinancialProduct ; rdfs:range xsd:boolean ;
+    rdfs:label "판매중 여부"@ko .
+
+mf:companyCode a owl:DatatypeProperty ;
+    rdfs:domain mf:Organization ; rdfs:range xsd:string ;
+    rdfs:label "기관코드"@ko .
+
+# ---------------------------------------------------------------------------
+# 7. 구성종목 (8/13 활성화 — KRX 수집분, CQ6)
+# ---------------------------------------------------------------------------
+
+mf:ListedCompany a owl:Class ;
+    rdfs:subClassOf mf:Organization ;
+    rdfs:label "상장 종목(회사)"@ko ;
+    rdfs:comment "ETF 구성종목으로 등장하는 상장 증권의 발행 주체. 범위(8/13 실측 기반): ① 국내 상장 주식(ST)·예탁증권(DR)·리츠(RT)·인프라펀드(IF)·상장펀드(MF) — URI mfr:company/krx-{6자리 단축코드} ② 해외 상장 주식 — URI mfr:company/isin-{ISIN}(캠브리콘 CNE1000041R8 등). 운용사(명칭 슬러그)·펀드 운용사(code-{기관코드})와 다른 키 공간이라 충돌하지 않는다. 해외 종목은 운용사별 이름 표기가 달라 rdfs:label 을 복수로 가진다. 출처: KRX 정보데이터시스템 ETF PDF(구성종목), 조회 기준일 2026-07-10(데이터 기준일 7/11의 직전 거래일)."@ko .
+
+mf:holdsConstituent a owl:ObjectProperty ;
+    rdfs:domain mf:ExchangeTradedProduct ;
+    rdfs:range  mf:ListedCompany ;
+    rdfs:label "…을 구성종목으로 보유한다"@ko ;
+    owl:inverseOf mf:isConstituentOf ;
+    rdfs:comment "상장 종목(국내 ST·DR·RT·IF·MF + 해외 주식)만 관계로 적재한다 — 현금성(원화현금·CP·CD·스왑)·채권(BN)·파생(FU·OP)·ETF/ETN 편입분(EF·EN, 회사가 아니라 상품)은 그래프에 넣지 않고 수집 CSV(SQL 채널)에 보존한다. 비중(COMPST_RTO)·수량 등 수치도 CSV 소관 — 그래프는 membership 관계만 가진다(채널 역할 분담, ROADMAP §4). CQ6 '삼성전자가 포함된 ETF' · 중-2 유형 '캠브리콘이 편입된 ETF'의 근거."@ko .
+
+mf:isConstituentOf a owl:ObjectProperty ;
+    rdfs:domain mf:ListedCompany ;
+    rdfs:range  mf:ExchangeTradedProduct ;
+    rdfs:label "…의 구성종목이다"@ko ;
+    owl:inverseOf mf:holdsConstituent .
+
+mf:tickerCode a owl:DatatypeProperty , owl:FunctionalProperty ;
+    rdfs:domain mf:ListedCompany ; rdfs:range xsd:string ;
+    rdfs:label "종목코드(6자리, 국내)"@ko ;
+    rdfs:comment "KRX 단축코드(COMPST_ISU_CD). 종목명 표기 변형과 무관한 안정 키 — 자회사 관계(mf:subsidiaryOf, 후속) 연결 시 이 코드로 매칭한다. 국내 종목 전용(해외는 mf:securityIsin)."@ko .
+
+mf:securityIsin a owl:DatatypeProperty , owl:FunctionalProperty ;
+    rdfs:domain mf:ListedCompany ; rdfs:range xsd:string ;
+    rdfs:label "종목 ISIN(해외)"@ko ;
+    rdfs:comment "해외 상장 주식의 식별 키(COMPST_ISU_CD 가 ISIN 형식인 행). 상품의 mf:isin 과 별개 속성 — 도메인이 회사 노드다."@ko .
+
+# ---------------------------------------------------------------------------
+# 8. 후속 확장 (설계 예약 — 아직 인스턴스 없음)
+# ---------------------------------------------------------------------------
+# - mf:subsidiaryOf (ListedCompany → ListedCompany): 자회사 관계 — CQ7 멀티홉.
+#   소스 후보: DART 공시(타법인 출자현황). tickerCode 로 구성종목 노드와 연결.
+# - 해외ETF 구성종목: holdsConstituent 를 그대로 재사용(도메인이 ETP 전체) —
+#   해외 소스 확보 후(ROADMAP §8.3) 회사 키 정책(비상장·해외 코드)만 추가 결정.
+# - mf:AssetClass / mf:Region 의 SKOS 개념 체계 승격: taxonomy 매핑 계약 확정 후.
+# - 펀드 판매 클래스(prfd_attr_cd)의 개별 노드화: 클래스 단위 질의가 필요해지면.
+# - SHACL shapes: 코드 검증(build_kg.py)을 선언적 제약으로 이관 — 8/8 총검토.

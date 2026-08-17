@@ -2,6 +2,22 @@
 # 로컬 datasets/ 에 두거나, 환경변수 MIRAE_DATASETS 로 다른 경로를 지정한다.
 datasets/
 
+# KG 빌드 산출물 — kg/build_kg.py 로 재생성 가능 (수백 MB, 커밋하지 않는다)
+kg/output/
+
+# 벡터 인덱스 산출물 — vector/build_index.py 로 재생성 가능(단, 임베딩 API 비용 발생)
+vector/output/
+
+# RDB 파일 — storage/load_duckdb.py 로 재생성 가능
+storage/output/
+
+# KRX 로그인 세션 쿠키 — 비밀값, 절대 커밋 금지
+external_data/collectors/krx_cookie.txt
+
+# 구성종목 원시 수집 JSON(종목당 1파일, 1,139개) — 수집기로 재생성 가능.
+# 통합 CSV(constituents_*.csv)와 수집 메타는 커밋 대상(팀 공유 산출물).
+external_data/constituents/raw/
+
 # 파이썬
 __pycache__/
 *.py[cod]

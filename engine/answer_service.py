@@ -114,16 +114,30 @@ def _draft_rating_compare(plan):
 
 def _draft_answer(plan, result):
     """규칙 기반 요약 답변 — 생성기가 없거나 실패했을 때의 폴백(항상 동작)."""
+    if plan.intent == "unstructured_info":
+        lines = ["요청하신 상품의 구조·투자전략·동향을 설명할 비정형 자료는 "
+                 "현재 보유 데이터에서 확인할 수 없습니다."]
+        if plan.notes:
+            lines.append("")
+            lines += [f"※ {n}" for n in plan.notes]
+        lines.append(f"(데이터 기준일: 마스터 {AS_OF_MASTER} · 구성종목 {AS_OF_CONSTITUENTS})")
+        return "\n".join(lines)
+
     lines = []
     for o in result.outcomes:
-        if not o.ok or not o.rows:
+        if not o.ok:
+            continue
+        if not o.rows:
+            if o.channel == "sql":
+                lines.append(f"[{o.op}] 조건 일치 결과 0건")
             continue
         rows = o.rows
         if o.channel == "sql":
             if plan.hints.get("order") == "aum" and rows and "pd_net_tamt" in rows[0]:
                 rows = _sort_rows_by_aum(rows)
             head = f"[{o.op}] 결과 {len(rows):,}건"
-            body = [f"  {i}. {_fmt_row(r)}" for i, r in enumerate(rows[:5], 1)]
+            display_rows = int(plan.hints.get("display_rows", 5))
+            body = [f"  {i}. {_fmt_row(r)}" for i, r in enumerate(rows[:display_rows], 1)]
             lines.append("\n".join([head] + body))
         elif o.channel == "graph":
             for r in rows[:3]:
@@ -140,8 +154,11 @@ def _draft_answer(plan, result):
             names = [str(r.get("pd_nm")) for r in rows[:5]]
             lines.append(f"[의미·키워드 결합 검색] 상위: " + " / ".join(names) + f" ({o.note})")
         elif o.channel == "keyword":
-            exact = [r["매칭"] for r in rows if r.get("직접일치")]
-            partial = [r["매칭"] for r in rows if not r.get("직접일치")]
+            if o.op == "fund_class_dictionary":
+                lines += [f"{r['class']}형({r['name']}): {r['meaning']}" for r in rows]
+                continue
+            exact = list(dict.fromkeys(r["매칭"] for r in rows if r.get("직접일치")))
+            partial = list(dict.fromkeys(r["매칭"] for r in rows if not r.get("직접일치")))
             if exact:
                 lines.append("명칭 직접 일치: " + " / ".join(exact[:5]))
             if partial:
@@ -211,6 +228,16 @@ def answer_question(question, ctx, question_id="", today=None,
     result = execute_plan(plan, ctx)
     verdict = validate_answerability(question, plan, result, ctx.index, ctx.policy)
 
+    # 커버리지 수치는 생성 모델이 요약 과정에서 빼먹기 쉽다. 실제 조회된
+    # 분자·분모를 노트로 승격해 생성 답변과 규칙 답변 모두에 강제로 남긴다.
+    for outcome in result.outcomes:
+        if outcome.channel == "sql" and outcome.op == "coverage_check":
+            for row in outcome.rows:
+                coverage_note = (f"{row['field']} 값 보유 {row['non_null']:,}/{row['total']:,}건"
+                                 f"({row['coverage_pct']}%) 기준")
+                if coverage_note not in plan.notes:
+                    plan.notes.append(coverage_note)
+
     evidences = list(result.evidences) + list(verdict.evidences)
     gen_note = ""
     if generator is not None and deadline is not None and deadline.over(deadline.generation_cutoff):
@@ -231,7 +258,7 @@ def answer_question(question, ctx, question_id="", today=None,
                 if r not in plan.notes:
                     plan.notes.append(r)
         answer = None
-        if generator is not None:
+        if generator is not None and not plan.hints.get("skip_generation"):
             raw = generator(question, plan, result, verdict)
             if raw:
                 checked, removed = post_check_answer(

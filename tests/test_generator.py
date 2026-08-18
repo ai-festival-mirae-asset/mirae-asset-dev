@@ -8,10 +8,11 @@ import os
 
 import pytest
 
-from engine.answer_service import answer_question, serialize_answer
-from engine.channels import RuntimeContext
+from engine.answer_service import _draft_answer, answer_question, serialize_answer
+from engine.channels import ChannelOutcome, ExecutionResult, RuntimeContext
 from engine.generator import build_generation_messages, post_check_answer
 from engine.policy import load_policy
+from engine.router import RoutePlan
 from pipeline.entity_index import DB_PATH_DEFAULT, build_entity_index
 from pipeline.evidence import Evidence
 
@@ -45,6 +46,13 @@ def ctx(con, index):
 def _ev(**fields):
     return Evidence(source="PREF01N001", source_id="KR7102110004", channel="sql",
                     as_of="2026-07-11", fields=fields)
+
+
+def test_zero_sql_result_is_stated_explicitly():
+    plan = RoutePlan(intent="constituent_intersection_low_fee")
+    result = ExecutionResult([ChannelOutcome("sql", "constituent_intersection_low_fee", rows=[])])
+    answer = _draft_answer(plan, result)
+    assert "constituent_intersection_low_fee" in answer and "0건" in answer
 
 
 # ---------------------------------------------------------------------------
@@ -117,6 +125,14 @@ def test_generator_not_called_for_refusals(ctx):
 
 
 @needs_db
+def test_unstructured_partial_does_not_expose_semantic_candidates(ctx):
+    out = answer_question("국민성장펀드의 구조와 투자전략 동향을 찾아서 알려줘",
+                          ctx, today=TODAY)
+    assert "비정형 자료" in out["answer"]
+    assert "behavior=partial" in out["think_trace"]
+
+
+@needs_db
 def test_notes_are_forced_into_generated_answer(ctx):
     def bare_generator(question, plan, result, verdict):
         return "조건에 맞는 채권 목록입니다."            # 노트·기준일 누락 생성
@@ -139,6 +155,7 @@ def test_generation_messages_contain_rules_and_context():
                                                       evidences=[_ev(a=1)])])
     msgs = build_generation_messages("질문", plan, result, Verdict("answer"))
     assert msgs[0]["role"] == "system" and "근거에 없는" in msgs[0]["content"]
+    assert "1등급이 매우 높은 위험" in msgs[0]["content"]
     assert "[근거1" in msgs[1]["content"] and "해석 기준 한 줄" in msgs[1]["content"]
 
 

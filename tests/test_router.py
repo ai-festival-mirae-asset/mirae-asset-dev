@@ -19,7 +19,8 @@ from engine.policy import DEFAULTS, load_policy
 from engine.router import (RATING_RANK, RoutePlan, detect_currency,
                            detect_time_flags, extract_percents, extract_ratings,
                            extract_risk_grades, extract_top_n, fallback_plan,
-                           rating_condition, route, route_stage_a)
+                           normalize_product_query, rating_condition, route,
+                           route_stage_a)
 from engine.router_llm import (args_to_plan, build_router_messages,
                                build_router_tool, extract_tool_args)
 from engine.sql_templates import TEMPLATES
@@ -122,6 +123,13 @@ def test_small_extractors():
     assert detect_currency("원화채권 중") == ("KRW", False)
 
 
+def test_product_query_alias_normalization():
+    assert normalize_product_query("타이거 차이나테크 톱텐 정보") == \
+        "TIGER 차이나테크 TOP10 정보"
+    assert normalize_product_query("KB스타 200 구성") == "RISE 200 구성"
+    assert normalize_product_query("킨덱스 미국S&P500 정보") == "ACE 미국S&P500 정보"
+
+
 def test_rrf_fuse_semiconductor_regression():
     """벡터 1위가 로보틱스여도 anchor(키워드) 목록과 결합하면 반도체가 이긴다."""
     vec = ["ROBOTICS", "SEMI-1", "OTHER"]
@@ -167,6 +175,15 @@ def test_router_tool_schema_and_plan_validation():
                          "graph_calls": [{"op": "holding_etfs", "query": "005930"}]},
                         partial)
     assert [c.channel for c in plan.calls] == ["sql", "graph"] and plan.stage == "llm"
+    partial_plan = args_to_plan(
+        {"intent": "부분 조회",
+         "sql_calls": [{"template_id": "etp_top_aum",
+                         "params": {"instrument_type": "ETF", "limit": 5}}],
+         "unsupported_constraints": ["법적 자회사 관계"]},
+        RoutePlan(intent="unresolved"))
+    assert partial_plan.behavior_hint == "partial"
+    assert partial_plan.hints["unsupported_constraints"] == ["법적 자회사 관계"]
+    assert any("미지원 조건" in note for note in partial_plan.notes)
     with pytest.raises(KeyError):
         args_to_plan({"intent": "x", "sql_calls": [{"template_id": "없는것"}]}, partial)
     with pytest.raises(ValueError, match="필수"):
@@ -229,6 +246,162 @@ def test_route_L11_top_aum_executes_kodex200(con, index):
 def test_route_L21_fund_counts(index):
     plan = _route(index, "공모펀드는 총 몇 개야?")
     assert plan.calls[0].op == "fund_counts" and plan.stage == "rule"
+
+
+@needs_db
+def test_route_L22_on_sale_fund_uses_real_sale_values(con, index):
+    plan = _route(index, "지금 판매 중인 주식형 공모펀드 보여줘")
+    result = execute_plan(plan, RuntimeContext(con=con, index=index))
+    rows = result.outcomes[0].rows
+    assert rows and all(str(r["sale_yn"]).replace(" ", "") == "판매중" for r in rows)
+
+
+@needs_db
+def test_route_fund_current_sale_and_our_sale_are_separate(con, index):
+    generic = _route(index, "지금 판매 중인 공모펀드 보여줘")
+    generic_call = next(c for c in generic.calls if c.op == "fund_filter")
+    assert generic_call.params["on_sale_only"] == "Y"
+    assert "thco_sale_only" not in generic_call.params
+
+    ours = _route(index, "미래에셋증권에서 지금 판매 중인 공모펀드 보여줘")
+    ours_call = next(c for c in ours.calls if c.op == "fund_filter")
+    assert ours_call.params["on_sale_only"] == "Y"
+    assert ours_call.params["thco_sale_only"] == "Y"
+    result = execute_plan(ours, RuntimeContext(con=con, index=index))
+    rows = result.outcomes[0].rows
+    assert rows and all(r["sale_yn"] == "판매중" and r["thco_sale_yn"] == "Y"
+                        for r in rows)
+
+    third_party = _route(index, "타사에서 판매 중인 공모펀드 보여줘")
+    assert third_party.intent == "unsupported_field"
+    assert third_party.behavior_hint == "refuse"
+
+
+@needs_db
+def test_route_M08_product_alias_resolves_to_internal_id(index):
+    plan = _route(index, "타이거 차이나테크 톱텐 정보 알려줘")
+    calls = {(c.channel, c.op): c.params for c in plan.calls}
+    assert plan.stage == "rule" and plan.intent == "product_detail"
+    assert calls[("sql", "etp_detail")]["pd_itm_no"].startswith("KR7")
+    assert ("keyword", "lookup") in calls
+
+
+@needs_db
+def test_route_legacy_brand_alias_uses_current_product_index(index):
+    plan = _route(index, "KBSTAR 200 구성종목 알려줘")
+    call = next(c for c in plan.calls if c.op == "constituent_top_weights")
+    assert plan.intent == "product_constituents"
+    assert call.params["etf_id"] == "KR7148020001"
+
+
+@needs_db
+def test_route_M10_unstructured_fund_is_partial(index):
+    plan = _route(index, "국민성장펀드의 구조와 투자전략 동향을 찾아서 알려줘")
+    assert plan.stage == "rule" and plan.intent == "unstructured_info"
+    assert plan.behavior_hint == "partial" and plan.hints["skip_generation"]
+
+
+@needs_db
+def test_route_H06_risk_grade_direction_is_forced(index):
+    plan = _route(index, "캠브리콘이 들어간 ETF들 위험등급은 어때?")
+    assert plan.hints["skip_generation"]
+    assert any("1등급=매우 높은 위험" in n for n in plan.notes)
+
+
+@needs_db
+def test_route_H26_residual_maturity_composite_filter(con, index):
+    plan = _route(index, "지금 기준으로 잔존만기 3년 이하이고 AA 이상이면서 표면금리 4%대인 채권 찾아줘")
+    assert plan.stage == "rule" and plan.intent == "bond_maturing_filter"
+    call = plan.calls[0]
+    assert call.op == "bond_maturing_within"
+    assert call.params["max_rating_rank"] == 3
+    assert call.params["min_coupon"] == 4.0 and call.params["max_coupon"] == 5.0
+    result = execute_plan(plan, RuntimeContext(con=con, index=index))
+    assert result.outcomes[0].ok and result.outcomes[0].rows
+
+
+@needs_db
+def test_route_M30_description_resolves_product_constituents(index):
+    plan = _route(index, "인도 일등기업에 투자하는 액티브 ETF의 구성종목 알려줘")
+    calls = {(c.channel, c.op): c.params for c in plan.calls}
+    assert plan.stage == "rule" and plan.intent == "product_constituents"
+    assert calls[("sql", "constituent_top_weights")]["etf_id"] == "KR70002C0008"
+    assert ("keyword", "lookup") in calls and ("graph", "constituents_of") in calls
+
+
+@needs_db
+def test_route_H01_subsidiary_query_is_partial_and_excludes_derivatives(index):
+    plan = _route(index, "에코프로의 자회사를 편입한 ETF 중에 순자산이 큰 상품의 위험요인을 알려줘")
+    assert plan.intent == "subsidiary_holding_candidates" and plan.behavior_hint == "partial"
+    holder_call = next(c for c in plan.calls if c.op == "constituent_candidate_holders_by_aum")
+    codes = [v for k, v in holder_call.params.items() if k.startswith("code_")]
+    assert "247540" in codes and all(re.fullmatch(r"\d{6}", code) for code in codes)
+    assert plan.hints["skip_generation"]
+
+
+@needs_db
+def test_route_H02_theme_history_is_partial(index):
+    plan = _route(index, "최근 6개월 동안 우주항공 테마와 연결된 이력이 있는 ETF를 정리해줘")
+    assert plan.intent == "theme_history" and plan.behavior_hint == "partial"
+    assert {c.channel for c in plan.calls} == {"keyword", "sql", "vector"}
+    assert any("2026-01-11~2026-07-11" in n for n in plan.notes)
+
+
+@needs_db
+def test_route_H03_constituent_intersection_low_fee(con, index):
+    plan = _route(index, "삼성전자랑 SK하이닉스를 둘 다 담고 있는 ETF 중에서 총보수가 제일 낮은 건 뭐야?")
+    assert plan.intent == "constituent_intersection_low_fee" and plan.behavior_hint == "partial"
+    result = execute_plan(plan, RuntimeContext(con=con, index=index))
+    fee_rows = next(o.rows for o in result.outcomes if o.op == "constituent_intersection_low_fee")
+    assert fee_rows and float(fee_rows[0]["cu_charge_rt"]) == 0.0
+
+
+@needs_db
+def test_route_H13_cross_product_risk_counts(con, index):
+    plan = _route(index, "위험등급 1등급(매우 높은 위험) 상품이 상품군별로 몇 개씩 있어?")
+    assert plan.intent == "risk_grade_cross_counts" and plan.behavior_hint == "partial"
+    result = execute_plan(plan, RuntimeContext(con=con, index=index))
+    groups = {r["product_group"] for r in result.outcomes[0].rows}
+    assert groups == {"국내채권", "국내ETF", "국내ETN", "공모펀드"}
+    bond = next(r for r in result.outcomes[0].rows if r["product_group"] == "국내채권")
+    assert bond["n"] == 15950
+
+
+@needs_db
+def test_route_H15_bond_etf_rating_distribution(con, index):
+    plan = _route(index, "회사채 ETF가 실제로 담고 있는 채권들의 신용등급 분포를 보여줘")
+    assert plan.intent == "bond_etf_rating_dist" and plan.behavior_hint == "partial"
+    result = execute_plan(plan, RuntimeContext(con=con, index=index))
+    rows = result.outcomes[0].rows
+    assert rows and any(r["credit_rating"] == "미확인" for r in rows)
+    assert rows[0]["matched_ratings"] < rows[0]["total_constituents"]
+
+
+@needs_db
+def test_route_L24_fund_ranking_coverage_is_answer_caveat(con, index):
+    ctx = RuntimeContext(con=con, index=index)
+    out = answer_question("1년 수익률이 좋은 공모펀드 5개 알려줘", ctx, today=TODAY)
+    assert "behavior=answer" in out["think_trace"]
+    assert "커버리지" in out["answer"] or "값 보유" in out["answer"]
+
+
+@needs_db
+def test_route_L29_fund_class_dictionary(con, index):
+    plan = _route(index, "펀드 클래스 A형이랑 C형은 뭐가 달라?")
+    assert plan.intent == "fund_class_compare" and plan.behavior_hint == "answer"
+    result = execute_plan(plan, RuntimeContext(con=con, index=index))
+    rows = result.outcomes[0].rows
+    assert {r["class"] for r in rows} == {"A", "C"}
+    assert any("선취판매수수료" in r["meaning"] for r in rows if r["class"] == "A")
+
+
+@needs_db
+def test_route_H19_tdf_empty_constituent_disclosure_is_partial(index):
+    plan = _route(index, "TDF(타깃데이트) ETF 상품이 있어? 뭘 담고 있는지도 알려줘")
+    assert plan.intent == "tdf_products_constituents" and plan.behavior_hint == "partial"
+    assert {c.channel for c in plan.calls} == {"keyword", "sql"}
+    assert any(c.op == "constituent_top_weights" for c in plan.calls)
+    assert any("빈 값" in n for n in plan.notes)
 
 
 @needs_db
@@ -313,9 +486,9 @@ def test_route_M13_theme_uses_vector_and_anchor(con, index):
 
 @needs_db
 def test_unresolved_falls_back_offline(index):
-    q = "삼성전자랑 SK하이닉스를 둘 다 담고 있는 ETF 중에서 총보수가 제일 낮은 건 뭐야?"
+    q = "국내 ETF와 해외 ETF 중 동일 지수를 추종하는 상품을 비교해줘"
     plan_a, needs_llm = route_stage_a(q, index, POLICY, TODAY)
-    assert needs_llm                                        # 교집합은 Stage B 소관
+    assert needs_llm                                        # 교차 시장 비교는 Stage B 소관
     plan = _route(index, q)                                 # LLM 미주입 → 폴백
     assert plan.stage == "fallback" and plan.calls
 

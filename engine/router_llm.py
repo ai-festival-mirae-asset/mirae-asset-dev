@@ -97,6 +97,10 @@ def build_router_tool():
                                      "description": "해외ETF 전략 서술 의미 검색 질의(불필요하면 생략)"},
                     "notes": {"type": "array", "items": {"type": "string"},
                               "description": "답변에 명시할 해석·한계 문구"},
+                    "unsupported_constraints": {
+                        "type": "array", "items": {"type": "string"},
+                        "description": "선택한 조회로는 적용할 수 없어 부분 답변에서 제외할 조건",
+                    },
                 },
                 "required": ["intent"],
             },
@@ -123,7 +127,9 @@ def build_router_messages(question, partial_plan):
         "2) 종목을 편입한 ETF 질문 → graph holding_etfs(query=종목 키) + "
         "sql constituent_holders(code=종목 키).\n"
         "3) 수치 필터·정렬·건수는 SQL 템플릿으로만. 템플릿 밖 연산이 필요하면 "
-        "가장 가까운 템플릿 결과 + notes 로 한계를 명시한다.\n"
+        "질문의 분리 가능한 일부만 가장 가까운 템플릿으로 조회하고 unsupported_constraints에 "
+        "적용하지 못한 조건을 정확히 적는다. 핵심 조건을 전혀 조회할 수 없으면 임의의 "
+        "템플릿으로 대체하지 않는다.\n"
         "4) 해석이 갈리는 표현(위험 낮음, AA 이상, 최근 등)은 notes 에 채택 해석을 적는다.\n"
         "5) 미래·실시간·기준일 이후 정보는 조회 계획을 만들지 말고 intent 에 "
         "'조회 불가'와 사유를 적는다.\n\n"
@@ -155,6 +161,14 @@ def args_to_plan(args, partial_plan, stage="llm"):
     for note in args.get("notes") or []:
         if isinstance(note, str) and note not in plan.notes:
             plan.notes.append(note)
+
+    unsupported = [str(value).strip() for value in args.get("unsupported_constraints") or []
+                   if str(value).strip()]
+    if unsupported:
+        plan.behavior_hint = "partial"
+        plan.hints["unsupported_constraints"] = unsupported
+        for value in unsupported:
+            plan.notes.append(f"미지원 조건: {value} — 해당 조건을 제외한 범위에서만 조회")
 
     for call in args.get("sql_calls") or []:
         tid = call.get("template_id")

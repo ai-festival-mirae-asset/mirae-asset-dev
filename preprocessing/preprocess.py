@@ -146,13 +146,17 @@ def yyyymmdd_to_iso(series, table, col, rule_id="R5"):
         if not re.fullmatch(r"\d{8}", s) or s == "00000000":
             return "__BAD__"
         return f"{s[:4]}-{s[4:6]}-{s[6:]}"
-    out = series.map(conv)
+    # pandas 3의 문자열 dtype 추론은 None을 NaN으로 다시 승격할 수 있다.
+    # 날짜 파생 컬럼은 이후 DuckDB NULL로 적재되어야 하므로 object dtype을
+    # 명시해 Python None을 보존한다.
+    out = pd.Series((conv(v) for v in series), index=series.index, dtype=object)
     n_bad = int((out == "__BAD__").sum())
     if n_bad:
         log_rule(table, rule_id, col, n_bad, "날짜 파싱 불가(0 등) → NULL")
     n_ok = int(out.notna().sum() - n_bad)
     log_rule(table, rule_id, col, n_ok, "YYYYMMDD → ISO 날짜(YYYY-MM-DD)")
-    return out.replace("__BAD__", None)
+    out.loc[out == "__BAD__"] = None
+    return out
 
 
 def drop_all_null_cols(df, cols, table, rule_id, note):
@@ -270,8 +274,10 @@ def iso_lag_days(series, as_of=AS_OF, fmt="%Y-%m-%d"):
     써야 한다. fmt: ISO('%Y-%m-%d') 또는 compact YYYYMMDD('%Y%m%d').
     파싱 불가·결측은 NULL.
     """
-    base = pd.to_datetime(series.str.strip() if series.dtype == object else series,
-                          format=fmt, errors="coerce")
+    # pandas 3의 StringDtype과 pd.NA도 안전하게 다루도록 문자열 정규화를
+    # dtype 분기 없이 수행한다. 결측은 그대로 NaT가 된다.
+    cleaned = series.astype("string").str.strip()
+    base = pd.to_datetime(cleaned, format=fmt, errors="coerce")
     return (pd.Timestamp(as_of) - base).dt.days.astype("Int64")
 
 

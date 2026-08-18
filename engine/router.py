@@ -15,6 +15,7 @@ LIKE 파라미터 규약: 플랜에는 원문(*_raw)을 싣고 이스케이프(l
       실행기가 일괄 적용한다 — LLM 플랜(Stage B)이 이스케이프를 놓치는 사고 방지.
 구조 주의: 테스트가 순수 함수를 import 한다 — import 부작용 금지.
 """
+import calendar
 import datetime
 import os
 import re
@@ -28,6 +29,8 @@ sys.path.insert(0, ROOT)
 from engine.policy import load_policy                         # noqa: E402
 from pipeline.entity_index import token_matches               # noqa: E402
 from pipeline.evidence import AS_OF_MASTER                    # noqa: E402
+from pipeline.query_aliases import (load_product_query_aliases,  # noqa: E402
+                                    normalize_product_query)
 from pipeline.themes import REGIONS, detect_theme_terms, load_themes  # noqa: E402
 
 # ---------------------------------------------------------------------------
@@ -53,8 +56,10 @@ UNSUPPORTED_ASSETS = ("코인", "가상자산", "암호화폐", "비트코인", 
 
 # 존재 검증을 우회하려는 그럴듯한 상품명의 브랜드 접두 감지 (T-07/08 —
 # mgmt_resolution.BRAND_PREFIX_TO_COMPANY 와 동기)
-BRAND_TOKENS = ("KODEX", "TIGER", "KoAct", "SOL", "PLUS", "ARIRANG", "RISE",
-                "KBSTAR", "ACE", "KOSEF", "히어로즈", "HANARO", "1Q", "마이티", "WON")
+BRAND_TOKENS = tuple(dict.fromkeys(
+    ("KODEX", "TIGER", "KoAct", "SOL", "PLUS", "ARIRANG", "RISE",
+     "KBSTAR", "ACE", "KOSEF", "히어로즈", "HANARO", "1Q", "마이티", "WON")
+    + tuple(load_product_query_aliases().values())))
 
 # 라틴 토큰 중 미등록 개체로 세지 않는 일반어
 LATIN_STOPWORDS = {"etf", "etn", "etp", "top", "vs", "ytd", "aum", "ai", "tdf",
@@ -63,7 +68,6 @@ LATIN_STOPWORDS = {"etf", "etn", "etp", "top", "vs", "ytd", "aum", "ai", "tdf",
 HOLDING_VERBS = ("편입", "담은", "담고", "담아", "포함", "들어간", "들어있", "들어 있")
 COUNT_WORDS = ("몇 개", "몇개", "몇 종", "몇이", "개수", "총 몇", "얼마나 되", "얼마나 돼")
 TOP_WORDS = ("상위", "가장", "제일", "톱", "탑", "top", "1위", "순서로", "순위", "좋은")
-
 
 # ---------------------------------------------------------------------------
 # 플랜 자료구조 — Stage B(LLM)·채널 실행기와 공유하는 계약
@@ -309,6 +313,49 @@ def _spacing_variants(name):
     return sorted({name, tight, spaced})
 
 
+_GENERIC_PRODUCT_TERMS = {
+    "etf", "etn", "etp", "상품", "정보", "구성", "구성종목", "종목",
+    "알려", "알려줘", "찾아", "찾아줘", "투자", "투자하", "투자하는",
+}
+
+
+def resolve_product_by_terms(index, question, kinds=("product_kr_etp",)):
+    """설명형 상품명에서 식별력 있는 토큰 교집합으로 유일한 상품을 찾는다.
+
+    전체 상품명이 질문에 그대로 나오지 않는 M-30 같은 표현을 위한 보수적
+    보완이다. 두 개 이상의 토큰이 같은 상품을 가리키고 최고점이 유일할 때만
+    채택해, 단일 일반어로 임의 상품을 고르는 일을 막는다.
+    """
+    tokens = []
+    for raw in re.findall(r"[가-힣A-Za-z0-9+]+", normalize_product_query(question)):
+        term = raw
+        for suffix in ("으로", "에서", "에게", "에는", "에", "의", "을", "를", "이", "가", "은", "는"):
+            if term.endswith(suffix) and len(term) > len(suffix) + 1:
+                term = term[:-len(suffix)]
+                break
+        if len(term) < 2 or term.casefold() in _GENERIC_PRODUCT_TERMS:
+            continue
+        if term.startswith(("알려", "찾아", "투자")):
+            continue
+        if term not in tokens:
+            tokens.append(term)
+
+    scored = {}
+    for term in tokens:
+        for _name, ref in index.search(term, limit=100, kinds=kinds):
+            item = scored.setdefault((ref.kind, ref.key), {"ref": ref, "terms": set(), "chars": 0})
+            if term not in item["terms"]:
+                item["terms"].add(term)
+                item["chars"] += len(term)
+    ranked = sorted(scored.values(), key=lambda x: (-len(x["terms"]), -x["chars"], x["ref"].key))
+    if not ranked or len(ranked[0]["terms"]) < 2:
+        return None
+    if len(ranked) > 1 and (len(ranked[0]["terms"]), ranked[0]["chars"]) == \
+            (len(ranked[1]["terms"]), ranked[1]["chars"]):
+        return None
+    return "+".join(sorted(ranked[0]["terms"])), ranked[0]["ref"]
+
+
 # ---------------------------------------------------------------------------
 # Stage A 본체
 # ---------------------------------------------------------------------------
@@ -321,7 +368,8 @@ def route_stage_a(question, index, policy=None, today=None):
     q = question.strip()
     themes = load_themes()
 
-    entities = ground_entities(index, q)
+    normalized_q = normalize_product_query(q)
+    entities = ground_entities(index, normalized_q)
     matched_names = [name for name, _refs in entities]
     unknown = find_unknown_latin_terms(q, matched_names)
     ratings, invalid_ratings = extract_ratings(q)
@@ -353,6 +401,24 @@ def route_stage_a(question, index, policy=None, today=None):
     n_consts = len({r.key for _n, refs in entities for r in refs if r.kind == "constituent"})
     comp_name, comp_ref = _first_of_kind(entities, "company")
     idx_name, idx_ref = _first_of_kind(entities, "index")
+
+    if not product_ref and has_etf_word and re.search(r"구성|정보|상세", q):
+        fuzzy_product = resolve_product_by_terms(index, q)
+        if fuzzy_product:
+            matched_terms, product_ref = fuzzy_product
+            product_name = product_ref.display
+            plan.entities.append((matched_terms, [product_ref]))
+            plan.hints["fuzzy_product_terms"] = matched_terms
+
+    if normalized_q != q:
+        plan.hints["normalized_product_query"] = normalized_q
+
+    # 금융상품 위험등급은 숫자가 작을수록 위험이 높다. 생성 모델이 방향을
+    # 뒤집는 오류(H-06)를 막기 위해 근거 노트를 강제하고 규칙 요약을 사용한다.
+    if "위험등급" in q and not is_bond_domain:
+        plan.notes.append("위험등급 체계: 1등급=매우 높은 위험, 6등급=매우 낮은 위험"
+                          "(숫자가 작을수록 위험이 높음)")
+        plan.hints["skip_generation"] = True
 
     # ── 1. 값 도메인 밖 (T-01/02/03) — 근거 없이도 확정 refuse 힌트 ──────────
     if invalid_ratings:
@@ -395,15 +461,120 @@ def route_stage_a(question, index, policy=None, today=None):
         plan.notes.append("해외 ETF 원천(PREF02N001)에는 위험등급 컬럼이 없음 — 국내 ETF 는 조회 가능")
         plan.hints["unavailable_field"] = "global_etf.risk_grade"
         return done("unsupported_field", "refuse")
+    if is_fund_domain and "타사" in q and "판매" in q:
+        plan.notes.append("공모펀드 원천에는 전체 판매상태와 당사판매여부만 있으며 타사 판매사 식별 항목은 없음")
+        plan.hints["unavailable_field"] = "fund.third_party_seller"
+        return done("unsupported_field", "refuse")
     if is_fund_domain and "보수" in q and not has_etf_word:
         plan.notes.append("공모펀드 원천(PRFD01N001)에는 총보수 필드가 없음(보유: 수익률·위험등급·설정액 등)")
         plan.hints["unavailable_field"] = "fund.total_fee"
         return done("unsupported_field", "refuse")
 
+    # ── 4.5 펀드 클래스 사전 설명 (L-29) ──────────────────────────────────
+    if is_fund_domain and "클래스" in q and re.search(r"A\s*형", q, re.I) and \
+            re.search(r"C\s*형", q, re.I):
+        plan.calls.append(ChannelCall("keyword", "fund_class_dictionary",
+                                      {"classes": ["A", "C"]}))
+        plan.notes.append("KOFIA 펀드 클래스 코드 사전의 A·C 정의를 근거로 비교")
+        plan.hints["skip_generation"] = True
+        return done("fund_class_compare")
+
     # ── 5. 등급 서열 비교 (L-08) — 사전 근거 답변 ────────────────────────────
     if len(ratings) >= 2 and re.search(r"더 높|더 낮|비교|어느|뭐가 높", q):
         plan.hints["rating_compare"] = [(t, r) for t, r, _e in ratings[:2]]
         return done("rating_compare")
+
+    # ── 5.5 상품군 횡단 위험등급 집계 (H-13) ──────────────────────────────
+    if risk and risk[0] != "invalid" and risk[0] == risk[1] and "상품군별" in q:
+        plan.calls.append(ChannelCall("sql", "risk_grade_product_counts",
+                                      {"grade": risk[0]}))
+        plan.notes.extend(risk[2])
+        plan.notes.append("국내채권은 원천의 상품 위험등급(drv_risk_grade) 1~6을 전체 마스터 기준으로 포함")
+        plan.notes.append("상품군별 상태 범위: 국내 ETF·ETN은 상장 active, 공모펀드·국내채권은 전체 마스터")
+        plan.notes.append("해외 ETF 원천에는 위험등급 필드가 없어 집계 불가")
+        plan.hints["skip_generation"] = True
+        return done("risk_grade_cross_counts", "partial")
+
+    # ── 5.6 회사채 ETF 구성채권-마스터 조인 (H-15) ────────────────────────
+    if has_etf_word and "회사채" in q and "신용등급" in q and "분포" in q:
+        plan.calls.append(ChannelCall("sql", "bond_etf_rating_dist", {}))
+        plan.notes.append("상품명에 '회사채'가 표시된 ETF의 BN 구성종목을 대상으로 집계")
+        plan.notes.append("채권 마스터 키 미매칭 또는 등급 결측은 '미확인'으로 유지한 부분 집계")
+        plan.hints["skip_generation"] = True
+        plan.hints["display_rows"] = 10
+        return done("bond_etf_rating_dist", "partial")
+
+    # ── 5.7 자회사 관계 미수집 상태의 보수적 대체 조회 (H-01) ────────────
+    if has_etf_word and "자회사" in q:
+        base = comp_name or const_name
+        candidates = []
+        if base:
+            base_norm = re.sub(r"\s+", "", base).casefold()
+            seen = set()
+            for _name, ref in index.search(base, limit=30, kinds=("constituent",)):
+                display_norm = re.sub(r"\s+", "", ref.display).casefold()
+                # 국내 상장사 후보만 사용한다. 이름에 회사명이 들어간 선물·채권
+                # 종목을 자회사 후보로 오인하지 않도록 6자리 주식코드로 제한한다.
+                if not re.fullmatch(r"\d{6}", ref.key) or ref.key in seen or display_norm == base_norm:
+                    continue
+                seen.add(ref.key)
+                candidates.append(ref)
+        plan.calls.append(ChannelCall("keyword", "lookup", {"query": base or q, "limit": 10}))
+        for ref in candidates[:4]:
+            plan.calls.append(ChannelCall("graph", "holding_etfs",
+                                          {"query": ref.key, "limit": 30}))
+        if candidates:
+            code_params = {f"code_{chr(ord('a') + i)}": ref.key
+                           for i, ref in enumerate(candidates[:4])}
+            code_params["limit"] = 30
+            plan.calls.append(ChannelCall("sql", "constituent_candidate_holders_by_aum",
+                                          code_params))
+        plan.hints["order"] = "aum"
+        plan.hints["skip_generation"] = True
+        plan.notes.append("자회사 법적 관계(subsidiaryOf)는 미수집 — 회사명이 포함된 개별 종목을 후보로만 조회")
+        plan.notes.append("구체적 위험요인 자료는 미수집 — 조회된 ETF의 상품 위험등급만 안내")
+        return done("subsidiary_holding_candidates", "partial")
+
+    # ── 5.8 복수 구성종목 교집합 + 총보수 정렬 (H-03) ────────────────────
+    constituent_refs = []
+    for _name, refs in entities:
+        for ref in refs:
+            if ref.kind == "constituent" and ref.key not in {r.key for r in constituent_refs}:
+                constituent_refs.append(ref)
+    if len(constituent_refs) >= 2 and "보수" in q and any(w in q for w in TOP_WORDS):
+        first, second = constituent_refs[:2]
+        for ref in (first, second):
+            plan.calls.append(ChannelCall("graph", "holding_etfs",
+                                          {"query": ref.key, "limit": 1000}))
+        plan.calls.append(ChannelCall("sql", "constituent_intersection_low_fee",
+                                      {"code_a": first.key, "code_b": second.key,
+                                       "limit": max(limit, 20)}))
+        plan.calls.append(ChannelCall("sql", "coverage_check",
+                                      {"field": "kr_etp.cu_charge_rt"}))
+        plan.notes.append("두 종목 편입 ETF의 교집합에서 총보수 값 보유 상품만 오름차순 정렬")
+        plan.notes.append("총보수 0 값의 의미는 원천 정의가 미확정이며 결측 상품은 비교에서 제외")
+        plan.hints["skip_generation"] = True
+        return done("constituent_intersection_low_fee", "partial")
+
+    # ── 5.9 TDF ETF 존재 + 구성 공시 확인 (H-19) ─────────────────────────
+    if has_etf_word and "TDF" in q.upper() and re.search(r"담|구성", q):
+        refs, seen = [], set()
+        for _name, ref in index.search("TDF", limit=50, kinds=("product_kr_etp",)):
+            if ref.key not in seen:
+                seen.add(ref.key)
+                refs.append(ref)
+        plan.calls.append(ChannelCall("keyword", "lookup", {"query": "TDF", "limit": 10}))
+        plan.calls.append(ChannelCall("sql", "etp_name_search",
+                                      {"pattern_raw": "TDF", "instrument_type": "ETF",
+                                       "status": "active", "limit": 30}))
+        ace_refs = [r for r in refs if "ACE" in r.display.upper()]
+        for ref in ace_refs:
+            plan.calls.append(ChannelCall("sql", "constituent_top_weights",
+                                          {"etf_id": ref.key, "limit": 10}))
+        plan.notes.append("TDF ETF 상품은 확인되지만 ACE TDF 시리즈의 2026-07-10 구성 공시는 빈 값")
+        plan.notes.append("상품명에서 자산군을 추정하지 않고, 실제 구성 공시가 있는 범위만 안내")
+        plan.hints["skip_generation"] = True
+        return done("tdf_products_constituents", "partial")
 
     # ── 6. 구성종목 역질의 (M-01~07/16/21/22, H-14) — 교집합(복수 종목)은 Stage B ──
     if const_ref and n_consts == 1 and (
@@ -427,9 +598,19 @@ def route_stage_a(question, index, policy=None, today=None):
 
     # ── 7. 상품 1종 상세·구성·페어 비교 (L-09/10/28, M-25, H-30) ─────────────
     if product_ref and product_ref.kind == "product_kr_etp":
+        if plan.hints.get("normalized_product_query") or plan.hints.get("fuzzy_product_terms"):
+            plan.calls.append(ChannelCall("keyword", "lookup",
+                                          {"query": product_ref.display, "limit": 5}))
+            if plan.hints.get("normalized_product_query"):
+                plan.notes.append(f"상품명 별칭을 정규화해 조회: {normalized_q}")
+            else:
+                plan.notes.append(f"설명형 상품명을 토큰 교집합으로 식별: {plan.hints['fuzzy_product_terms']}")
         if "구성" in q and not re.search(r"비교|달라|차이", q):
             plan.calls.append(ChannelCall("sql", "constituent_top_weights",
                                           {"etf_id": product_ref.key, "limit": top_n or 10}))
+            if plan.hints.get("fuzzy_product_terms"):
+                plan.calls.append(ChannelCall("graph", "constituents_of",
+                                              {"query": product_ref.display, "limit": top_n or 10}))
             plan.notes.append("구성종목 기준일 2026-07-10")
             return done("product_constituents")
         if "구성" not in q:
@@ -459,9 +640,12 @@ def route_stage_a(question, index, policy=None, today=None):
         return done("index_products")
 
     # ── 8. 펀드 비정형(구조·전략 서술) — 미수집 명시 (M-10) ──────────────────
-    if product_ref and product_ref.kind == "product_fund" and re.search(r"구조|전략|동향", q):
-        plan.calls.append(ChannelCall("keyword", "lookup", {"query": product_name}))
+    if is_fund_domain and re.search(r"구조|전략|동향", q):
+        lookup_query = product_ref.display if product_ref and product_ref.kind == "product_fund" else q
+        plan.calls.append(ChannelCall("keyword", "lookup", {"query": lookup_query, "limit": 5}))
+        plan.calls.append(ChannelCall("vector", "semantic", {"query": q, "k": 5}))
         plan.notes.append("구조·전략 서술(비정형)은 수집 범위 밖 — 마스터 보유 필드까지만 답변")
+        plan.hints["skip_generation"] = True
         return done("unstructured_info", "partial")
 
     # ── 8.5 운용사 역질의 (M-09) — 구성 결합(H-08)은 Stage B ────────────────
@@ -500,7 +684,26 @@ def route_stage_a(question, index, policy=None, today=None):
             if bond_class == "국공채" and "국고채" in q:
                 plan.notes.append("'국고채'는 제공 대분류상 국공채로 조회")
             return done("bond_ranking")
-        if "잔존만기" in q:                              # H-26 등 복합 — Stage B 소관
+        residual_within = re.search(r"잔존만기\s*(\d+)\s*년\s*(?:이하|이내)", q)
+        if residual_within:                              # H-26: 시간+등급+금리 복합 필터
+            years = int(residual_within.group(1))
+            try:
+                until = today.replace(year=today.year + years)
+            except ValueError:                           # 2/29 요청의 비윤년 보정
+                until = today.replace(year=today.year + years, day=28)
+            params = {"as_of_date": today.isoformat(), "until": until.isoformat(),
+                      "currency": currency if not ccy_exclude else None,
+                      "bond_class": bond_class,
+                      "min_coupon": coupon_min if coupon_band is None else coupon_band,
+                      "max_coupon": coupon_band + 1 if coupon_band is not None else None,
+                      "limit": max(limit, 20)}
+            params.update(cond)
+            plan.notes.extend(notes)
+            plan.notes.append(f"잔존만기 {years}년 이하={today.isoformat()}~{until.isoformat()} 만기일로 재계산")
+            plan.calls.append(ChannelCall("sql", "bond_maturing_within",
+                                          {k: v for k, v in params.items() if v is not None}))
+            return done("bond_maturing_filter")
+        if "잔존만기" in q:                              # 그 밖의 복합 표현은 Stage B 소관
             plan.intent = "unresolved"
             return plan, True
         m_within = re.search(r"(\d)\s*년\s*(?:안에|이내)", q)
@@ -644,19 +847,26 @@ def route_stage_a(question, index, policy=None, today=None):
 
     # ── 12. 공모펀드 (L-21~25) ──────────────────────────────────────────────
     if is_fund_domain:
+        asks_our_sale = bool(re.search(
+            r"(?:당사|미래에셋\s*증권).{0,12}판매|판매.{0,12}(?:당사|미래에셋\s*증권)", q))
         if any(w in q for w in COUNT_WORDS) and "클래스" not in q:   # L-21
             plan.calls.append(ChannelCall("sql", "fund_counts", {}))
             plan.notes.append("상품(마스터) 수와 판매 클래스 수는 다름 — 구분해 답변")
             return done("fund_count")
         attr = next((w for w in ("주식형", "채권형", "혼합형", "재간접", "MMF") if w in q), None)
         if "수익률" in q and any(w in q for w in TOP_WORDS):         # L-24
+            sale_params = {}
+            if "판매" in q:
+                sale_params["on_sale_only"] = "Y"
+            if asks_our_sale:
+                sale_params["thco_sale_only"] = "Y"
             plan.calls.append(ChannelCall("sql", "fund_top_return_1y",
-                                          {"on_sale_only": "Y" if "판매" in q else None,
-                                           "limit": top_n or 5}))
+                                          {**sale_params, "limit": top_n or 5}))
             plan.calls.append(ChannelCall("sql", "coverage_check",
                                           {"field": "fund_master.fd_yr1_ern_r"}))
             plan.notes.append("1년 수익률 값 보유 상품 기준 — 커버리지 명시")
-            return done("fund_ranking", "partial")
+            plan.hints["coverage_is_caveat_only"] = True
+            return done("fund_ranking")
         if re.search(r"벤치마크|추종|따라가|삼는", q):               # L-25
             target = idx_name or next((w for w in ("KOSPI200", "코스피200", "코스피 200") if w in q), None)
             if target:
@@ -669,17 +879,28 @@ def route_stage_a(question, index, policy=None, today=None):
                 plan.notes.append("벤치마크 표기 변형(한/영·붙임/띄움)을 함께 검색")
                 return done("fund_by_benchmark")
         if risk and risk[0] != "invalid":                 # L-23
+            params = {"min_risk": risk[0], "max_risk": risk[1],
+                      "limit": max(limit, 20)}
+            if "판매" in q:
+                params["on_sale_only"] = "Y"
+                plan.notes.append("현재 판매상태는 sale_yn='판매중' 기준")
+            if asks_our_sale:
+                params["thco_sale_only"] = "Y"
+                plan.notes.append("당사 판매는 thco_sale_yn='Y'를 추가로 동시 충족하는 상품 기준")
             plan.calls.append(ChannelCall("sql", "fund_filter",
-                                          {"min_risk": risk[0], "max_risk": risk[1],
-                                           "limit": max(limit, 20)}))
+                                          params))
             plan.notes.extend(risk[2])
             return done("fund_filter")
-        if attr or "판매 중" in q or "판매중" in q:        # L-22
+        if attr or "판매" in q:                              # L-22
             params = {"limit": max(limit, 20)}
             if attr:
                 params["attr_pattern_raw"] = attr
             if "판매" in q:
                 params["on_sale_only"] = "Y"
+                plan.notes.append("현재 판매상태는 sale_yn='판매중' 기준")
+            if asks_our_sale:
+                params["thco_sale_only"] = "Y"
+                plan.notes.append("당사 판매는 thco_sale_yn='Y'를 추가로 동시 충족하는 상품 기준")
             plan.calls.append(ChannelCall("sql", "fund_filter", params))
             return done("fund_filter")
 
@@ -707,6 +928,25 @@ def route_stage_a(question, index, policy=None, today=None):
         return done("name_token_search")
 
     # ── 14. 테마 검색 (M-11~13/24/26/28, H-04) — 벡터+키워드+상품명 결합 ─────
+    if theme_hits and "최근" in q and "개월" in q and "이력" in q:
+        months_match = re.search(r"최근\s*(\d+)\s*개월", q)
+        months = int(months_match.group(1)) if months_match else policy["recent_window_months"]
+        anchor = datetime.date.fromisoformat(AS_OF_MASTER)
+        month_index = anchor.year * 12 + anchor.month - 1 - months
+        start_year, start_month0 = divmod(month_index, 12)
+        start = datetime.date(start_year, start_month0 + 1,
+                              min(anchor.day, calendar.monthrange(start_year, start_month0 + 1)[1]))
+        theme_query = " ".join(non_region_themes or theme_hits)
+        plan.calls.append(ChannelCall("vector", "semantic", {"query": theme_query, "k": 8}))
+        for term in non_region_themes[:2]:
+            plan.calls.append(ChannelCall("sql", "etp_name_search",
+                                          {"pattern_raw": term, "limit": 10}))
+            plan.calls.append(ChannelCall("keyword", "lookup", {"query": term, "limit": 5}))
+        plan.notes.append(f"'최근 {months}개월'={start.isoformat()}~{AS_OF_MASTER}로 해석")
+        plan.notes.append("테마 연결 이력 데이터는 미수집 — 기준일 상품명·전략 서술 매칭 후보만 제시")
+        plan.hints["skip_generation"] = True
+        return done("theme_history", "partial")
+
     if (non_region_themes or "테마" in q or (is_global and theme_hits)) \
             and re.search(r"투자하는|투자하|전략|중심|집중|테마|찾아|알려|골라|있어", q) \
             and not product_ref and (not is_bond_domain or has_etf_word):

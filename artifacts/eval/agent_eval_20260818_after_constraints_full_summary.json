@@ -1,0 +1,123 @@
+{
+  "mode": "API E2E full: HCX-005 router+generator, CLOVA embedding, SQL, keyword, KG, validation",
+  "runtime_load_seconds": 2.399,
+  "health": {
+    "status": "ok",
+    "db": true,
+    "index_entries": 125760,
+    "graph_triples": 1116124,
+    "vector": true,
+    "hcx_router": true,
+    "hcx_generator": true,
+    "cache_size": 0
+  },
+  "total": 105,
+  "behavior_ok": 105,
+  "refusal_surface_ok": 105,
+  "contract_ok": 105,
+  "evidence_ok": 105,
+  "channel_ok": 83,
+  "strict_proxy": 83,
+  "global_errors": 0,
+  "channel_error_cases": 0,
+  "degraded_cases": 10,
+  "empty_answer_cases": 0,
+  "latency": {
+    "mean": 4.1871,
+    "p50": 3.4747,
+    "p95": 10.0689,
+    "max": 13.1955,
+    "over_15s": 0
+  },
+  "by_level": {
+    "하": {
+      "total": 30,
+      "behavior_ok": 30,
+      "channel_ok": 27,
+      "evidence_ok": 30,
+      "strict_proxy": 27,
+      "degraded": 1
+    },
+    "중": {
+      "total": 30,
+      "behavior_ok": 30,
+      "channel_ok": 22,
+      "evidence_ok": 30,
+      "strict_proxy": 22,
+      "degraded": 4
+    },
+    "상": {
+      "total": 30,
+      "behavior_ok": 30,
+      "channel_ok": 19,
+      "evidence_ok": 30,
+      "strict_proxy": 19,
+      "degraded": 5
+    },
+    "트랩": {
+      "total": 15,
+      "behavior_ok": 15,
+      "channel_ok": 15,
+      "evidence_ok": 15,
+      "strict_proxy": 15,
+      "degraded": 0
+    }
+  },
+  "behavior_confusion": {
+    "answer->answer": 79,
+    "partial->partial": 10,
+    "refuse->refuse": 16
+  },
+  "generation": {
+    "HCX-005 생성 · 사후 대조 통과": 49,
+    "HCX-005 생성 · 사후 대조로 6줄 제거": 2,
+    "HCX-005 생성 · 사후 대조로 1줄 제거": 12,
+    "none": 30,
+    "생성 호출 실패 — 규칙 요약으로 폴백": 6,
+    "HCX-005 생성 · 사후 대조로 3줄 제거": 1,
+    "HCX-005 생성 · 사후 대조로 5줄 제거": 1,
+    "시간 예산 초과(13.2s) — HCX 생성 생략, 규칙 요약으로 강등": 1,
+    "시간 예산 초과(8.0s) — HCX 생성 생략, 규칙 요약으로 강등": 1,
+    "시간 예산 초과(10.9s) — HCX 생성 생략, 규칙 요약으로 강등": 1,
+    "HCX-005 생성 · 사후 대조로 4줄 제거": 1
+  },
+  "behavior_fail_ids": [],
+  "channel_fail_ids": [
+    "L-08",
+    "L-15",
+    "L-25",
+    "M-14",
+    "M-17",
+    "M-18",
+    "M-19",
+    "M-20",
+    "M-22",
+    "M-27",
+    "M-29",
+    "H-01",
+    "H-07",
+    "H-09",
+    "H-11",
+    "H-16",
+    "H-17",
+    "H-21",
+    "H-22",
+    "H-24",
+    "H-27",
+    "H-28"
+  ],
+  "evidence_fail_ids": [],
+  "degraded_ids": [
+    "L-15",
+    "M-04",
+    "M-14",
+    "M-22",
+    "M-26",
+    "H-04",
+    "H-05",
+    "H-17",
+    "H-23",
+    "H-27"
+  ],
+  "empty_answer_ids": []
+}

@@ -96,6 +96,18 @@ def test_fund_counts_master_vs_class(con):
 
 
 @needs_db
+def test_fund_sale_status_and_our_sale_flag_are_distinct(con):
+    current = run_template(con, "fund_filter", {"on_sale_only": "Y", "limit": 20000})
+    ours = run_template(con, "fund_filter",
+                        {"on_sale_only": "Y", "thco_sale_only": "Y", "limit": 20000})
+    assert len(current.rows) == 8445
+    assert len(ours.rows) == 8434
+    assert all(row["sale_yn"] == "판매중" for row in current.rows)
+    assert all(row["sale_yn"] == "판매중" and row["thco_sale_yn"] == "Y"
+               for row in ours.rows)
+
+
+@needs_db
 def test_constituent_holders_samsung(con):
     """M-01: 삼성전자(005930) 편입 ETF — 다수 존재 + 비중 내림차순 + 기준일 7/10."""
     r = run_template(con, "constituent_holders", {"code": "005930", "limit": 300})
@@ -135,6 +147,8 @@ def test_entity_index_grounding(index):
     """인덱스: 상품 약칭·한글 별칭·구성종목 exact — 현금 센티널은 없어야 함."""
     kinds = {r.kind for r in index.exact("TIGER 200")}
     assert "product_kr_etp" in kinds
+    assert any(r.key == "KR70047A0007" for r in index.exact("타이거 차이나테크톱텐"))
+    assert any(r.key == "KR7148020001" for r in index.exact("KBSTAR 200"))
     cam = index.exact("캠브리콘")
     assert any(r.kind == "constituent" and r.key == "CNE1000041R8" for r in cam)
     assert index.exact("설정현금액") == []          # 현금성은 개체가 아니다(트랩 방어)

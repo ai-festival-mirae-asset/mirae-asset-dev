@@ -12,6 +12,8 @@ LIKE 규약: 플랜의 *_raw 파라미터는 여기서 like_param() 이스케이
 구조 주의: 테스트가 순수 함수(rrf_fuse 등)를 import 한다 — import 부작용 금지.
 """
 import os
+import csv
+import io
 import sys
 from dataclasses import dataclass, field
 
@@ -100,6 +102,25 @@ def _exec_sql(ctx, call):
 
 
 def _exec_keyword(ctx, call):
+    if call.op == "fund_class_dictionary":
+        path = os.path.join(ROOT, "external_data", "dictionaries", "fund_class.csv")
+        if not os.path.exists(path):
+            return ChannelOutcome("keyword", call.op, ok=False, error="펀드 클래스 사전 미탑재")
+        wanted = {str(v).upper() for v in call.params.get("classes", [])}
+        rows, evidences = [], []
+        with io.open(path, "r", encoding="utf-8-sig", newline="") as fh:
+            for row in csv.DictReader(fh):
+                key = str(row.get("키", "")).strip().upper()
+                if not str(row.get("분류", "")).startswith("값사전|펀드클래스") or key not in wanted:
+                    continue
+                fields = {"class": key, "name": row.get("한글명"),
+                          "meaning": row.get("의미"), "source": row.get("출처")}
+                rows.append(fields)
+                evidences.append(Evidence(source="fund_class.csv", source_id=key,
+                                          channel="keyword", as_of=AS_OF_MASTER,
+                                          fields=fields))
+        return ChannelOutcome("keyword", call.op, rows=rows, evidences=evidences,
+                              note="KOFIA 펀드 클래스 코드 사전")
     if ctx.index is None:
         return ChannelOutcome("keyword", call.op, ok=False, error="인덱스 미탑재")
     refs, evidences, exact = keyword_lookup(
@@ -229,6 +250,11 @@ def _exec_vector(ctx, call):
 
     fused = rrf_fuse([vec_ids, lex_ids]) if (vec_ids and lex_ids) else \
         [(i, 0.0) for i in (vec_ids or lex_ids)]
+    # 테마 anchor가 실제로 검색된 경우에는 의미 유사도만 높은 상품을 결과에서
+    # 제외한다. 기간 표현 같은 주변 단어가 비관련 ETF를 끌어올리는 것을 막고,
+    # 벡터는 anchor 보유 후보의 재정렬에만 사용한다.
+    if anchors and lex_ids:
+        fused = [(pid, score) for pid, score in fused if pid in lex_names]
     mode = ("RRF(벡터+lexical)" if vec_ids and lex_ids else
             "벡터 단독" if vec_ids else "lexical anchor 단독(임베더 미탑재)")
 

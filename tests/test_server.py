@@ -95,7 +95,7 @@ def test_cache_hits_on_second_call(client):
 @needs_db
 def test_degraded_answer_not_cached(client):
     """폴백(강등)이 낀 응답은 캐시 금지 — 재시도가 새로 계산되게 한다."""
-    q = {"question": "삼성전자랑 SK하이닉스를 둘 다 담고 있는 ETF 중에서 총보수가 제일 낮은 건 뭐야?"}
+    q = {"question": "국내 ETF와 해외 ETF 중 동일 지수를 추종하는 상품을 비교해줘"}
     first = client.get("/answer", params=q).json()
     assert "폴백" in first["think_trace"]                  # HCX 없는 구성 → 규칙 폴백 경로
     second = client.get("/answer", params=q).json()

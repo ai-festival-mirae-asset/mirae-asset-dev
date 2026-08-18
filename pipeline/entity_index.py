@@ -26,6 +26,7 @@ ROOT = os.path.dirname(HERE)
 sys.path.insert(0, ROOT)
 
 from pipeline.constituent_aliases import load_aliases  # noqa: E402
+from pipeline.query_aliases import product_alias_variants  # noqa: E402
 
 DB_PATH_DEFAULT = os.path.join(ROOT, "storage", "output", "products.duckdb")
 
@@ -149,7 +150,8 @@ def build_entity_index(con):
     """DuckDB 연결 → EntityIndex. 서버 기동 시 1회 빌드해 재사용한다."""
     idx = EntityIndex()
 
-    # ① 상품 4종 — 정식명·약칭 모두 등록
+    # ① 상품 4종 — 정식명·약칭 모두 등록. 국내 ETP는 검증된 브랜드의
+    #    한글/영문·구 브랜드 표기도 같은 실제 상품 키를 가리키도록 색인한다.
     for kind, table, key_col, name_cols, source in _PRODUCT_SOURCES:
         cols = ", ".join((key_col,) + name_cols)
         for row in con.execute(f"SELECT {cols} FROM {table}").fetchall():
@@ -158,6 +160,9 @@ def build_entity_index(con):
             for n in names:
                 if n:
                     idx.add(n, EntityRef(kind, key, display or n, source))
+                    if kind == "product_kr_etp":
+                        for alias_name in product_alias_variants(n):
+                            idx.add(alias_name, EntityRef(kind, key, display or n, source))
 
     # ② 구성종목 — 이름 변형 전부(운용사별 표기 상이), 키는 코드/ISIN.
     #    현금성 센티널(CASH·KRD/KRZ/KRY 코드, 현금·예금 명칭)은 종목이 아니다 —

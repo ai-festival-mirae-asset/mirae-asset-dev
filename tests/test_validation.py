@@ -81,6 +81,7 @@ def test_gate_time_boundary():
 def test_gate_field_availability():
     assert gate_field_availability("해외 ETF를 위험등급 1등급만 골라서 보여줘").verdict == "refuse"
     assert gate_field_availability("공모펀드 중에서 총보수 제일 낮은 것 알려줘").verdict == "refuse"
+    assert gate_field_availability("타사에서 판매 중인 공모펀드 알려줘").verdict == "refuse"
     assert gate_field_availability("위험등급 낮은 국내 ETF 보여줘").verdict == "pass"
     assert gate_field_availability("회사채 ETF의 총보수 알려줘").verdict == "pass"   # ETF 보수는 있음
 

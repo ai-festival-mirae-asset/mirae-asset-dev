@@ -37,6 +37,7 @@ from engine.router import (BRAND_TOKENS, UNSUPPORTED_ASSETS,  # noqa: E402
                            ground_entities)
 from pipeline.entity_index import norm_name, token_matches    # noqa: E402
 from pipeline.evidence import AS_OF_MASTER, Evidence          # noqa: E402
+from pipeline.query_aliases import normalize_product_query    # noqa: E402
 
 
 @dataclass
@@ -121,14 +122,15 @@ def gate_existence(question, index, policy):
     ② 브랜드+미존재 상품명: KODEX 등 브랜드로 시작하는 상품명인데 그 이름이 없음
     ③ 'N호' 변형: 기준일 데이터에 해당 호수로 식별되는 상품이 없음
     """
-    grounded = ground_entities(index, question)
+    normalized_question = normalize_product_query(question)
+    grounded = ground_entities(index, normalized_question)
     matched_names = [name for name, _refs in grounded]
     asks = bool(_ASKS_SPECIFIC_RE.search(question))
     limit = policy["trap_similar_suggest_limit"]
 
     # ① 미등록 라틴 토큰 — 의미 있는 부분 일치(원문 표기 기준)조차 0건일 때만 거절.
     #    공백 제거 정규화의 우연 겹침('kimi' ⊂ 'Denmark IMI')은 token_matches 가 걸러낸다.
-    unknown = find_unknown_latin_terms(question, matched_names)
+    unknown = find_unknown_latin_terms(normalized_question, matched_names)
     for tok in unknown:
         if asks and not token_matches(index, tok, limit=1):
             return (GateResult("existence", "refuse",
@@ -137,10 +139,11 @@ def gate_existence(question, index, policy):
                     [])
 
     # ② 브랜드 접두 상품명 — 정확 일치·부분 일치 모두 없으면 그 상품은 없다
-    brand = next((b for b in BRAND_TOKENS if b in question), None)
+    brand = next((b for b in BRAND_TOKENS if b in normalized_question), None)
     has_product = any(r.kind.startswith("product") for _n, refs in grounded for r in refs)
     if brand and asks and not has_product:
-        phrase = re.sub(r"정보|알려줘|알려|수익률|어때|찾아줘|있어|\?", " ", question).strip()
+        phrase = re.sub(r"정보|알려줘|알려|수익률|어때|찾아줘|있어|\?", " ",
+                        normalized_question).strip()
         if not index.exact(phrase) and not index.search(phrase, limit=1):
             suggestions = _suggest(index, phrase, limit)
             if not suggestions:                       # 브랜드 뒤 토막말로 재시도(안내용)
@@ -151,7 +154,7 @@ def gate_existence(question, index, policy):
                                f"'{phrase}' 명칭의 상품이 기준일 상품 목록에 없음"), suggestions)
 
     # ③ 'N호' 변형 — 정확 일치한 이름에 포함된 경우는 제외하고 검사
-    masked = _mask_grounded(question, grounded)
+    masked = _mask_grounded(normalized_question, grounded)
     if re.search(r"\d+\s?호", masked):
         m = _VARIANT_RE.search(question)
         if m and asks:
@@ -192,6 +195,8 @@ def gate_time_boundary(question):
 _FIELD_RULES = (
     (lambda q: "해외" in q and "위험" in q and "등급" in q and "국내" not in q,
      "해외 ETF 원천 데이터에는 위험등급 항목이 없음 — 국내 ETF 는 조회 가능"),
+    (lambda q: "펀드" in q and "타사" in q and "판매" in q,
+     "공모펀드 원천에는 전체 판매상태와 당사판매여부만 있으며 타사 판매사 식별 항목은 없음"),
     (lambda q: "펀드" in q and "보수" in q and not re.search(r"ETF|ETN|ETP", q, re.I),
      "공모펀드 원천 데이터에는 총보수 항목이 없음(보유: 수익률·위험등급·설정액 등)"),
 )
@@ -214,6 +219,8 @@ def gate_coverage(plan, result, policy):
         if outcome.channel == "sql" and outcome.op == "coverage_check":
             for row in outcome.rows:
                 if row.get("coverage_pct", 100.0) < threshold:
+                    if plan.hints.get("coverage_is_caveat_only"):
+                        continue
                     return GateResult(
                         "coverage", "partial",
                         f"{row['field']} 값 보유 {row['non_null']:,}/{row['total']:,}건"

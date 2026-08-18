@@ -31,6 +31,8 @@ import time
 HERE = os.path.dirname(os.path.abspath(__file__))            # server/
 ROOT = os.path.dirname(HERE)
 sys.path.insert(0, ROOT)
+from config.env_loader import load_env  # noqa: E402
+load_env()   # 저장소 최상위 .env 를 읽는다(운영체제 환경변수가 우선).
 
 from fastapi import FastAPI                                   # noqa: E402
 from fastapi.responses import HTMLResponse, JSONResponse      # noqa: E402
@@ -44,6 +46,14 @@ CACHE_PATH_DEFAULT = os.path.join(ROOT, "storage", "output", "answer_cache.jsonl
 
 # 응답이 이 표식들을 담고 있으면 "실패·강등"으로 보고 캐시하지 않는다
 _DEGRADED_MARKERS = ("오류 ", "폴백", "강등", "생략", "전역 오류")
+
+# 공식 규격(과제설명 PDF p.11)의 응답 헤더 — `application/json; charset=utf-8`.
+# JSON 은 원래 UTF-8 이지만 charset 을 명시해 두면 채점 프로그램 쪽 해석 여지가 없다.
+JSON_MEDIA_TYPE = "application/json; charset=utf-8"
+
+
+def _json(payload):
+    return JSONResponse(payload, media_type=JSON_MEDIA_TYPE)
 
 
 def is_cacheable(out):
@@ -122,10 +132,13 @@ def create_app(ctx, llm_router=None, generator=None, cache_path=CACHE_PATH_DEFAU
 
     @app.get("/answer")
     def answer(question_id: str = "", question: str = ""):
+        # 두 파라미터 모두 기본값을 두어 빠져도 422 가 아니라 200 + 5필드로 응답한다.
+        # 규격에 없는 파라미터(예: &foo=bar)는 FastAPI 가 무시하므로 500 없이 처리된다
+        # (과제설명 PDF p.11 "미정의 파라미터가 들어와도 500 없이 처리" — 테스트로 잠금).
         t0 = time.perf_counter()
         q = (question or "").strip()
         if not q:
-            return JSONResponse(serialize_answer(
+            return _json(serialize_answer(
                 question_id, question, [],
                 "빈 질문 — 검증 없이 안내 응답",
                 "질문이 비어 있습니다. question 파라미터에 질문을 담아 다시 호출해 주세요."))
@@ -133,8 +146,9 @@ def create_app(ctx, llm_router=None, generator=None, cache_path=CACHE_PATH_DEFAU
         if q in cache:                                # 캐시 즉답(정상 완결 응답만 들어있음)
             out = dict(cache[q])
             out["question_id"] = str(question_id or out.get("question_id", ""))
+            out["question"] = question                # 규격: 요청값을 그대로 돌려준다
             out["think_trace"] = out["think_trace"] + "\n(캐시 응답)"
-            return JSONResponse(out)
+            return _json(out)
 
         deadline = Deadline()
         req_ctx = dataclasses.replace(ctx, deadline=deadline)
@@ -148,10 +162,11 @@ def create_app(ctx, llm_router=None, generator=None, cache_path=CACHE_PATH_DEFAU
                 f"전역 오류: {type(exc).__name__}: {exc}",
                 "일시적인 내부 오류로 이번 요청을 처리하지 못했습니다. "
                 "같은 질문으로 다시 시도해 주세요.")
+        out["question"] = question                    # 규격: 요청값을 그대로 돌려준다(공백 포함)
         out["think_trace"] += f"\n응답 시간: {time.perf_counter() - t0:.2f}초"
         if is_cacheable(out):
             _store_cache(q, out)
-        return JSONResponse(out)
+        return _json(out)
 
     @app.get("/health")
     def health():

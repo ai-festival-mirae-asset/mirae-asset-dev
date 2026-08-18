@@ -16,6 +16,15 @@ import numpy as np
 import pandas as pd
 
 HERE = Path(__file__).resolve().parent          # preprocessing/profiling/
+
+# --- .env 파일 지원 -------------------------------------------------------
+# 저장소 최상위의 .env 를 읽어 환경변수로 올린다(없으면 아무 일도 안 함).
+_ROOT = str(HERE.parent.parent)
+if _ROOT not in sys.path:
+    sys.path.insert(0, _ROOT)
+from config.env_loader import load_env  # noqa: E402
+load_env()
+# --------------------------------------------------------------------------
 # 원본 xlsx 위치: 기본은 repo 루트의 datasets/ (커밋 대상 아님 — .gitignore).
 # 데이터를 저장소 밖에 두는 경우 MIRAE_DATASETS 환경변수로 지정한다.
 DATA = Path(os.environ.get("MIRAE_DATASETS") or HERE.parent.parent / "datasets")

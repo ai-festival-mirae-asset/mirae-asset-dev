@@ -65,6 +65,25 @@ def test_empty_question_still_valid_json(client):
 
 
 @needs_db
+def test_undefined_params_and_missing_id_never_500(client):
+    """공식 규격(과제설명 PDF p.11): 미정의 파라미터가 와도 500 없이 처리, 응답은
+    application/json; charset=utf-8. question_id 가 빠져도 5필드 200 을 유지한다."""
+    q = "신용등급 AAAA인 채권 찾아줘"                     # 이 모듈의 다른 테스트와 겹치지 않는 질문
+    r = client.get("/answer", params={"question": q, "foo": "bar", "debug": "1",
+                                      "question_id ": "x"})   # 오타 키(공백 포함)도 미정의 파라미터
+    assert r.status_code == 200
+    out = r.json()
+    assert set(out) == FIVE_FIELDS
+    assert all(isinstance(v, str) for v in out.values())
+    assert out["question_id"] == ""                       # 누락 → 빈 문자열(오류 아님)
+    assert out["question"] == q                           # 요청값 그대로 반환
+    ctype = r.headers["content-type"].lower()
+    assert ctype.startswith("application/json") and "charset=utf-8" in ctype
+    # 빈 질문 경로도 같은 헤더
+    assert "charset=utf-8" in client.get("/answer", params={"x": "y"}).headers["content-type"].lower()
+
+
+@needs_db
 def test_cache_hits_on_second_call(client):
     q = {"question": "공모펀드는 총 몇 개야?"}
     first = client.get("/answer", params=q).json()

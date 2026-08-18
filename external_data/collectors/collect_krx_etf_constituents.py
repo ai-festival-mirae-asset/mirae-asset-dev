@@ -38,6 +38,15 @@ import urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))                 # external_data/collectors/
 ROOT = os.path.dirname(os.path.dirname(HERE))                     # repo 루트
+
+# --- .env 파일 지원 -------------------------------------------------------
+# 저장소 최상위의 .env 를 읽어 환경변수로 올린다(없으면 아무 일도 안 함).
+# 운영체제 환경변수가 이미 있으면 그쪽이 우선이다.
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
+from config.env_loader import load_env  # noqa: E402
+load_env()
+# --------------------------------------------------------------------------
 OUT_BASE = os.path.join(os.path.dirname(HERE), "constituents")    # external_data/constituents/
 KR_ETF_CSV = os.path.join(ROOT, "preprocessing", "processed", "PREF01N001_kr_etf_processed.csv")
 

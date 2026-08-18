@@ -34,6 +34,15 @@ import pandas as pd
 
 HERE = os.path.dirname(os.path.abspath(__file__))   # preprocessing/
 ROOT = os.path.dirname(HERE)
+
+# --- .env 파일 지원 -------------------------------------------------------
+# 저장소 최상위의 .env 를 읽어 환경변수로 올린다(없으면 아무 일도 안 함).
+# 운영체제 환경변수가 이미 있으면 그쪽이 우선이다.
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
+from config.env_loader import load_env  # noqa: E402
+load_env()
+# --------------------------------------------------------------------------
 OUT = os.path.join(HERE, "processed")
 SCRIPT = os.path.join(HERE, "preprocess.py")
 DS = os.environ.get("MIRAE_DATASETS") or os.path.join(ROOT, "datasets")  # preprocess.py 와 동일 규칙

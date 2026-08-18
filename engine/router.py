@@ -356,7 +356,8 @@ def route_stage_a(question, index, policy=None, today=None):
 
     # ── 1. 값 도메인 밖 (T-01/02/03) — 근거 없이도 확정 refuse 힌트 ──────────
     if invalid_ratings:
-        plan.notes.append(f"'{invalid_ratings[0]}'는 신용등급 체계(AAA~D)에 없는 표기")
+        # 검문소(validation.gate_value_domain)와 같은 문구 — 거절문에서 사유가 중복 표시되지 않게
+        plan.notes.append(f"'{invalid_ratings[0]}'는 신용등급 체계(AAA~D)에 존재하지 않는 표기")
         plan.hints["invalid_value"] = invalid_ratings[0]
         return done("invalid_value", "refuse")
     if risk and risk[0] == "invalid":

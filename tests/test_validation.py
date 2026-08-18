@@ -154,6 +154,19 @@ def test_trap_terms_have_zero_meaningful_matches(index):
     assert index.search("kimi", limit=1) != []
 
 
+@needs_db
+def test_refusal_does_not_resurface_accidental_match_as_suggestion(ctx):
+    """8/18 실측: 거절문의 '혹시 다음 상품…' 안내에 우연 겹침(MSCI Denmark IMI)이
+    되살아나던 문제 — 안내는 질의어가 원문 표기 그대로 보이는 '상품'만 허용한다."""
+    out = answer_question("Kimi 관련 투자상품 있어?", ctx, today=TODAY)
+    assert out["answer"].startswith(REFUSE_HEAD)
+    assert "Denmark" not in out["answer"] and "혹시" not in out["answer"]
+    # 값 도메인 함정: 라우터 노트와 검문소 사유가 같은 문구라 사유가 한 줄만 나온다
+    out2 = answer_question("신용등급 AAAA인 채권 찾아줘", ctx, today=TODAY)
+    assert out2["answer"].startswith(REFUSE_HEAD)
+    assert out2["answer"].count("- 사유:") == 1
+
+
 # ---------------------------------------------------------------------------
 # 4. 충분성 검사(partial) — 커버리지 낮은 질문은 한계 문구가 강제된다
 # ---------------------------------------------------------------------------

@@ -38,6 +38,15 @@ import pandas as pd
 
 HERE = os.path.dirname(os.path.abspath(__file__))   # preprocessing/
 ROOT = os.path.dirname(HERE)                        # repo 루트
+
+# --- .env 파일 지원 -------------------------------------------------------
+# 저장소 최상위의 .env 를 읽어 환경변수로 올린다(없으면 아무 일도 안 함).
+# 운영체제 환경변수가 이미 있으면 그쪽이 우선이다.
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
+from config.env_loader import load_env  # noqa: E402
+load_env()
+# --------------------------------------------------------------------------
 # 원본 xlsx 위치: 기본은 repo 루트의 datasets/ (커밋 대상 아님).
 # 데이터를 저장소 밖에 두는 경우 MIRAE_DATASETS 환경변수로 지정한다.
 DS = os.environ.get("MIRAE_DATASETS") or os.path.join(ROOT, "datasets")

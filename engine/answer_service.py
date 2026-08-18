@@ -81,11 +81,19 @@ def _draft_refusal(plan, result, verdict):
     lines += [f"- 사유: {r}" for r in reasons]
 
     suggestions = list(verdict.suggestions)
-    for o in result.outcomes:                        # 키워드 채널의 부분 일치도 안내에 합류
+    # 키워드 채널의 부분 일치도 안내에 합류하되, '상품' 종류이면서 질의어가 원문 표기
+    # 그대로 이름 안에 보이는 것만 — 'kimi' ⊂ 'Denmark IMI'(공백 제거 우연 겹침)처럼
+    # 검문소가 이미 "의미 없는 겹침"으로 판정한 이름을 안내로 되살리지 않는다(8/18 실측).
+    kw_queries = [str(c.params.get("query", "")) for c in plan.calls if c.channel == "keyword"]
+    for o in result.outcomes:
         if o.channel == "keyword":
             for r in o.rows:
-                if not r.get("직접일치") and r["매칭"] not in suggestions:
-                    suggestions.append(r["매칭"])
+                name = str(r["매칭"])
+                is_product = str(r.get("종류", "")).startswith("product")
+                visible = any(q and q.lower() in name.lower() for q in kw_queries)
+                if (not r.get("직접일치") and is_product and visible
+                        and name not in suggestions):
+                    suggestions.append(name)
     if suggestions:
         lines.append("- 혹시 다음 상품을 찾으셨나요(명칭 부분 일치 안내이며, "
                      "질의하신 대상의 존재 근거는 아닙니다): " + " / ".join(suggestions[:3]))

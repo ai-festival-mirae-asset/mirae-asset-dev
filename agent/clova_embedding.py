@@ -23,6 +23,17 @@ from urllib.parse import urlparse
 
 import httpx
 
+# --- .env 파일 지원 -------------------------------------------------------
+# 저장소 최상위의 .env 를 읽어 환경변수로 올린다(파일이 없으면 아무 일도 안 함).
+# 운영체제 환경변수가 이미 있으면 그쪽이 우선이라 기존 설정은 깨지지 않는다.
+import sys as _sys
+_ROOT = str(Path(__file__).resolve().parent.parent)
+if _ROOT not in _sys.path:
+    _sys.path.insert(0, _ROOT)
+from config.env_loader import load_env  # noqa: E402
+load_env()
+# --------------------------------------------------------------------------
+
 DEFAULT_BASE_URL = "https://clovastudio.stream.ntruss.com"
 API_KEY_ENV = "CLOVASTUDIO_API_KEY"
 

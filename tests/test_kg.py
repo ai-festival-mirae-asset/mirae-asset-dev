@@ -13,7 +13,7 @@ import pandas as pd
 import pytest
 
 from kg import build_kg as bk
-from kg.kg_store import MF, RDFS_LABEL, TripleStore, norm_name, parse_line
+from kg.kg_store import FP, RDFS_LABEL, TripleStore, norm_name, parse_line
 
 
 # ---------------------------------------------------------------------------
@@ -55,7 +55,7 @@ def test_as_decimal(raw, ok):
 
 
 def test_valid_risk_grade_range_constraint():
-    """온톨로지 mf:riskGrade 범위 제약(1~6)의 코드 구현 — 밖이면 거부 + 집계."""
+    """온톨로지 fp:riskGrade 범위 제약(1~6)의 코드 구현 — 밖이면 거부 + 집계."""
     violations = {}
     assert bk.valid_risk_grade("3", violations) == "3"
     assert bk.valid_risk_grade("6", violations) == "6"
@@ -112,13 +112,13 @@ def test_kr_etf_row_mapping():
     nt, stats = emit_rows(bk.extract_kr_etf_row, [KR_ETF_ROW])
     store = load_store(nt)
     s = bk.res("kr-etf", "KR7102110004")[1:-1]
-    assert MF + "ETF" in store.types(s)
-    assert store.object(s, MF + "riskGrade") == "2"
-    assert store.object(s, MF + "expenseRatio") == "0.05"
-    assert store.object(s, MF + "listedDate") == "2008-01-02"
-    mgmt = store.object(s, MF + "managedBy")
+    assert store.types(s) == [FP + "DomesticETF"]        # 가장 구체적인 클래스 하나만(etf_kr.ttl)
+    assert store.object(s, FP + "riskGrade") == "2"
+    assert store.object(s, FP + "expenseRatio") == "0.05"
+    assert store.object(s, FP + "listedDate") == "2008-01-02"
+    mgmt = store.object(s, FP + "managedBy")
     assert store.label(mgmt) == "미래에셋"
-    idx = store.object(s, MF + "tracksIndex")
+    idx = store.object(s, FP + "tracksIndex")
     assert store.label(idx) == "코스피 200"
     assert stats["product_nodes"] == 1
 
@@ -129,8 +129,7 @@ def test_etf_etn_disjoint_guard():
     nt, stats = emit_rows(bk.extract_kr_etf_row, [row])
     store = load_store(nt)
     s = bk.res("kr-etf", "X1")[1:-1]
-    assert MF + "ExchangeTradedProduct" in store.types(s)
-    assert MF + "ETF" not in store.types(s)
+    assert store.types(s) == [FP + "ExchangeTradedProduct"]
     assert stats["instrument_type_unresolved"] == 1
 
 
@@ -140,8 +139,36 @@ def test_etn_aum_not_emitted():
     nt, _ = emit_rows(bk.extract_kr_etf_row, [row])
     store = load_store(nt)
     s = bk.res("kr-etf", "X2")[1:-1]
-    assert store.object(s, MF + "aum") is None
-    assert store.object(s, MF + "netAssets") is not None
+    assert store.types(s) == [FP + "DomesticETN"]
+    assert store.object(s, FP + "aum") is None
+    assert store.object(s, FP + "netAssets") is not None
+
+
+def test_global_rows_get_foreign_classes():
+    """해외ETF 마스터 행은 fp:ForeignETF / fp:ForeignETN (etf_gl.ttl — 공식 예시 클래스)."""
+    rows = [{"pd_itm_no": "G-ETF", "pd_nm": "SPDR S&P 500", "drv_instrument_type": "ETF",
+             "du_last_aum": "1.5", "pd_trd_ccy": "USD"},
+            {"pd_itm_no": "G-ETN", "pd_nm": "iPath ETN", "drv_instrument_type": "ETN",
+             "du_last_aum": "0"}]
+    nt, stats = emit_rows(bk.extract_global_etf_row, rows)
+    store = load_store(nt)
+    etf, etn = bk.res("global-etf", "G-ETF")[1:-1], bk.res("global-etf", "G-ETN")[1:-1]
+    assert store.types(etf) == [FP + "ForeignETF"]
+    assert store.types(etn) == [FP + "ForeignETN"]
+    assert store.object(etf, FP + "productGroup") == "해외ETF"
+    assert store.object(etf, FP + "tradingCurrency") == "USD"
+    assert store.object(etf, FP + "aum") == "1.5" and store.object(etn, FP + "aum") is None
+    assert stats["instrument_type_unresolved"] == 0
+
+
+def test_kg_namespace_matches_official_prefix():
+    """8/19 공식 접두어: fp: <http://mafest.ai/product#> — 생성기·스토어·온톨로지 파일이 같은 값."""
+    from kg.kg_store import FP as STORE_FP, MF as LEGACY_ALIAS
+    assert bk.FP == STORE_FP == "http://mafest.ai/product#"
+    assert LEGACY_ALIAS == STORE_FP                       # 옛 이름 호환 별칭
+    text = io.open(os.path.join(bk.ROOT, "ontology", "common.ttl"), encoding="utf-8").read()
+    assert "@prefix fp:   <http://mafest.ai/product#>" in text
+    assert "@prefix fpr:  <http://mafest.ai/resource/>" in text and bk.FPR == "http://mafest.ai/resource/"
 
 
 def test_bond_row_perpetual_has_no_maturity_date():
@@ -150,11 +177,11 @@ def test_bond_row_perpetual_has_no_maturity_date():
     nt, stats = emit_rows(bk.extract_bond_row, [row])
     store = load_store(nt)
     s = bk.res("bond", "B1")[1:-1]
-    assert store.object(s, MF + "maturityDate") is None
-    assert store.object(s, MF + "isPerpetual") == "true"
-    assert store.object(s, MF + "riskGrade") is None       # 99 → 범위 제약 거부
+    assert store.object(s, FP + "maturityDate") is None
+    assert store.object(s, FP + "isPerpetual") == "true"
+    assert store.object(s, FP + "riskGrade") is None       # 99 → 범위 제약 거부
     assert stats["risk_grade_dropped"] == {"99": 1}
-    issuer = store.object(s, MF + "issuedBy")
+    issuer = store.object(s, FP + "issuedBy")
     assert store.label(issuer) == "발행사A"
 
 
@@ -164,9 +191,9 @@ def test_missing_values_make_no_triples():
     nt, _ = emit_rows(bk.extract_global_etf_row, [row])
     store = load_store(nt)
     s = bk.res("global-etf", "G1")[1:-1]
-    assert store.object(s, MF + "riskGrade") is None
-    assert store.object(s, MF + "expenseRatio") is None
-    assert store.object(s, MF + "managedBy") is None
+    assert store.object(s, FP + "riskGrade") is None
+    assert store.object(s, FP + "expenseRatio") is None
+    assert store.object(s, FP + "managedBy") is None
 
 
 # ---------------------------------------------------------------------------
@@ -188,29 +215,44 @@ def test_e2e_dod_query_tiger200(tmp_path):
     hits = store.search_products("TIGER 200")
     assert len(hits) == 1
     s, _ = hits[0]
-    mgmt = store.object(s, MF + "managedBy")
+    mgmt = store.object(s, FP + "managedBy")
     assert store.label(mgmt) == "미래에셋"                    # ← DoD
     # 역관계(CQ2): 미래에셋 노드에서 managedBy 역방향으로 상품이 찾아진다
-    assert s in store.subjects(MF + "managedBy", mgmt)
+    assert s in store.subjects(FP + "managedBy", mgmt)
 
 
 def test_fund_master_grouping(tmp_path):
     """공모펀드는 itm_no 마스터 1노드 + shareClassCount 로 클래스 행 수 보존."""
     base = {"itm_nm": "테스트펀드", "or_co_xtn_itt_cd": "00040010",
-            "drv_risk_grade": "4", "fd_ivst_rgn_desc": "국내", "sale_yn": "Y"}
+            "drv_risk_grade": "4", "fd_ivst_rgn_desc": "국내", "sale_yn": "판매중"}
     rows = [dict(base, itm_no="F1", prfd_attr_cd="A"),
             dict(base, itm_no="F1", prfd_attr_cd="C"),
-            dict(base, itm_no="F2", prfd_attr_cd="A", itm_nm="테스트펀드2")]
+            dict(base, itm_no="F2", prfd_attr_cd="A", itm_nm="테스트펀드2", sale_yn="판매완료")]
     df = pd.DataFrame(rows, dtype=str)
     stats = bk.build_table("public_fund", df, str(tmp_path))
     assert stats["product_nodes"] == 2
 
     store = TripleStore.from_dir(str(tmp_path))
     f1 = bk.res("fund", "F1")[1:-1]
-    assert store.object(f1, MF + "shareClassCount") == "2"
-    mgmt = store.object(f1, MF + "managedBy")
-    assert store.object(mgmt, MF + "companyCode") == "00040010"   # 코드 노드(명칭 없음)
+    assert store.types(f1) == [FP + "PublicFund"]
+    assert store.object(f1, FP + "shareClassCount") == "2"
+    mgmt = store.object(f1, FP + "managedBy")
+    assert store.object(mgmt, FP + "companyCode") == "00040010"   # 코드 노드(명칭 없음)
     assert store.label(mgmt) is None
+    # sale_yn 실제 값('판매중'/'판매완료' — Y/N 아님)이 판매중 여부로 적재된다(8/19 정정)
+    assert store.object(f1, FP + "isOnSale") == "true"
+    assert store.object(bk.res("fund", "F2")[1:-1], FP + "isOnSale") == "false"
+
+
+def test_legacy_namespace_graph_is_rejected(tmp_path):
+    """8/18 이전 어휘(mf:)로 만든 .nt 를 적재하면 조용히 '상품 없음'이 되지 않고 즉시 멈춘다."""
+    old = ('<https://ai-festival-mirae-asset.github.io/resource/kr-etf/X> '
+           '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> '
+           '<https://ai-festival-mirae-asset.github.io/ontology/finance#ETF> .\n')
+    path = tmp_path / "kr_etf.nt"
+    path.write_text(old, encoding="utf-8")
+    with pytest.raises(ValueError, match="재생성"):
+        TripleStore.from_dir(str(tmp_path))
 
 
 def test_nt_file_self_contained_and_dedup(tmp_path):
@@ -263,13 +305,13 @@ def test_constituent_stock_row_membership():
     bk.extract_constituent_row(em, CONST_ROW, stats, set())
     store = load_store(buf.getvalue())
     etf = bk.res("kr-etf", "KR7102110004")[1:-1]
-    company = store.object(etf, MF + "holdsConstituent")
+    company = store.object(etf, FP + "holdsConstituent")
     assert company is not None
-    assert MF + "ListedCompany" in store.types(company)
+    assert FP + "ListedCompany" in store.types(company)
     assert store.label(company) == "삼성전자"
-    assert store.object(company, MF + "tickerCode") == "005930"
+    assert store.object(company, FP + "tickerCode") == "005930"
     assert store.label(etf) == "TIGER 200"
-    assert store.subjects(MF + "holdsConstituent", company) == [etf]  # CQ6 역질의
+    assert store.subjects(FP + "holdsConstituent", company) == [etf]  # CQ6 역질의
     assert stats["edges"] == 1 and stats["etf_nodes"] == 1
 
 
@@ -302,7 +344,7 @@ def test_constituent_dedupe_across_etfs():
     company = bk.res("company", "krx-005930")[1:-1]
     type_lines = [l for l in nt.splitlines() if "#type>" in l and "company/" in l]
     assert len(type_lines) == 1
-    assert len(store.subjects(MF + "holdsConstituent", company)) == 2
+    assert len(store.subjects(FP + "holdsConstituent", company)) == 2
     assert stats["edges"] == 2 and stats["etf_nodes"] == 2
 
 
@@ -317,11 +359,11 @@ def test_constituent_foreign_stock_label_variants():
     store = load_store(nt)
     company = bk.res("company", "isin-CNE1000041R8")[1:-1]
     assert stats["edges_foreign"] == 2 and stats["edges_domestic"] == 0
-    assert MF + "ListedCompany" in store.types(company)
-    assert store.object(company, MF + "securityIsin") == "CNE1000041R8"
+    assert FP + "ListedCompany" in store.types(company)
+    assert store.object(company, FP + "securityIsin") == "CNE1000041R8"
     labels = store.objects(company, RDFS_LABEL)
     assert len(labels) == 2                      # 두 표기 전부 보존 — 이름 검색 성립 조건
-    assert len(store.subjects(MF + "holdsConstituent", company)) == 2
+    assert len(store.subjects(FP + "holdsConstituent", company)) == 2
 
 
 def test_constituent_reit_included_cash_and_futures_excluded():
@@ -361,5 +403,5 @@ def test_build_constituents_e2e(tmp_path):
     assert stats["as_of"] == "2026-07-10"
     store = TripleStore().load(os.path.join(str(tmp_path), "constituents.nt"))
     samsung = bk.res("company", "krx-005930")[1:-1]
-    etfs = store.subjects(MF + "holdsConstituent", samsung)
+    etfs = store.subjects(FP + "holdsConstituent", samsung)
     assert [store.label(s) for s in etfs] == ["TIGER 200"]

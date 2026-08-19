@@ -8,8 +8,13 @@
        kg/output/build_report.json (테이블별 노드·트리플 수 + 무결성 위반 집계)
 
 원칙
-  1. 어휘는 ontology/finance.ttl 정의만 사용한다 (MF/MFR 네임스페이스 일치).
-  2. 온톨로지 제약을 적재 전에 코드로 검증한다:
+  1. 어휘는 온톨로지 5파일(ontology/common.ttl + bond_kr·etf_kr·etf_gl·fund_pub.ttl,
+     접두어 fp:) 정의만 사용한다 — tests/test_ontology.py 가 "코드가 쓰는 항 ⊆ 온톨로지
+     선언"을 검사한다. 인스턴스는 가장 구체적인 클래스로만 타이핑한다(국내ETF 행 →
+     fp:DomesticETF, 해외 ETN 행 → fp:ForeignETN …). 상위 클래스(fp:ETF·fp:Product)는
+     온톨로지의 rdfs:subClassOf 로 추론되는 몫이라 인스턴스에 직접 붙이지 않는다.
+  2. 온톨로지 제약을 적재 전에 코드로 검증한다(SHACL 선언은 ontology/shapes.ttl —
+     같은 규칙을 kg/validate_shacl.py 로 독립 재검사할 수 있다):
        - riskGrade ∉ {1..6}  → 해당 트리플 미생성 + 리포트 (범위 무결성 — "99등급" 차단)
        - instrument_type ∉ {ETF, ETN} → 상위클래스(ExchangeTradedProduct)로만 타이핑 + 리포트
          (ETF/ETN disjoint 보호 — 불명 행을 ETF 로 단정하지 않는다)
@@ -23,12 +28,12 @@
 
 공모펀드 단순화: 동일 itm_no 그룹에서 달라지는 컬럼은 prfd_attr_cd 뿐임이 검증되어
   있으므로(8/5 dev-kyung, memory.md) 마스터(itm_no) 단위 1노드로 적재하고
-  mf:shareClassCount 로 클래스 행 수를 보존한다.
+  fp:shareClassCount 로 클래스 행 수를 보존한다.
 
 구조 주의: 테스트(tests/test_kg.py)가 순수 함수를 import 한다 — import 시점 부작용 금지.
 
 실행 : python kg/build_kg.py [--tables kr_etf,global_etf] [--limit N] [--out DIR]
-근거 : ontology/finance.ttl · ROADMAP.md §4(아키텍처)·§7.2 · kg/KG_METHOD.md
+근거 : ontology/*.ttl · ROADMAP.md §4(아키텍처)·§7.2 · kg/KG_METHOD.md
 """
 import argparse
 import io
@@ -47,9 +52,11 @@ OUT_DEFAULT = os.path.join(HERE, "output")
 
 AS_OF = "2026-07-11"  # 데이터 스냅샷 기준일 — preprocess.py 와 동일
 
-# --- 네임스페이스 (ontology/finance.ttl 과 일치해야 한다) ---------------------
-MF = "https://ai-festival-mirae-asset.github.io/ontology/finance#"
-MFR = "https://ai-festival-mirae-asset.github.io/resource/"
+# --- 네임스페이스 (ontology/common.ttl 과 일치해야 한다 — kg_store.py 와 같은 값) ----
+FP = "http://mafest.ai/product#"          # 스키마 — 공식 예시 접두어 fp: (8/19 채택)
+FPR = "http://mafest.ai/resource/"        # 인스턴스
+ONTOLOGY_FILES = ("ontology/common.ttl", "ontology/bond_kr.ttl", "ontology/etf_kr.ttl",
+                  "ontology/etf_gl.ttl", "ontology/fund_pub.ttl")
 RDF_TYPE = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
 RDFS_LABEL = "<http://www.w3.org/2000/01/rdf-schema#label>"
 XSD = "http://www.w3.org/2001/XMLSchema#"
@@ -121,14 +128,14 @@ def slug(text):
     return quote(text.strip(), safe="")
 
 
-def mf_term(local):
-    """스키마 항 (클래스·프로퍼티) IRI."""
-    return "<" + MF + local + ">"
+def fp_term(local):
+    """스키마 항 (클래스·프로퍼티) IRI — fp:{local}. local 은 온톨로지 5파일에 선언된 이름."""
+    return "<" + FP + local + ">"
 
 
 def res(kind, key):
-    """인스턴스 IRI — mfr:{kind}/{key}. key 는 원시 문자열(내부에서 슬러그화)."""
-    return "<" + MFR + kind + "/" + slug(key) + ">"
+    """인스턴스 IRI — fpr:{kind}/{key}. key 는 원시 문자열(내부에서 슬러그화)."""
+    return "<" + FPR + kind + "/" + slug(key) + ">"
 
 
 def sv(row, col):
@@ -172,11 +179,28 @@ def as_bool(s):
     return None
 
 
+def as_sale_flag(s):
+    """공모펀드 sale_yn → xsd:boolean lexical.
+
+    실제 값은 Y/N 이 아니라 '판매중'/'판매완료'다(8/18 채점기가 발견 — 그 전에는 이 속성이
+    조용히 한 건도 생성되지 않았다). Y/N 표기도 함께 받는다.
+    """
+    if s is None:
+        return None
+    u = s.strip()
+    if u == "판매중":
+        return "true"
+    if u == "판매완료":
+        return "false"
+    return as_bool(u)
+
+
 def valid_risk_grade(s, violations):
     """위험등급 범위 제약(1~6, 데이터 실측 우선 — ROADMAP §8.4).
 
     범위 밖 값은 None 을 돌려주고 violations 카운터에 기록한다 — 온톨로지
-    mf:riskGrade 제약의 코드 구현("99등급"이라고 답하느니 없다고 답한다).
+    fp:riskGrade 제약(common.ttl · shapes.ttl fp:ProductShape)의 코드 구현
+    ("99등급"이라고 답하느니 없다고 답한다).
     """
     v = as_int(s)
     if v is None:
@@ -215,16 +239,16 @@ class TableEmitter:
         k = (kind, key)
         if k not in self._seen_aux:
             self._seen_aux.add(k)
-            self.t(iri, RDF_TYPE, mf_term(cls_local))
+            self.t(iri, RDF_TYPE, fp_term(cls_local))
             if label is not None:
                 self._seen_labels.add((kind, key, label))
                 self.t(iri, RDFS_LABEL, lit(label))
             if code is not None:
-                self.t(iri, mf_term("companyCode"), lit(code))
+                self.t(iri, fp_term("companyCode"), lit(code))
             if ticker is not None:
-                self.t(iri, mf_term("tickerCode"), lit(ticker))
+                self.t(iri, fp_term("tickerCode"), lit(ticker))
             if isin is not None:
-                self.t(iri, mf_term("securityIsin"), lit(isin))
+                self.t(iri, fp_term("securityIsin"), lit(isin))
         return iri
 
     def aux_label(self, kind, key, label):
@@ -241,10 +265,10 @@ def emit_common(em, s_iri, row, table_id, group_label, name_col, short_col, id_c
     """4종 공통 속성 — 이름·키·출처(근거 표시 지원)."""
     em.t(s_iri, RDFS_LABEL, lit(sv(row, name_col)) if sv(row, name_col) else None)
     if short_col and sv(row, short_col):
-        em.t(s_iri, mf_term("shortName"), lit(sv(row, short_col)))
-    em.t(s_iri, mf_term("productId"), lit(sv(row, id_col)))
-    em.t(s_iri, mf_term("sourceTable"), lit(table_id))
-    em.t(s_iri, mf_term("productGroup"), lit(group_label))
+        em.t(s_iri, fp_term("shortName"), lit(sv(row, short_col)))
+    em.t(s_iri, fp_term("productId"), lit(sv(row, id_col)))
+    em.t(s_iri, fp_term("sourceTable"), lit(table_id))
+    em.t(s_iri, fp_term("productGroup"), lit(group_label))
 
 
 # ---------------------------------------------------------------------------
@@ -256,69 +280,79 @@ def extract_bond_row(em, row, stats):
     if pid is None:
         return
     s = res("bond", pid)
-    em.t(s, RDF_TYPE, mf_term("Bond"))
+    em.t(s, RDF_TYPE, fp_term("Bond"))
     emit_common(em, s, row, "PRBD01N001", "국내채권", "PD_NM", "PD_ABRV_NM", "PD_NO")
 
     issuer = sv(row, "PD_PBCM")
     if issuer:
-        em.t(s, mf_term("issuedBy"), em.aux_node("company", issuer, "Issuer", label=issuer))
+        em.t(s, fp_term("issuedBy"), em.aux_node("company", issuer, "Issuer", label=issuer))
 
-    em.t(s, mf_term("bondClass"), lit(sv(row, "STD_PD_MCLS_NM")) if sv(row, "STD_PD_MCLS_NM") else None)
-    em.t(s, mf_term("bondKind"), lit(sv(row, "BD_KND")) if sv(row, "BD_KND") else None)
+    em.t(s, fp_term("bondClass"), lit(sv(row, "STD_PD_MCLS_NM")) if sv(row, "STD_PD_MCLS_NM") else None)
+    em.t(s, fp_term("bondKind"), lit(sv(row, "BD_KND")) if sv(row, "BD_KND") else None)
     curr = sv(row, "CURR_CD")
     if curr and curr != "000":  # '000' = 통화 미지정 센티널 (column_dictionary)
-        em.t(s, mf_term("currency"), lit(curr))
+        em.t(s, fp_term("currency"), lit(curr))
 
     d = as_date(sv(row, "ISU_DT"))
-    em.t(s, mf_term("issueDate"), lit_typed(d, "date") if d else None)
+    em.t(s, fp_term("issueDate"), lit_typed(d, "date") if d else None)
     perpetual = as_bool(sv(row, "drv_is_perpetual"))
     if perpetual == "true":
-        em.t(s, mf_term("isPerpetual"), lit_typed("true", "boolean"))
+        em.t(s, fp_term("isPerpetual"), lit_typed("true", "boolean"))
     else:
         d = as_date(sv(row, "MAT_DT"))
-        em.t(s, mf_term("maturityDate"), lit_typed(d, "date") if d else None)
-    em.t(s, mf_term("maturityStatus"), lit(sv(row, "drv_maturity_status")) if sv(row, "drv_maturity_status") else None)
+        em.t(s, fp_term("maturityDate"), lit_typed(d, "date") if d else None)
+    em.t(s, fp_term("maturityStatus"), lit(sv(row, "drv_maturity_status")) if sv(row, "drv_maturity_status") else None)
     b = as_bool(sv(row, "drv_is_buyable"))
-    em.t(s, mf_term("isBuyable"), lit_typed(b, "boolean") if b else None)
+    em.t(s, fp_term("isBuyable"), lit_typed(b, "boolean") if b else None)
 
     c = as_decimal(sv(row, "SRFC_IRT"))
-    em.t(s, mf_term("couponRate"), lit_typed(c, "decimal") if c else None)
-    em.t(s, mf_term("creditRating"), lit(sv(row, "drv_crd_grd_norm")) if sv(row, "drv_crd_grd_norm") else None)
+    em.t(s, fp_term("couponRate"), lit_typed(c, "decimal") if c else None)
+    em.t(s, fp_term("creditRating"), lit(sv(row, "drv_crd_grd_norm")) if sv(row, "drv_crd_grd_norm") else None)
     r = as_int(sv(row, "drv_crd_grd_rank"))
-    em.t(s, mf_term("creditRatingRank"), lit_typed(r, "integer") if r else None)
+    em.t(s, fp_term("creditRatingRank"), lit_typed(r, "integer") if r else None)
     g = valid_risk_grade(sv(row, "drv_risk_grade"), stats["risk_grade_dropped"])
-    em.t(s, mf_term("riskGrade"), lit_typed(g, "integer") if g else None)
+    em.t(s, fp_term("riskGrade"), lit_typed(g, "integer") if g else None)
     stats["product_nodes"] += 1
 
 
-def _etp_class(row, stats):
-    """drv_instrument_type → 온톨로지 클래스. ETF/ETN 이외(불명)는 상위클래스로만 타이핑."""
+# drv_instrument_type × 상장 시장 → 가장 구체적인 온톨로지 클래스 (etf_kr.ttl · etf_gl.ttl)
+ETP_CLASS = {
+    ("domestic", "ETF"): "DomesticETF", ("domestic", "ETN"): "DomesticETN",
+    ("foreign", "ETF"): "ForeignETF",   ("foreign", "ETN"): "ForeignETN",
+}
+
+
+def _etp_class(row, stats, market="domestic"):
+    """drv_instrument_type → 온톨로지 클래스(국내/해외 × ETF/ETN).
+
+    ETF/ETN 이외(불명)는 상위클래스 ExchangeTradedProduct 로만 타이핑한다 — ETF 로
+    단정하지 않는다(disjoint 보호). 상품군은 fp:productGroup 리터럴로 따로 남는다.
+    """
     t = sv(row, "drv_instrument_type")
-    if t == "ETF":
-        return "ETF"
-    if t == "ETN":
-        return "ETN"
+    cls = ETP_CLASS.get((market, t))
+    if cls:
+        return cls
     stats["instrument_type_unresolved"] += 1
     return "ExchangeTradedProduct"
 
 
 def _emit_etp_shared(em, s, row, cls, stats):
-    """국내·해외 ETP 공통 속성."""
+    """국내·해외 ETP 공통 속성 (common.ttl 의 ETP 도메인 속성)."""
     mgmt = sv(row, "cu_fund_mgmt_co")
     if mgmt:
-        em.t(s, mf_term("managedBy"), em.aux_node("company", mgmt, "ManagementCompany", label=mgmt))
+        em.t(s, fp_term("managedBy"), em.aux_node("company", mgmt, "ManagementCompany", label=mgmt))
     idx = sv(row, "cu_base_index")
     if idx and not any(t in idx for t in INDEX_SENTINEL_SUBSTRINGS):
-        em.t(s, mf_term("tracksIndex"), em.aux_node("index", idx, "Index", label=idx))
+        em.t(s, fp_term("tracksIndex"), em.aux_node("index", idx, "Index", label=idx))
     e = as_decimal(sv(row, "cu_charge_rt"))
-    em.t(s, mf_term("expenseRatio"), lit_typed(e, "decimal") if e else None)
-    if cls != "ETN":  # ETN 의 du_last_aum 은 전량 0 실측 — 규모는 netAssets 로
+    em.t(s, fp_term("expenseRatio"), lit_typed(e, "decimal") if e else None)
+    if not cls.endswith("ETN"):  # ETN 의 du_last_aum 은 전량 0 실측 — 규모는 netAssets 로
         a = as_decimal(sv(row, "du_last_aum"))
-        em.t(s, mf_term("aum"), lit_typed(a, "decimal") if a else None)
-    em.t(s, mf_term("assetClass"), lit(sv(row, "wu_inv_ast_type")) if sv(row, "wu_inv_ast_type") else None)
-    em.t(s, mf_term("region"), lit(sv(row, "wu_inv_rgn")) if sv(row, "wu_inv_rgn") else None)
+        em.t(s, fp_term("aum"), lit_typed(a, "decimal") if a else None)
+    em.t(s, fp_term("assetClass"), lit(sv(row, "wu_inv_ast_type")) if sv(row, "wu_inv_ast_type") else None)
+    em.t(s, fp_term("region"), lit(sv(row, "wu_inv_rgn")) if sv(row, "wu_inv_rgn") else None)
     d = as_date(sv(row, "pd_lstg_dt"))
-    em.t(s, mf_term("listedDate"), lit_typed(d, "date") if d else None)
+    em.t(s, fp_term("listedDate"), lit_typed(d, "date") if d else None)
 
 
 def extract_kr_etf_row(em, row, stats):
@@ -326,25 +360,25 @@ def extract_kr_etf_row(em, row, stats):
     if pid is None:
         return
     s = res("kr-etf", pid)
-    cls = _etp_class(row, stats)
-    em.t(s, RDF_TYPE, mf_term(cls))
+    cls = _etp_class(row, stats, market="domestic")    # DomesticETF / DomesticETN (etf_kr.ttl)
+    em.t(s, RDF_TYPE, fp_term(cls))
     emit_common(em, s, row, "PREF01N001", "국내ETF", "pd_nm", "pd_abrv_nm", "pd_itm_no")
     _emit_etp_shared(em, s, row, cls, stats)
 
     n = as_decimal(sv(row, "pd_net_tamt"))
-    em.t(s, mf_term("netAssets"), lit_typed(n, "decimal") if n else None)
-    em.t(s, mf_term("currency"), lit(sv(row, "drv_curr_cd")) if sv(row, "drv_curr_cd") else None)
+    em.t(s, fp_term("netAssets"), lit_typed(n, "decimal") if n else None)
+    em.t(s, fp_term("currency"), lit(sv(row, "drv_curr_cd")) if sv(row, "drv_curr_cd") else None)
     g = valid_risk_grade(sv(row, "drv_risk_grade"), stats["risk_grade_dropped"])
-    em.t(s, mf_term("riskGrade"), lit_typed(g, "integer") if g else None)
+    em.t(s, fp_term("riskGrade"), lit_typed(g, "integer") if g else None)
     status = sv(row, "drv_listing_status")
-    em.t(s, mf_term("listingStatus"), lit(status) if status else None)
+    em.t(s, fp_term("listingStatus"), lit(status) if status else None)
     if status == "delisted":
         d = as_date(sv(row, "pd_lste_dt"))
-        em.t(s, mf_term("delistedDate"), lit_typed(d, "date") if d else None)
+        em.t(s, fp_term("delistedDate"), lit_typed(d, "date") if d else None)
     r1 = as_decimal(sv(row, "du_er_1y"))
-    em.t(s, mf_term("return1y"), lit_typed(r1, "decimal") if r1 else None)
+    em.t(s, fp_term("return1y"), lit_typed(r1, "decimal") if r1 else None)
     ry = as_decimal(sv(row, "du_er_ytd"))
-    em.t(s, mf_term("returnYtd"), lit_typed(ry, "decimal") if ry else None)
+    em.t(s, fp_term("returnYtd"), lit_typed(ry, "decimal") if ry else None)
     stats["product_nodes"] += 1
 
 
@@ -353,20 +387,20 @@ def extract_global_etf_row(em, row, stats):
     if pid is None:
         return
     s = res("global-etf", pid)
-    cls = _etp_class(row, stats)
-    em.t(s, RDF_TYPE, mf_term(cls))
+    cls = _etp_class(row, stats, market="foreign")     # ForeignETF / ForeignETN (etf_gl.ttl)
+    em.t(s, RDF_TYPE, fp_term(cls))
     emit_common(em, s, row, "PREF02N001", "해외ETF", "pd_nm", "pd_abrv_nm", "pd_itm_no")
     _emit_etp_shared(em, s, row, cls, stats)
 
     isin = sv(row, "pd_isin_cd")
-    em.t(s, mf_term("isin"), lit(isin) if isin else None)  # 키 아님 — 중복·공백 실측 (§5)
-    em.t(s, mf_term("tradingCurrency"), lit(sv(row, "pd_trd_ccy")) if sv(row, "pd_trd_ccy") else None)
+    em.t(s, fp_term("isin"), lit(isin) if isin else None)  # 키 아님 — 중복·공백 실측 (§5)
+    em.t(s, fp_term("tradingCurrency"), lit(sv(row, "pd_trd_ccy")) if sv(row, "pd_trd_ccy") else None)
     inv = as_bool(sv(row, "drv_is_inverse"))
     if inv == "true":
-        em.t(s, mf_term("isInverse"), lit_typed("true", "boolean"))
+        em.t(s, fp_term("isInverse"), lit_typed("true", "boolean"))
     inc = as_bool(sv(row, "drv_incomplete_core"))
     if inc == "true":
-        em.t(s, mf_term("isIncompleteRecord"), lit_typed("true", "boolean"))
+        em.t(s, fp_term("isIncompleteRecord"), lit_typed("true", "boolean"))
     # 해외ETF 는 위험등급 원천 컬럼이 없다 — riskGrade 트리플 없음 = "확인할 수 없음" 근거
     stats["product_nodes"] += 1
 
@@ -376,37 +410,37 @@ def extract_fund_master_row(em, row, stats, share_class_count):
     if pid is None:
         return
     s = res("fund", pid)
-    em.t(s, RDF_TYPE, mf_term("PublicFund"))
+    em.t(s, RDF_TYPE, fp_term("PublicFund"))
     emit_common(em, s, row, "PRFD01N001", "공모펀드", "itm_nm", "itm_abrv_nm", "itm_no")
 
     code = sv(row, "or_co_xtn_itt_cd")
     if code:
         # 운용사 명칭이 원천에 없다 — 코드 노드로 적재, 명칭 해석은 entity resolution 후속
-        em.t(s, mf_term("managedBy"), em.aux_node("company", "code-" + code, "ManagementCompany", code=code))
-        em.t(s, mf_term("managementCompanyCode"), lit(code))
+        em.t(s, fp_term("managedBy"), em.aux_node("company", "code-" + code, "ManagementCompany", code=code))
+        em.t(s, fp_term("managementCompanyCode"), lit(code))
     bmk = sv(row, "bmrk_nm")
     if bmk:
-        em.t(s, mf_term("hasBenchmark"), em.aux_node("index", bmk, "Index", label=bmk))
+        em.t(s, fp_term("hasBenchmark"), em.aux_node("index", bmk, "Index", label=bmk))
 
-    em.t(s, mf_term("fundAttribute"), lit(sv(row, "or_attr_desc")) if sv(row, "or_attr_desc") else None)
+    em.t(s, fp_term("fundAttribute"), lit(sv(row, "or_attr_desc")) if sv(row, "or_attr_desc") else None)
     g = valid_risk_grade(sv(row, "drv_risk_grade"), stats["risk_grade_dropped"])
-    em.t(s, mf_term("riskGrade"), lit_typed(g, "integer") if g else None)
-    em.t(s, mf_term("region"), lit(sv(row, "fd_ivst_rgn_desc")) if sv(row, "fd_ivst_rgn_desc") else None)
-    em.t(s, mf_term("currency"), lit(sv(row, "curr_cd")) if sv(row, "curr_cd") else None)
+    em.t(s, fp_term("riskGrade"), lit_typed(g, "integer") if g else None)
+    em.t(s, fp_term("region"), lit(sv(row, "fd_ivst_rgn_desc")) if sv(row, "fd_ivst_rgn_desc") else None)
+    em.t(s, fp_term("currency"), lit(sv(row, "curr_cd")) if sv(row, "curr_cd") else None)
     n = as_decimal(sv(row, "fd_nast_suma"))
-    em.t(s, mf_term("netAssets"), lit_typed(n, "decimal") if n else None)
+    em.t(s, fp_term("netAssets"), lit_typed(n, "decimal") if n else None)
     r1 = as_decimal(sv(row, "fd_yr1_ern_r"))
-    em.t(s, mf_term("return1y"), lit_typed(r1, "decimal") if r1 else None)
-    b = as_bool(sv(row, "sale_yn"))
-    em.t(s, mf_term("isOnSale"), lit_typed(b, "boolean") if b else None)
-    em.t(s, mf_term("shareClassCount"), lit_typed(str(share_class_count), "integer"))
+    em.t(s, fp_term("return1y"), lit_typed(r1, "decimal") if r1 else None)
+    b = as_sale_flag(sv(row, "sale_yn"))
+    em.t(s, fp_term("isOnSale"), lit_typed(b, "boolean") if b else None)
+    em.t(s, fp_term("shareClassCount"), lit_typed(str(share_class_count), "integer"))
     stats["product_nodes"] += 1
 
 
 def extract_constituent_row(em, row, stats, seen_etf):
-    """구성종목 수집 CSV 1행 → membership 트리플 (finance.ttl §7, CQ6).
+    """구성종목 수집 CSV 1행 → membership 트리플 (etf_kr.ttl §3, CQ6).
 
-    mf:ListedCompany 적재 대상 (8/13 실측 기반 — KG_METHOD.md 구성종목 절):
+    fp:ListedCompany 적재 대상 (8/13 실측 기반 — KG_METHOD.md 구성종목 절):
       ① 국내 상장 증권(SECUGRP_ID ∈ ST·DR·RT·IF·MF) — 키 krx-{6자리 코드}
       ② 해외 상장 주식(SECUGRP_ID 없음 + 비KR ISIN) — 키 isin-{ISIN}. 운용사별
          이름 표기가 달라 변형을 전부 rdfs:label 로 보존한다(이름 검색 성립 조건).
@@ -443,7 +477,7 @@ def extract_constituent_row(em, row, stats, seen_etf):
         stats["etf_nodes"] += 1
     company = em.aux_node("company", key, "ListedCompany", label=name, **kwargs)
     em.aux_label("company", key, name)         # 이름 변형 추가 라벨(중복이면 no-op)
-    em.t(s, mf_term("holdsConstituent"), company)
+    em.t(s, fp_term("holdsConstituent"), company)
     stats["edges"] += 1
 
 
@@ -529,7 +563,7 @@ def main(argv=None):
         sys.exit(f"전처리 산출물이 없다: {PROCESSED} — 먼저 python preprocessing/preprocess.py 실행")
 
     os.makedirs(args.out, exist_ok=True)
-    report = {"as_of": AS_OF, "ontology": "ontology/finance.ttl",
+    report = {"as_of": AS_OF, "ontology": list(ONTOLOGY_FILES), "schema_namespace": FP,
               "note": "결측은 트리플 미생성. risk_grade_dropped = 범위(1~6) 밖 값 적재 거부 집계. "
                       "constituents 는 KRX 수집분(기준일 2026-07-10)이며 부분 수집일 수 있다(etf_nodes 로 확인).",
               "tables": {}}

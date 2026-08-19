@@ -8,4 +8,6 @@ duckdb>=1.0          # 표 데이터 저장소(RDB)
 fastapi>=0.100       # API 서버 (순서 ⑥)
 uvicorn>=0.30        # API 서버 구동기
 tzdata               # Windows 에서 서울 시간대 계산(time_policy)
+rdflib>=7.0          # 온톨로지 5파일(ontology/*.ttl) 파싱 — 테스트·SHACL 검사용(서버 실행에는 불필요)
+pyshacl>=0.30        # SHACL 데이터 규칙 검사(kg/validate_shacl.py, ontology/shapes.ttl)
 pytest>=8.0          # 자동 테스트

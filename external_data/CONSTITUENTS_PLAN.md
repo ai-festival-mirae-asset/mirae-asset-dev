@@ -60,7 +60,7 @@
 
 ## 5. 수집 후 연결 (KG 확장) — **8/13 완료 (부분 수집분 가동)**
 
-- [x] `mf:holdsConstituent` 활성화(`ontology/finance.ttl` §7 — v0.2) + `kg/build_kg.py` constituents 추출기 + `query_kg.py --holds` (CQ6). 상세 정책·실측: `kg/KG_METHOD.md` 5장.
+- [x] `fp:holdsConstituent` 활성화(당시 `ontology/finance.ttl` §7 v0.2 → 8/19 `ontology/etf_kr.ttl` §3 으로 이동) + `kg/build_kg.py` constituents 추출기 + `query_kg.py --holds` (CQ6). 상세 정책·실측: `kg/KG_METHOD.md` 5장.
 - **[8/13 발견 — 커버리지 상향]** KRX PDF 데이터에 **국내 상장 ETF가 편입한 해외 주식 ~25,400행이 포함**되어 있다(미국 19,449 · 중국 1,686 · 일본 861 등). 실증: **"캠브리콘 편입 ETF" 질의가 국내 데이터만으로 13종목 답변 가능**(TIGER 차이나테크TOP10 등). 즉 중-2 유형의 상당 부분이 이미 커버된다.
 - **잔여 격차**: **해외 상장 ETF 마스터(PREF02N001, 5,646종)의 구성종목**은 여전히 미확보 — KRX 는 국내 상장분만. (국내 커버 발견으로 긴급도는 한 단계 하향 — 단, "해외ETF" 명시 질의 대비는 여전히 필요)
 

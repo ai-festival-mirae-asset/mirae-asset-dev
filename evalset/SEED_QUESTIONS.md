@@ -23,7 +23,7 @@
 
 | # | 질의 | 방어 근거 |
 |---|---|---|
-| T-1 | 신용등급 **AAAA**인 채권 찾아줘 | 등급 값 도메인(AAA~D) 밖 — 온톨로지 `mf:creditRating` 주석 + Answer Validation 존재 검증 |
+| T-1 | 신용등급 **AAAA**인 채권 찾아줘 | 등급 값 도메인(AAA~D) 밖 — 온톨로지 `fp:creditRating`(bond_kr.ttl) 주석 + SHACL 허용 목록 + Answer Validation 존재 검증 |
 | T-2 | **kimi** 관련 투자 상품 있어? (전체) | 7/11 기준 관련 상품 없음 — LLM 사전지식 차단. 표기는 영문 "kimi"로 확정(8/13). **[8/13 실측] 4종 마스터 상품명 + 구성종목명 75,081행 전체에서 "kimi" 부분일치 0건** — 수집 확장 후에도 직접 매칭 없음 확인 |
 | T-3 | **KODEX AI 로봇 ETF** 정보 알려줘 | 7/11 기준 미존재 상품 — 상품명 존재 검증 |
 
@@ -43,7 +43,7 @@
 4. 상 난이도는 **채널 3개 조합**(그래프+SQL+벡터)이 기본형 — Query Router가 없으면 못 푼다.
 5. 답변 불가 3종은 유형이 서로 다르다: 값 도메인 위반(T-1) / 존재하지 않는 개체(T-2) / 존재하지 않는 상품명(T-3) — Answer Validation이 세 검증을 각각 갖춰야 한다.
 
-## 3. 온톨로지 CQ 보강 (finance.ttl CQ1~CQ7에 추가할 후보)
+## 3. 온톨로지 CQ 보강 (common.ttl 머리말 CQ1~CQ7에 추가할 후보 — 8/19 5파일 분할 후 위치)
 
 - CQ8: "판매 가능한 원화채권 중 AA 이상" — isBuyable + currency + creditRatingRank (하-1)
 - CQ9: "캠브리콘이 편입된 중국 반도체 ETF" — holdsConstituent(해외) + region/theme (중-2)

@@ -101,6 +101,8 @@ python storage/load_duckdb.py
 python kg/build_kg.py
 ```
 
+> **8/19 이후 `git pull` 한 분**: 온톨로지 어휘가 바뀌어(공식 형식 5파일, `fp:` 접두어) **`python kg/build_kg.py` 를 한 번 다시 실행**해야 합니다. 옛 그래프 파일이 남아 있으면 서버가 켜질 때 "재생성 필요" 오류로 멈춥니다(조용히 틀리는 것보다 낫습니다). `pip install -r requirements.txt` 도 다시 한 번(검사용 패키지 2개 추가).
+
 > **이 두 개는 실행하지 마세요.**
 > - `python preprocessing/preprocess.py` — 결과물이 이미 저장소에 있습니다. 게다가 대회 원본 엑셀이 있어야 돌아갑니다.
 > - `python vector/build_index.py` — 결과물이 이미 저장소에 있습니다. **다시 만들면 API 요금이 실제로 나갑니다**(호출 5,567번).

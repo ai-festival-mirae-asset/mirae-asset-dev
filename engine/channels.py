@@ -134,7 +134,7 @@ def _exec_graph(ctx, call):
     if ctx.kg_store is None:
         return ChannelOutcome("graph", call.op, ok=False,
                               error="그래프 미탑재(서버 기동 시 프리로드 대상)")
-    from kg.kg_store import MF, RDFS_LABEL
+    from kg.kg_store import FP, RDFS_LABEL
     from kg.query_kg import find_company_products, find_holding_etfs
     store, params = ctx.kg_store, call.params
     query, limit = params.get("query", ""), params.get("limit", 10)
@@ -174,22 +174,22 @@ def _exec_graph(ctx, call):
         s, label = hits[0]
         if call.op == "product_info":
             fields = {"상품": label}
-            mgmt = store.object(s, MF + "managedBy")
+            mgmt = store.object(s, FP + "managedBy")
             if mgmt:
                 fields["운용사"] = store.label(mgmt) or mgmt
             for ko, local in (("위험등급", "riskGrade"), ("총보수(%)", "expenseRatio"),
                               ("상장상태", "listingStatus")):
-                v = store.object(s, MF + local)
+                v = store.object(s, FP + local)
                 if v is not None:
                     fields[ko] = v
-            idx = store.object(s, MF + "tracksIndex") or store.object(s, MF + "hasBenchmark")
+            idx = store.object(s, FP + "tracksIndex") or store.object(s, FP + "hasBenchmark")
             if idx:
                 fields["기초지수"] = store.label(idx) or idx
-            ev = Evidence(source=store.object(s, MF + "sourceTable") or "KG",
-                          source_id=store.object(s, MF + "productId") or s,
+            ev = Evidence(source=store.object(s, FP + "sourceTable") or "KG",
+                          source_id=store.object(s, FP + "productId") or s,
                           channel="graph", as_of=AS_OF_MASTER, fields=fields)
             return ChannelOutcome("graph", call.op, rows=[fields], evidences=[ev])
-        consts = store.objects(s, MF + "holdsConstituent")
+        consts = store.objects(s, FP + "holdsConstituent")
         labels = [store.label(c) or c for c in consts]
         rows = [{"상품": label, "구성종목수": len(labels), "구성": labels[:limit]}]
         ev = Evidence(source="KRX-PDF(KG)", source_id=label, channel="graph",

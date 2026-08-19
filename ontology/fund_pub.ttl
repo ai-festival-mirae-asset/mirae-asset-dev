@@ -1,0 +1,75 @@
+# ============================================================================
+# 금융상품 온톨로지 · 공모펀드 도메인 (fund_pub.ttl)
+#
+# 대상 데이터: PRFD01N001 공모펀드마스터 (2026-07-11 스냅샷, 판매 클래스 행 95,618 →
+#            상품(itm_no) 11,138)
+# 공통 어휘(fp:Product·fp:managedBy·fp:riskGrade·fp:netAssets·fp:return1y·fp:region·
+#   fp:currency 등)는 ontology/common.ttl 을 imports.
+# 인스턴스 생성: kg/build_kg.py extract_fund_master_row → kg/output/public_fund.nt
+#
+# 이 도메인에서 특히 중요한 것
+#   - 원본은 (itm_no, prfd_attr_cd) 판매 클래스 단위 행이다. 같은 itm_no 그룹에서 달라지는
+#     컬럼은 prfd_attr_cd 뿐임이 검증되어(8/5) 상품(itm_no) 1노드로 적재하고 클래스 수는
+#     fp:shareClassCount 로 남긴다. "펀드 개수" = 상품 수 11,138(8/14 확정 해석).
+#   - 운용사는 명칭 없이 기관코드만 온다(or_co_xtn_itt_cd) → 코드 노드.
+#   - 총보수 컬럼이 없다 → "펀드 총보수 최저"는 '확인할 수 없음'(fp:expenseRatio 의
+#     도메인이 ETP 라 펀드에는 적용되지 않는다 — shapes.ttl 도 검사).
+#   - sale_yn 의 실제 값은 '판매중'/'판매완료'(Y/N 아님 — 8/18 채점기가 발견).
+# ============================================================================
+
+@prefix fp:   <http://mafest.ai/product#> .
+@prefix fpr:  <http://mafest.ai/resource/> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+<http://mafest.ai/product/fund_pub>
+    a owl:Ontology ;
+    owl:imports <http://mafest.ai/product/common> ;
+    rdfs:label "금융상품 온톨로지 — 공모펀드"@ko ;
+    owl:versionInfo "1.0 — 2026-08-19 (finance.ttl 0.2 의 펀드 절 계승)" .
+
+# ---------------------------------------------------------------------------
+# 1. 클래스
+# ---------------------------------------------------------------------------
+
+fp:PublicFund a owl:Class ;
+    rdfs:subClassOf fp:Product ;
+    rdfs:label "공모펀드"@ko ;
+    owl:disjointWith fp:Bond , fp:ExchangeTradedProduct ;
+    rdfs:comment "공모펀드 마스터(PRFD01N001). 인스턴스는 itm_no 단위 상품이며 판매 클래스(속성) 행은 shareClassCount 로 요약한다. 채권·상장지수상품과 disjoint(ETF 도 법적으로는 펀드지만 이 온톨로지에서는 상장 여부로 갈라 ETP 로 둔다 — 제공 테이블 구분과 일치)."@ko .
+
+# ---------------------------------------------------------------------------
+# 2. 관계
+# ---------------------------------------------------------------------------
+
+fp:hasBenchmark a owl:ObjectProperty ;
+    rdfs:domain fp:PublicFund ;
+    rdfs:range  fp:Index ;
+    rdfs:label "…을 벤치마크로 한다"@ko ;
+    rdfs:comment "bmrk_nm — 성과 비교 기준 지수. ETP 의 fp:tracksIndex(추종·복제)와 뜻이 달라 별도 관계로 둔다. 지수 노드(fp:Index)는 공통."@ko .
+
+# ---------------------------------------------------------------------------
+# 3. 공모펀드 전용 속성
+# ---------------------------------------------------------------------------
+
+fp:fundAttribute a owl:DatatypeProperty ;
+    rdfs:domain fp:PublicFund ; rdfs:range xsd:string ;
+    rdfs:label "운용속성"@ko ;
+    rdfs:comment "or_attr_desc: 주식형·채권형·MMF·재간접 등(원시 표기)."@ko .
+
+fp:managementCompanyCode a owl:DatatypeProperty ;
+    rdfs:domain fp:PublicFund ; rdfs:range xsd:string ;
+    rdfs:label "운용회사 기관코드"@ko ;
+    rdfs:comment "or_co_xtn_itt_cd — 공모펀드는 운용사 명칭이 원천에 없어 코드만 적재(fp:managedBy 의 목적어는 fpr:company/code-{코드} 노드). 코드→명칭 해석(entity resolution)은 후속 과제 — 원천에 명칭이 없다는 사실 자체를 답변의 한계로 명시한다."@ko .
+
+fp:shareClassCount a owl:DatatypeProperty ;
+    rdfs:domain fp:PublicFund ; rdfs:range xsd:integer ;
+    rdfs:label "판매 클래스 수"@ko ;
+    rdfs:comment "동일 itm_no 의 (itm_no, prfd_attr_cd) 행 수 — 평균 8.6개. 집계 중복 방지의 근거(판매 클래스 95,618 ≠ 상품 11,138)."@ko .
+
+fp:isOnSale a owl:DatatypeProperty ;
+    rdfs:domain fp:PublicFund ; rdfs:range xsd:boolean ;
+    rdfs:label "판매중 여부"@ko ;
+    rdfs:comment "sale_yn — 실제 값 '판매중'(8,445 상품) → true · '판매완료'(2,693) → false. 당사(미래에셋증권) 판매 여부는 별도 컬럼(thco_sale_yn)이며 그래프에는 넣지 않는다(SQL 채널 소관)."@ko .

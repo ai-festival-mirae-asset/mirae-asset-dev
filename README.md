@@ -23,7 +23,7 @@
 
 예를 들어 "삼성전자가 포함된 ETF 알려줘"라고 물으면 — 라우터가 "삼성전자"를 종목코드 005930으로 연결하고, 그래프 채널에서 편입 ETF 229종을 찾고, 표 채널에서 편입 비중·순자산을 붙여, 근거(출처·기준일)와 함께 답합니다. 반대로 "kimi 관련 상품 있어?"는 데이터 전체에서 일치하는 것이 없음을 확인하고 정해진 거절 문구로 답합니다.
 
-## 3. 진행 현황 (구현 8단계 중 7단계 완료, 2026-08-19 기준)
+## 3. 진행 현황 (구현 8단계 중 7단계 + 온톨로지 5파일 완료, 2026-08-19 기준)
 
 | 단계 | 내용 (쉬운 설명) | 상태 |
 |---|---|---|
@@ -35,19 +35,19 @@
 | ⑤ 답변 생성기 | HCX-005가 최종 문장 작성 + 지어낸 내용 자동 삭제(사후 대조) | ✅ 완료 (8/14) |
 | ⑥ API 서버 | `/answer` 주소로 서비스 (15초 내 응답, 어떤 오류에도 유효 JSON, 질문 시험대 화면). 8/18 공식 규격 재대조(응답 헤더·미정의 파라미터·요청값 반환) + [API 명세서](API_SPEC.md) 초안 | ✅ 완료 (8/14 · 8/18 보강) |
 | ⑦ 자동 채점기 | 모의고사 105문항을 자동 실행·4축 채점(태도·근거·내용·시간) — **첫 성적표 80/105 (76%), 함정 오답 0/16, 응답 중앙값 5.4초** (`evalset/reports/`) | ✅ 완료 (8/19) |
-| ⑦-2 온톨로지 5파일 분할 | 공식 형식(common·bond_kr·etf_kr·etf_gl·fund_pub .ttl)으로 나누기 — 8/18 공식 자료로 추가 | 🔜 다음 |
-| ⑧ 다듬기 + 서버 배포 | 성적표 기준 보정 → NCP 클라우드에 올려 외부에서 접속 검증 (= M2) → 2주 무인 운영 준비 | ⬜ |
+| ⑦-2 온톨로지 5파일(공식 형식) | `ontology/common.ttl·bond_kr.ttl·etf_kr.ttl·etf_gl.ttl·fund_pub.ttl` — 공식 지정 파일명·접두어 `fp:`·공통 상위 `fp:Product` 그대로. 덤으로 데이터 규칙 검사 파일(`shapes.ttl`, SHACL) + 그래프 재생성 + 테스트 15개 | ✅ 완료 (8/19) |
+| ⑧ 다듬기 + 서버 배포 | 성적표 기준 보정 → NCP 클라우드에 올려 외부에서 접속 검증 (= M2) → 2주 무인 운영 준비 | 🔜 진행 중 |
 | ⑨ 제출물 마무리 | 기술제안서(40점) · API 명세서에 서버 주소 · README 최종 · 9/6 마감 전 마지막 푸시 | ⬜ |
 
-자동 테스트 **275개 전부 통과** 상태(함정 16문항 자동 방어 + 과잉 거절 방지 표본 + 공식 API 규격 잠금 + 채점기 자체 검증 포함). 세부 진행 기록은 [ROADMAP.md](ROADMAP.md) §7, 과거·현재·미래 계획은 [PLAN.md](PLAN.md).
+자동 테스트 **310개 전부 통과** 상태(함정 16문항 자동 방어 + 과잉 거절 방지 표본 + 공식 API 규격 잠금 + 채점기 자체 검증 + 온톨로지 5파일·SHACL 검증 포함). 세부 진행 기록은 [ROADMAP.md](ROADMAP.md) §7, 과거·현재·미래 계획은 [PLAN.md](PLAN.md).
 
 ## 4. 폴더 안내
 
 ```
 ├── preprocessing/    제공 데이터(엑셀) 정제 — 방법 설명은 PREPROCESSING_METHOD.md
 ├── external_data/    직접 수집·조사한 자료 — 구성종목 수집기, 각종 사전(등급·별칭·테마 등)
-├── ontology/         상품·회사·지수의 관계 설계도 (finance.ttl — 제출 필수물. 공식 형식인 5개 파일로 분할 예정 = ⑦-2)
-├── kg/               지식그래프 만들기·조회 (build_kg.py / query_kg.py)
+├── ontology/         상품·회사·지수의 관계 설계도 — 제출 필수물. 공식 형식 5파일(common·bond_kr·etf_kr·etf_gl·fund_pub .ttl) + 데이터 규칙 shapes.ttl(SHACL)
+├── kg/               지식그래프 만들기·조회·규칙 검사 (build_kg.py / query_kg.py / validate_shacl.py — 설명은 KG_METHOD.md)
 ├── vector/           의미 검색 인덱스 만들기·조회
 ├── storage/          DuckDB 적재 (load_duckdb.py → storage/output/products.duckdb)
 ├── pipeline/         공용 부품 — 엔티티 사전, 근거(Evidence) 규격, 시간 정책, 테마 사전
@@ -56,7 +56,7 @@
 ├── agent/            CLOVA(HCX) API 클라이언트 — 규정 준수 강제 장치 포함
 ├── config/           정책 파일(policy.json)과 설정 읽기(env_loader.py — .env 처리)
 ├── evalset/          자체 모의고사 105문항 + 자동 채점기(eval_runner.py) + 검사표(checks_v1.jsonl) + 성적표(reports/)
-├── tests/            자동 테스트 275개 (pytest)
+├── tests/            자동 테스트 310개 (pytest)
 ├── infra/            NCP 서버 구축 가이드
 └── datasets/         대회 원본 엑셀 8개 — 각자 로컬에만 두고 커밋하지 않음
 ```
@@ -97,8 +97,11 @@ python config/env_loader.py     # 제대로 들어갔는지 확인
 # 2) DuckDB 적재 (정제 CSV → storage/output/products.duckdb)
 python storage/load_duckdb.py
 
-# 3) 지식그래프 생성 (→ kg/output/*.nt)
+# 3) 지식그래프 생성 (→ kg/output/*.nt) — 8/19 온톨로지 어휘가 바뀌었으므로 그 전에 만든
+#    파일이 있으면 반드시 다시 만든다(옛 파일은 서버 기동 시 "재생성 필요" 오류로 멈춘다)
 python kg/build_kg.py
+# (선택) 온톨로지 규칙(SHACL)으로 그래프 재검사 — 국내ETF 전량 약 4초
+# python kg/validate_shacl.py --tables kr_etf --limit 0
 
 # 4) 의미검색 인덱스 — 실행에 필요한 2개 파일은 저장소에 커밋돼 있으므로 보통 생략한다.
 #    다시 만들면 임베딩 API 크레딧이 실제로 소모된다(해외ETF 5,567건 호출).

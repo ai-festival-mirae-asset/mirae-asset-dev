@@ -20,14 +20,17 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.dirname(HERE))  # repo 루트 — `python kg/query_kg.py` 직접 실행 지원
 
-from kg.kg_store import MF, MFR, RDFS_LABEL, TripleStore, norm_name  # noqa: E402
+from kg.kg_store import FP, RDFS_LABEL, TripleStore, norm_name  # noqa: E402
 
 AS_OF = "2026-07-11"
 CONSTITUENTS_AS_OF = "2026-07-10"  # 구성종목(KRX)은 기준일 직전 거래일 조회분
 
+# 인스턴스에 붙는 클래스(가장 구체적인 것) → 표시명. 온톨로지 5파일(fp:) 기준.
 CLASS_KO = {
-    MF + "Bond": "채권", MF + "ETF": "ETF", MF + "ETN": "ETN",
-    MF + "ExchangeTradedProduct": "ETP(유형 불명)", MF + "PublicFund": "공모펀드",
+    FP + "Bond": "채권",
+    FP + "DomesticETF": "국내ETF", FP + "DomesticETN": "국내ETN",
+    FP + "ForeignETF": "해외ETF", FP + "ForeignETN": "해외ETN",
+    FP + "ExchangeTradedProduct": "ETP(유형 불명)", FP + "PublicFund": "공모펀드",
 }
 
 
@@ -38,12 +41,12 @@ def describe_product(store, s):
     if types:
         lines.append(f"    유형       : {', '.join(types)}")
 
-    mgmt_iri = store.object(s, MF + "managedBy")
+    mgmt_iri = store.object(s, FP + "managedBy")
     if mgmt_iri:
-        mgmt = store.label(mgmt_iri) or store.object(mgmt_iri, MF + "companyCode")
+        mgmt = store.label(mgmt_iri) or store.object(mgmt_iri, FP + "companyCode")
         suffix = "" if store.label(mgmt_iri) else " (기관코드 — 명칭 해석은 후속)"
         lines.append(f"    운용사     : {mgmt}{suffix}")
-    issuer_iri = store.object(s, MF + "issuedBy")
+    issuer_iri = store.object(s, FP + "issuedBy")
     if issuer_iri:
         lines.append(f"    발행기관   : {store.label(issuer_iri)}")
 
@@ -52,25 +55,25 @@ def describe_product(store, s):
               ("상장상태", "listingStatus"), ("만기상태", "maturityStatus"),
               ("투자지역", "region"), ("투자자산군", "assetClass")]
     for ko, local in simple:
-        v = store.object(s, MF + local)
+        v = store.object(s, FP + local)
         if v is not None:
             lines.append(f"    {ko}: {v}")
-    idx_iri = store.object(s, MF + "tracksIndex") or store.object(s, MF + "hasBenchmark")
+    idx_iri = store.object(s, FP + "tracksIndex") or store.object(s, FP + "hasBenchmark")
     if idx_iri:
         lines.append(f"    기초지수/벤치마크: {store.label(idx_iri)}")
 
-    table = store.object(s, MF + "sourceTable")
-    pid = store.object(s, MF + "productId")
+    table = store.object(s, FP + "sourceTable")
+    pid = store.object(s, FP + "productId")
     lines.append(f"    근거       : 테이블 {table} · 상품번호 {pid} · 데이터 기준일 {AS_OF}")
     return lines
 
 
 def find_company_products(store, query, limit):
-    """운용사명 부분일치 → mf:managedBy 역방향으로 상품 나열 (CQ2 — 역관계 질의)."""
+    """운용사명 부분일치 → fp:managedBy 역방향으로 상품 나열 (CQ2 — 역관계 질의)."""
     q = norm_name(query)
     out = []
     seen = set()
-    for p in (MF + "managedBy", MF + "issuedBy"):
+    for p in (FP + "managedBy", FP + "issuedBy"):
         for company_iri, products in store._pos.get(p, {}).items():
             name = store.label(company_iri)
             if name and q in norm_name(name) and company_iri not in seen:
@@ -89,12 +92,12 @@ def find_holding_etfs(store, query, limit):
     q = norm_name(query)
     exact = query.strip()
     alias_isins = {isin for isin, _name in load_aliases().get(norm_alias(query), [])}
-    holds = store._pos.get(MF + "holdsConstituent", {})
+    holds = store._pos.get(FP + "holdsConstituent", {})
     out = []
     for company_iri, etfs in holds.items():
         names = store.objects(company_iri, RDFS_LABEL)
-        ticker = store.object(company_iri, MF + "tickerCode") or ""
-        isin = store.object(company_iri, MF + "securityIsin") or ""
+        ticker = store.object(company_iri, FP + "tickerCode") or ""
+        isin = store.object(company_iri, FP + "securityIsin") or ""
         if (any(q in norm_name(n) for n in names)
                 or (ticker and exact == ticker) or (isin and exact.upper() == isin)
                 or (isin and isin in alias_isins)):

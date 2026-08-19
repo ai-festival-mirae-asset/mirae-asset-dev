@@ -1,0 +1,75 @@
+# ============================================================================
+# 금융상품 온톨로지 · 해외ETF 도메인 (etf_gl.ttl)
+#
+# 대상 데이터: PREF02N001 해외ETF마스터 (2026-07-11 스냅샷, 5,646행 — ETF 5,587 + ETN 59)
+# 공통 어휘(fp:ExchangeTradedProduct·fp:ETF·fp:ETN·fp:managedBy·fp:tracksIndex·
+#   fp:expenseRatio·fp:aum·fp:listedDate·fp:isin 등)는 ontology/common.ttl 을 imports.
+# 인스턴스 생성: kg/build_kg.py extract_global_etf_row → kg/output/global_etf.nt
+#
+# 이 도메인에서 특히 중요한 것
+#   - 해외ETF 는 원천에 위험등급 컬럼이 없다 → fp:riskGrade 를 갖지 않는다는 제약을
+#     선언한다(아래 owl:Restriction + shapes.ttl). "해외 ETF 위험등급 1등급만"은
+#     '확인할 수 없음'이 정답인 유형이고, 이 선언이 그 근거다.
+#   - 상품 ISIN(pd_isin_cd)은 공백 9행·중복 50그룹이라 키가 아니다(키는 pd_itm_no).
+#   - 기초지수 문자열에 "Index is not provided" 류 센티널이 있어 전처리·적재 양쪽에서
+#     걸러낸다.
+# ============================================================================
+
+@prefix fp:   <http://mafest.ai/product#> .
+@prefix fpr:  <http://mafest.ai/resource/> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+<http://mafest.ai/product/etf_gl>
+    a owl:Ontology ;
+    owl:imports <http://mafest.ai/product/common> ;
+    rdfs:label "금융상품 온톨로지 — 해외ETF"@ko ;
+    owl:versionInfo "1.0 — 2026-08-19 (finance.ttl 0.2 의 해외 ETP 속성 계승, fp:ForeignETF 클래스 신설 — 공식 예시 선언 채택)" .
+
+# ---------------------------------------------------------------------------
+# 1. 클래스 — 해외 상장 ETF·ETN  (공식 예시: fp:ForeignETF rdfs:subClassOf fp:ETF)
+# ---------------------------------------------------------------------------
+
+fp:ForeignETF a owl:Class ;
+    rdfs:subClassOf fp:ETF ;
+    rdfs:label "해외ETF"@ko ;
+    rdfs:comment "해외 거래소 상장 ETF — 해외ETF 마스터(PREF02N001)의 drv_instrument_type = ETF 행(5,587건). 국내 상장 ETF 는 fp:DomesticETF(etf_kr.ttl). 상품군 리터럴 fp:productGroup = '해외ETF'."@ko .
+
+fp:ForeignETN a owl:Class ;
+    rdfs:subClassOf fp:ETN ;
+    rdfs:label "해외ETN"@ko ;
+    rdfs:comment "해외 거래소 상장 ETN — 같은 마스터의 drv_instrument_type = ETN 행(59건). 파일 이름이 'ETF 마스터'라도 ETN 을 ETF 로 부르지 않는다."@ko .
+
+# 위험등급 적용 불가 — 해외ETF 마스터에는 위험등급 원천 컬럼이 없다.
+# OWL 로는 "fp:riskGrade 값을 하나도 갖지 않는다"(최대 개수 0)로 선언한다.
+# 데이터 검사(SHACL)는 shapes.ttl fp:ForeignEtpShape 가 같은 규칙을 검증한다.
+fp:ForeignETF rdfs:subClassOf [
+        a owl:Restriction ;
+        owl:onProperty fp:riskGrade ;
+        owl:maxCardinality "0"^^xsd:nonNegativeInteger ] .
+
+fp:ForeignETN rdfs:subClassOf [
+        a owl:Restriction ;
+        owl:onProperty fp:riskGrade ;
+        owl:maxCardinality "0"^^xsd:nonNegativeInteger ] .
+
+# ---------------------------------------------------------------------------
+# 2. 해외ETP 전용 속성
+# ---------------------------------------------------------------------------
+
+fp:tradingCurrency a owl:DatatypeProperty ;
+    rdfs:domain fp:ExchangeTradedProduct ; rdfs:range xsd:string ;
+    rdfs:label "거래통화"@ko ;
+    rdfs:comment "pd_trd_ccy(USD·JPY·EUR·HKD 등). 국내ETP 는 원화 단일이라 공통 속성 fp:currency 로 충분하다."@ko .
+
+fp:isInverse a owl:DatatypeProperty ;
+    rdfs:domain fp:ExchangeTradedProduct ; rdfs:range xsd:boolean ;
+    rdfs:label "인버스 여부"@ko ;
+    rdfs:comment "drv_is_inverse(원천 cu_inverse_short_yn) — 플래그성 컬럼(채워진 것만 Y, NULL=N 해석 규칙). true 인 상품만 트리플을 만든다."@ko .
+
+fp:isIncompleteRecord a owl:DatatypeProperty ;
+    rdfs:domain fp:Product ; rdfs:range xsd:boolean ;
+    rdfs:label "핵심 필드 희소 행"@ko ;
+    rdfs:comment "해외ETF drv_incomplete_core = true 8행 — 이름·운용사·지수 등 핵심 필드가 대부분 비어 있어 기본 랭킹에서 제외 태깅. true 인 상품만 트리플을 만든다."@ko .

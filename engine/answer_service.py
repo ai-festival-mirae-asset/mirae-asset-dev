@@ -177,7 +177,11 @@ def _ensure_notes(text, plan):
     for n in plan.notes:
         if n not in text:
             text += f"\n※ {n}"
-    if "기준일" not in text:
+    # '기준일'이라는 말과 실제 날짜가 둘 다 있어야 한다 — 생성기가 "데이터 기준일: 현재"(날짜 없음,
+    # M-08·M-30)라거나 "2026-07-11"만 덜렁 쓰는(라벨 없음, L-21) 경우 모두 정식 기준일 줄을 붙인다.
+    has_label = "기준일" in text
+    has_date = AS_OF_MASTER in text or AS_OF_CONSTITUENTS in text
+    if not (has_label and has_date):
         text += f"\n(데이터 기준일: 마스터 {AS_OF_MASTER} · 구성종목 {AS_OF_CONSTITUENTS})"
     return text
 
@@ -247,7 +251,8 @@ def answer_question(question, ctx, question_id="", today=None,
     if verdict.behavior == "refuse":
         answer = _draft_refusal(plan, result, verdict)
     elif plan.intent == "rating_compare":            # 사전 근거 답변 — 생성 불필요(결정적)
-        answer = _draft_rating_compare(plan) or _draft_answer(plan, result)
+        # 다른 경로와 같이 해석 노트·기준일을 붙인다(8/18 채점기가 '답변에 기준일 없음'을 잡아냄)
+        answer = _ensure_notes(_draft_rating_compare(plan) or _draft_answer(plan, result), plan)
         evidences.append(Evidence(source="credit_rating.csv", source_id="서열사전",
                                   channel="keyword", as_of=AS_OF_MASTER,
                                   fields={k: RATING_RANK[k] for k, _r in

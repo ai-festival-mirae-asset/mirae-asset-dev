@@ -58,6 +58,9 @@ def _t(id, description, sql, params=(), source="", key_col="", as_of=AS_OF_MASTE
     return Template(id, description, sql, tuple(params), source, key_col, as_of)
 
 
+# 주의(8/18): 공모펀드 sale_yn 의 실제 값은 'Y/N' 이 아니라 '판매중'/'판매완료' 다 — 8/13 판은 'Y' 만 보아
+#   판매중 필터가 항상 0건이었다(자동 채점기 L-22 가 잡음). 8/18 kyungrae 반영으로 판매상태(sale_yn='판매중')와
+#   당사판매여부(thco_sale_yn='Y')를 별도 파라미터로 구분한다.
 TEMPLATES = {t.id: t for t in [
 
     # ---------------- 채권 (L-01~08, L-27, H-26) ----------------

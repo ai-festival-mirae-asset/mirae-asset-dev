@@ -1,0 +1,116 @@
+{
+  "mode": "API E2E offline: rule, SQL, keyword, KG, validation",
+  "runtime_load_seconds": 2.318,
+  "health": {
+    "status": "ok",
+    "db": true,
+    "index_entries": 125760,
+    "graph_triples": 1116124,
+    "vector": false,
+    "hcx_router": false,
+    "hcx_generator": false,
+    "cache_size": 0
+  },
+  "total": 105,
+  "behavior_ok": 105,
+  "refusal_surface_ok": 105,
+  "contract_ok": 105,
+  "evidence_ok": 104,
+  "channel_ok": 82,
+  "strict_proxy": 82,
+  "global_errors": 0,
+  "channel_error_cases": 1,
+  "degraded_cases": 8,
+  "empty_answer_cases": 1,
+  "latency": {
+    "mean": 0.0219,
+    "p50": 0.013,
+    "p95": 0.0671,
+    "max": 0.2786,
+    "over_15s": 0
+  },
+  "by_level": {
+    "하": {
+      "total": 30,
+      "behavior_ok": 30,
+      "channel_ok": 27,
+      "evidence_ok": 30,
+      "strict_proxy": 27,
+      "degraded": 0
+    },
+    "중": {
+      "total": 30,
+      "behavior_ok": 30,
+      "channel_ok": 22,
+      "evidence_ok": 30,
+      "strict_proxy": 22,
+      "degraded": 3
+    },
+    "상": {
+      "total": 30,
+      "behavior_ok": 30,
+      "channel_ok": 18,
+      "evidence_ok": 29,
+      "strict_proxy": 18,
+      "degraded": 4
+    },
+    "트랩": {
+      "total": 15,
+      "behavior_ok": 15,
+      "channel_ok": 15,
+      "evidence_ok": 15,
+      "strict_proxy": 15,
+      "degraded": 1
+    }
+  },
+  "behavior_confusion": {
+    "answer->answer": 79,
+    "partial->partial": 10,
+    "refuse->refuse": 16
+  },
+  "generation": {
+    "none": 105
+  },
+  "behavior_fail_ids": [],
+  "channel_fail_ids": [
+    "L-08",
+    "L-15",
+    "L-25",
+    "M-14",
+    "M-17",
+    "M-18",
+    "M-19",
+    "M-20",
+    "M-22",
+    "M-27",
+    "M-29",
+    "H-01",
+    "H-07",
+    "H-08",
+    "H-09",
+    "H-11",
+    "H-16",
+    "H-17",
+    "H-21",
+    "H-22",
+    "H-24",
+    "H-27",
+    "H-28"
+  ],
+  "evidence_fail_ids": [
+    "H-22"
+  ],
+  "degraded_ids": [
+    "M-10",
+    "M-14",
+    "M-22",
+    "H-08",
+    "H-17",
+    "H-22",
+    "H-27",
+    "T-09"
+  ],
+  "empty_answer_ids": [
+    "H-22"
+  ]
+}

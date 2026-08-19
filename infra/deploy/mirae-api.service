@@ -1,0 +1,32 @@
+# systemd 서비스 — 평가용 API 서버 상시 가동 (9/7~9/20 무인 운영)
+# 설치: install.sh 가 /etc/systemd/system/mirae-api.service 로 복사한다.
+# 원칙: 죽으면 5초 뒤 자동 재기동(Restart=always) · 부팅 시 자동 시작 · 기동에 최대 5분 허용(그래프 적재 ~1분)
+[Unit]
+Description=Mirae Asset AI Festival - financial product answer API (GET /answer)
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/mirae-asset-dev
+# 비밀값(CLOVASTUDIO_API_KEY)은 저장소 밖 /etc/mirae-api.env 에만 둔다(권한 600). .env 보다 우선한다.
+EnvironmentFile=-/etc/mirae-api.env
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONUTF8=1
+ExecStart=/opt/mirae-asset-dev/.venv/bin/python server/app.py --host 0.0.0.0 --port 80
+Restart=always
+RestartSec=5
+TimeoutStartSec=300
+TimeoutStopSec=20
+KillSignal=SIGINT
+LimitNOFILE=65536
+# 4GB 서버 기준 — 메모리 폭주 시 죽여서 재기동시키는 편이 멈춘 채 버티는 것보다 낫다
+MemoryMax=3200M
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=mirae-api
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,13 @@
+# 실행에 필요한 패키지 — pip install -r requirements.txt
+# (버전은 하한만 고정 — NCP 배포(⑧) 시 실제 설치 버전으로 동결 예정)
+pandas>=2.0          # 전처리(엑셀 → CSV)
+openpyxl>=3.1        # 엑셀 읽기
+numpy>=1.26          # 벡터(의미 검색) 인덱스
+httpx>=0.27          # CLOVA API 호출
+duckdb>=1.0          # 표 데이터 저장소(RDB)
+fastapi>=0.100       # API 서버 (순서 ⑥)
+uvicorn>=0.30        # API 서버 구동기
+tzdata               # Windows 에서 서울 시간대 계산(time_policy)
+rdflib>=7.0          # 온톨로지 5파일(ontology/*.ttl) 파싱 — 테스트·SHACL 검사용(서버 실행에는 불필요)
+pyshacl>=0.30        # SHACL 데이터 규칙 검사(kg/validate_shacl.py, ontology/shapes.ttl)
+pytest>=8.0          # 자동 테스트

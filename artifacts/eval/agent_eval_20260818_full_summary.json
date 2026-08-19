@@ -1,0 +1,153 @@
+{
+  "mode": "API E2E full: HCX-005 router+generator, CLOVA embedding, SQL, keyword, KG, validation",
+  "runtime_load_seconds": 3.472,
+  "health": {
+    "status": "ok",
+    "db": true,
+    "index_entries": 119698,
+    "graph_triples": 1116124,
+    "vector": true,
+    "hcx_router": true,
+    "hcx_generator": true,
+    "cache_size": 0
+  },
+  "total": 105,
+  "behavior_ok": 97,
+  "refusal_surface_ok": 105,
+  "contract_ok": 105,
+  "evidence_ok": 99,
+  "channel_ok": 78,
+  "strict_proxy": 70,
+  "global_errors": 0,
+  "channel_error_cases": 0,
+  "degraded_cases": 12,
+  "empty_answer_cases": 3,
+  "latency": {
+    "mean": 5.0441,
+    "p50": 4.8219,
+    "p95": 10.1944,
+    "max": 13.203,
+    "over_15s": 0
+  },
+  "by_level": {
+    "하": {
+      "total": 30,
+      "behavior_ok": 29,
+      "channel_ok": 27,
+      "evidence_ok": 28,
+      "strict_proxy": 24,
+      "degraded": 3
+    },
+    "중": {
+      "total": 30,
+      "behavior_ok": 29,
+      "channel_ok": 19,
+      "evidence_ok": 28,
+      "strict_proxy": 19,
+      "degraded": 4
+    },
+    "상": {
+      "total": 30,
+      "behavior_ok": 24,
+      "channel_ok": 17,
+      "evidence_ok": 28,
+      "strict_proxy": 12,
+      "degraded": 4
+    },
+    "트랩": {
+      "total": 15,
+      "behavior_ok": 15,
+      "channel_ok": 15,
+      "evidence_ok": 15,
+      "strict_proxy": 15,
+      "degraded": 1
+    }
+  },
+  "behavior_confusion": {
+    "answer->answer": 78,
+    "answer->partial": 1,
+    "partial->partial": 3,
+    "partial->answer": 7,
+    "refuse->refuse": 16
+  },
+  "generation": {
+    "HCX-005 생성 · 사후 대조 통과": 61,
+    "HCX-005 생성 · 사후 대조로 1줄 제거": 12,
+    "HCX-005 생성 · 사후 대조로 5줄 제거": 2,
+    "none": 17,
+    "생성 답변 전체가 근거 대조 실패 — 규칙 요약으로 강등": 1,
+    "HCX-005 생성 · 사후 대조로 4줄 제거": 1,
+    "생성 호출 실패 — 규칙 요약으로 폴백": 5,
+    "HCX-005 생성 · 사후 대조로 3줄 제거": 2,
+    "시간 예산 초과(8.0s) — HCX 생성 생략, 규칙 요약으로 강등": 1,
+    "시간 예산 초과(10.6s) — HCX 생성 생략, 규칙 요약으로 강등": 1,
+    "HCX-005 생성 · 사후 대조로 2줄 제거": 1,
+    "시간 예산 초과(12.4s) — HCX 생성 생략, 규칙 요약으로 강등": 1
+  },
+  "behavior_fail_ids": [
+    "L-24",
+    "M-10",
+    "H-01",
+    "H-02",
+    "H-03",
+    "H-13",
+    "H-15",
+    "H-19"
+  ],
+  "channel_fail_ids": [
+    "L-08",
+    "L-15",
+    "L-25",
+    "M-08",
+    "M-10",
+    "M-14",
+    "M-17",
+    "M-18",
+    "M-19",
+    "M-20",
+    "M-22",
+    "M-27",
+    "M-29",
+    "M-30",
+    "H-01",
+    "H-07",
+    "H-08",
+    "H-09",
+    "H-11",
+    "H-16",
+    "H-17",
+    "H-19",
+    "H-21",
+    "H-22",
+    "H-24",
+    "H-27",
+    "H-28"
+  ],
+  "evidence_fail_ids": [
+    "L-22",
+    "L-29",
+    "M-08",
+    "M-30",
+    "H-15",
+    "H-26"
+  ],
+  "degraded_ids": [
+    "L-09",
+    "L-12",
+    "L-29",
+    "M-01",
+    "M-18",
+    "M-26",
+    "M-30",
+    "H-04",
+    "H-15",
+    "H-17",
+    "H-26",
+    "T-09"
+  ],
+  "empty_answer_ids": [
+    "M-30",
+    "H-15",
+    "H-26"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "source": "KRX 정보데이터시스템 (data.krx.co.kr)",
+  "endpoint": "https://data.krx.co.kr/comm/bldAttendant/getJsonData.cmd",
+  "trdDd": "20260710",
+  "etf_count": 1139,
+  "row_count": 75081,
+  "baseline_rule": "데이터 기준일 20260711 이전만 수집(규정 게이트)"
+}

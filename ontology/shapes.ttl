@@ -1,0 +1,222 @@
+# ============================================================================
+# 금융상품 온톨로지 · 데이터 규칙 검사 (shapes.ttl — SHACL, 부속 파일)
+#
+# 무엇: 지식그래프 인스턴스(kg/output/*.nt)가 지켜야 할 값 규칙을 SHACL 로 선언한 것.
+#       "위험등급은 1~6 정수", "해외ETF 는 위험등급이 없다", "신용등급은 AAA~D 목록 안",
+#       "ETF 이면서 ETN 일 수 없다", "펀드·채권에는 총보수가 없다" 등.
+# 왜  : 8/18 기술세션이 표현 계층(URI → RDF → RDFS → OWL → SHACL 검증)에서 SHACL 을
+#       강조했다. 우리는 같은 규칙을 적재 전에 코드(kg/build_kg.py — 범위 밖 값 거부·집계)로
+#       검사해 왔고, 이 파일은 그 규칙을 선언문으로 옮긴 것이다. 코드 검사가 1차 방어,
+#       SHACL 은 "생성기 출력이 규칙을 지켰는가"를 독립적으로 확인하는 2차 검사다.
+# 실행: python kg/validate_shacl.py --tables kr_etf,global_etf --limit 20000
+#       (rdflib + pyshacl — 오프라인 검사·테스트 전용, 서버 실행에는 필요 없음)
+#       tests/test_ontology.py 가 ① 규칙 위반 표본을 잡아내는지 ② 생성기 출력이 규칙에
+#       맞는지를 합성 데이터로 잠근다.
+# 주의: 인스턴스는 가장 구체적인 클래스(fp:DomesticETF 등)로만 타이핑되므로, 상위 클래스
+#       대상(sh:targetClass fp:Product 등)이 잡히려면 온톨로지 5파일(rdfs:subClassOf 선언)을
+#       함께 적재해야 한다 — validate_shacl.py 가 그렇게 한다.
+# ============================================================================
+
+@prefix fp:   <http://mafest.ai/product#> .
+@prefix fpr:  <http://mafest.ai/resource/> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+<http://mafest.ai/product/shapes>
+    a owl:Ontology ;
+    owl:imports <http://mafest.ai/product/common> ;
+    rdfs:label "금융상품 온톨로지 — 데이터 규칙(SHACL)"@ko ;
+    owl:versionInfo "1.0 — 2026-08-19" .
+
+# ---------------------------------------------------------------------------
+# 1. 모든 상품 공통 (fp:Product 와 그 하위 전부)
+# ---------------------------------------------------------------------------
+
+fp:ProductShape a sh:NodeShape ;
+    sh:targetClass fp:Product ;
+    rdfs:label "상품 공통 규칙"@ko ;
+    sh:property [
+        sh:path fp:riskGrade ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 1 ;
+        sh:maxInclusive 6 ;
+        sh:maxCount 1 ;
+        sh:message "위험등급은 1~6 사이 정수 하나여야 한다 (0=미분류·99 등은 적재 금지)"@ko ] ;
+    sh:property [
+        sh:path fp:productId ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:message "상품번호(원천 키)는 정확히 하나 — 근거 역추적의 열쇠"@ko ] ;
+    sh:property [
+        sh:path fp:sourceTable ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:message "출처 테이블 ID 는 정확히 하나 — 근거 표시 필수 규칙"@ko ] ;
+    sh:property [
+        sh:path fp:productGroup ;
+        sh:in ( "국내채권" "국내ETF" "해외ETF" "공모펀드" ) ;
+        sh:minCount 1 ;
+        sh:message "상품군 표기는 제공 테이블 4종 중 하나"@ko ] ;
+    sh:property [
+        sh:path fp:managedBy ;
+        sh:class fp:ManagementCompany ;
+        sh:maxCount 1 ;
+        sh:message "운용 주체는 최대 하나(FunctionalProperty)이며 운용사 노드여야 한다"@ko ] ;
+    sh:property [
+        sh:path fp:return1y ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive -100 ;
+        sh:message "1년 수익률은 -100% 미만일 수 없다"@ko ] .
+
+# ---------------------------------------------------------------------------
+# 2. 국내채권
+# ---------------------------------------------------------------------------
+
+fp:BondShape a sh:NodeShape ;
+    sh:targetClass fp:Bond ;
+    rdfs:label "채권 규칙"@ko ;
+    sh:property [
+        sh:path fp:creditRating ;
+        sh:in ( "AAA" "AA+" "AA" "AA-" "A+" "A" "A-" "BBB+" "BBB" "BBB-"
+                "BB+" "BB" "BB-" "B+" "B" "B-" "CCC+" "CCC" "CCC-" "CC" "C" "D" ) ;
+        sh:maxCount 1 ;
+        sh:message "신용등급은 AAA~D 체계의 값만 허용 — 'AAAA' 같은 표기는 존재하지 않는다(함정 방어)"@ko ] ;
+    sh:property [
+        sh:path fp:creditRatingRank ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 1 ;
+        sh:maxInclusive 20 ;
+        sh:maxCount 1 ;
+        sh:message "신용등급 서열은 1(AAA)~20(D)"@ko ] ;
+    sh:property [
+        sh:path fp:issuedBy ;
+        sh:class fp:Issuer ;
+        sh:maxCount 1 ;
+        sh:message "발행기관은 최대 하나이며 발행기관 노드여야 한다"@ko ] ;
+    sh:property [
+        sh:path fp:maturityDate ;
+        sh:datatype xsd:date ;
+        sh:maxCount 1 ;
+        sh:message "만기일은 날짜(xsd:date) 하나 — 9999 센티널은 적재 금지"@ko ] ;
+    sh:property [
+        sh:path fp:couponRate ;
+        sh:datatype xsd:decimal ;
+        sh:maxCount 1 ] ;
+    sh:property [
+        sh:path fp:expenseRatio ;
+        sh:maxCount 0 ;
+        sh:message "채권에는 총보수가 없다(적용 불가)"@ko ] ;
+    # 영구채(isPerpetual=true)는 만기일 트리플을 가질 수 없다 — 둘 중 하나는 비어 있어야 한다
+    sh:or (
+        [ sh:property [ sh:path fp:isPerpetual ; sh:maxCount 0 ] ]
+        [ sh:property [ sh:path fp:maturityDate ; sh:maxCount 0 ] ] ) ;
+    sh:message "영구채는 만기일을 갖지 않는다"@ko .
+
+# ---------------------------------------------------------------------------
+# 3. 상장지수상품 — ETF/ETN 배타, 국내/해외 규칙
+# ---------------------------------------------------------------------------
+
+fp:EtfShape a sh:NodeShape ;
+    sh:targetClass fp:ETF ;
+    rdfs:label "ETF 규칙"@ko ;
+    sh:not [ sh:class fp:ETN ] ;
+    sh:message "ETF 이면서 ETN 일 수 없다(disjoint)"@ko ;
+    sh:property [
+        sh:path fp:expenseRatio ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 0 ;
+        sh:maxCount 1 ;
+        sh:message "총보수는 0 이상 소수 하나"@ko ] .
+
+fp:EtnShape a sh:NodeShape ;
+    sh:targetClass fp:ETN ;
+    rdfs:label "ETN 규칙"@ko ;
+    sh:not [ sh:class fp:ETF ] ;
+    sh:message "ETN 이면서 ETF 일 수 없다(disjoint)"@ko ;
+    sh:property [
+        sh:path fp:aum ;
+        sh:maxCount 0 ;
+        sh:message "ETN 은 AUM 을 적재하지 않는다(전량 0 실측) — 규모는 netAssets"@ko ] .
+
+fp:DomesticEtpShape a sh:NodeShape ;
+    sh:targetClass fp:DomesticETF , fp:DomesticETN ;
+    rdfs:label "국내ETP 규칙"@ko ;
+    sh:property [
+        sh:path fp:productGroup ;
+        sh:hasValue "국내ETF" ;
+        sh:message "국내 상장 ETP 의 상품군 표기는 '국내ETF'(제공 테이블명)"@ko ] ;
+    sh:property [
+        sh:path fp:listingStatus ;
+        sh:in ( "active" "delisted" "suspended" ) ;
+        sh:maxCount 1 ;
+        sh:message "상장상태는 active/delisted/suspended 중 하나"@ko ] .
+
+fp:ForeignEtpShape a sh:NodeShape ;
+    sh:targetClass fp:ForeignETF , fp:ForeignETN ;
+    rdfs:label "해외ETP 규칙"@ko ;
+    sh:property [
+        sh:path fp:riskGrade ;
+        sh:maxCount 0 ;
+        sh:message "해외ETF/ETN 은 위험등급이 없다(원천 컬럼 없음 — 적용 불가, '확인할 수 없음'의 근거)"@ko ] ;
+    sh:property [
+        sh:path fp:productGroup ;
+        sh:hasValue "해외ETF" ;
+        sh:message "해외 상장 ETP 의 상품군 표기는 '해외ETF'(제공 테이블명)"@ko ] .
+
+# ---------------------------------------------------------------------------
+# 4. 공모펀드
+# ---------------------------------------------------------------------------
+
+fp:PublicFundShape a sh:NodeShape ;
+    sh:targetClass fp:PublicFund ;
+    rdfs:label "공모펀드 규칙"@ko ;
+    sh:property [
+        sh:path fp:shareClassCount ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 1 ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:message "판매 클래스 수는 1 이상 정수 하나(상품 1노드 = 클래스 행 묶음)"@ko ] ;
+    sh:property [
+        sh:path fp:expenseRatio ;
+        sh:maxCount 0 ;
+        sh:message "공모펀드 마스터에는 총보수가 없다(적용 불가 — '확인할 수 없음')"@ko ] ;
+    sh:property [
+        sh:path fp:hasBenchmark ;
+        sh:class fp:Index ;
+        sh:message "벤치마크는 지수 노드여야 한다"@ko ] ;
+    sh:property [
+        sh:path fp:isOnSale ;
+        sh:datatype xsd:boolean ;
+        sh:maxCount 1 ] .
+
+# ---------------------------------------------------------------------------
+# 5. 구성종목 회사 노드
+# ---------------------------------------------------------------------------
+
+fp:ListedCompanyShape a sh:NodeShape ;
+    sh:targetClass fp:ListedCompany ;
+    rdfs:label "상장 종목(회사) 규칙"@ko ;
+    sh:property [
+        sh:path rdfs:label ;
+        sh:minCount 1 ;
+        sh:message "종목 노드는 이름(라벨)이 하나 이상 — 이름 검색 성립 조건"@ko ] ;
+    sh:property [
+        sh:path fp:tickerCode ;
+        sh:pattern "^[0-9A-Z]{6}$" ;
+        sh:maxCount 1 ;
+        sh:message "국내 종목코드는 6자리"@ko ] ;
+    sh:property [
+        sh:path fp:securityIsin ;
+        sh:pattern "^[A-Z]{2}[A-Z0-9]{9}[0-9]$" ;
+        sh:maxCount 1 ;
+        sh:message "해외 종목 키는 ISIN 형식(12자리)"@ko ] ;
+    # 국내(종목코드) 또는 해외(ISIN) 키 중 정확히 하나
+    sh:xone (
+        [ sh:property [ sh:path fp:tickerCode ; sh:minCount 1 ] ]
+        [ sh:property [ sh:path fp:securityIsin ; sh:minCount 1 ] ] ) ;
+    sh:message "종목 노드는 국내 종목코드 또는 해외 ISIN 중 정확히 하나를 키로 가진다"@ko .

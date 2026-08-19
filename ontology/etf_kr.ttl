@@ -1,0 +1,97 @@
+# ============================================================================
+# 금융상품 온톨로지 · 국내ETF 도메인 (etf_kr.ttl)
+#
+# 대상 데이터: PREF01N001 국내ETF마스터 (2026-07-11 스냅샷, 1,733행 — ETF 69.3% + ETN 30.7%)
+#            + KRX 정보데이터시스템 구성종목(PDF) 수집분 (기준일 2026-07-10, 국내 상장 ETF 923종목)
+# 공통 어휘(fp:ExchangeTradedProduct·fp:ETF·fp:ETN·fp:managedBy·fp:tracksIndex·
+#   fp:expenseRatio·fp:aum·fp:riskGrade 등)는 ontology/common.ttl 을 imports.
+# 인스턴스 생성: kg/build_kg.py extract_kr_etf_row → kg/output/kr_etf.nt,
+#              extract_constituent_row → kg/output/constituents.nt
+#
+# 이 도메인에서 특히 중요한 것
+#   - 파일 이름은 "ETF 마스터"지만 30.7%는 ETN — 인스턴스는 drv_instrument_type 으로
+#     fp:DomesticETF / fp:DomesticETN 으로 나눠 타이핑하고, 판정 불가 행은
+#     fp:ExchangeTradedProduct 로만 타이핑한다(ETF 로 단정하지 않음).
+#   - 구성종목(편입 종목) 관계는 국내 상장 ETF 에서만 실제 인스턴스가 있다(KRX 수집분).
+#     관계의 도메인은 ETP 전체로 열어 두어 해외ETF 소스를 확보하면 그대로 재사용한다.
+#   - 위험등급(pd_risk_cd → 1~6)·거래종료(212건 혼재)·기초지수 결측(커버리지 0.18%)이
+#     답변 가능성 판정의 근거가 된다.
+# ============================================================================
+
+@prefix fp:   <http://mafest.ai/product#> .
+@prefix fpr:  <http://mafest.ai/resource/> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+<http://mafest.ai/product/etf_kr>
+    a owl:Ontology ;
+    owl:imports <http://mafest.ai/product/common> ;
+    rdfs:label "금융상품 온톨로지 — 국내ETF"@ko ;
+    owl:versionInfo "1.0 — 2026-08-19 (finance.ttl 0.2 의 ETP·구성종목 절 계승, 국내/해외 클래스 분리 신설)" .
+
+# ---------------------------------------------------------------------------
+# 1. 클래스 — 국내 상장 ETF·ETN
+# ---------------------------------------------------------------------------
+
+fp:DomesticETF a owl:Class ;
+    rdfs:subClassOf fp:ETF ;
+    rdfs:label "국내ETF"@ko ;
+    rdfs:comment "국내 거래소(KRX) 상장 ETF — 국내ETF 마스터(PREF01N001)의 drv_instrument_type = ETF 행. 해외 상장 ETF 는 fp:ForeignETF(etf_gl.ttl). 상품군 리터럴 fp:productGroup = '국내ETF'."@ko .
+
+fp:DomesticETN a owl:Class ;
+    rdfs:subClassOf fp:ETN ;
+    rdfs:label "국내ETN"@ko ;
+    rdfs:comment "국내 거래소 상장 ETN — 같은 마스터의 drv_instrument_type = ETN 행(532건, 30.7%). 운용사 자리(fp:managedBy)에는 발행 증권사가 온다. AUM(du_last_aum)은 전량 0 이라 적재하지 않고 규모는 fp:netAssets 로 본다."@ko .
+
+# ---------------------------------------------------------------------------
+# 2. 국내ETP 전용 속성 — 상장 상태·수익률
+# ---------------------------------------------------------------------------
+
+fp:listingStatus a owl:DatatypeProperty ;
+    rdfs:domain fp:ExchangeTradedProduct ; rdfs:range xsd:string ;
+    rdfs:label "상장상태"@ko ;
+    rdfs:comment "active / delisted / suspended (drv_listing_status). 기본 검색은 active 만 — 거래종료 212건 혼재 실측. 해외ETF 마스터에는 대응 컬럼이 없어 국내 도메인 파일에 둔다(도메인은 ETP 로 열어 둠)."@ko .
+
+fp:delistedDate a owl:DatatypeProperty ;
+    rdfs:domain fp:ExchangeTradedProduct ; rdfs:range xsd:date ;
+    rdfs:label "거래종료일"@ko ;
+    rdfs:comment "pd_lste_dt — listingStatus = delisted 인 상품에만 적재."@ko .
+
+fp:returnYtd a owl:DatatypeProperty ;
+    rdfs:domain fp:ExchangeTradedProduct ; rdfs:range xsd:decimal ;
+    rdfs:label "YTD 수익률(%)"@ko ;
+    rdfs:comment "du_er_ytd. YTD = 2026-01-01 ~ 데이터 기준일(2026-07-11) 수익률로 해석한다(8/6 확정 비즈니스 규칙). 1년 수익률은 공통 속성 fp:return1y."@ko .
+
+# ---------------------------------------------------------------------------
+# 3. 구성종목 (KRX 수집분 — CQ6 '삼성전자가 포함된 ETF는?')
+# ---------------------------------------------------------------------------
+
+fp:ListedCompany a owl:Class ;
+    rdfs:subClassOf fp:Organization ;
+    rdfs:label "상장 종목(회사)"@ko ;
+    rdfs:comment "ETF 구성종목으로 등장하는 상장 증권의 발행 주체. 범위(8/13 실측 기반): ① 국내 상장 주식(ST)·예탁증권(DR)·리츠(RT)·인프라펀드(IF)·상장펀드(MF) — URI fpr:company/krx-{6자리 단축코드} ② 해외 상장 주식 — URI fpr:company/isin-{ISIN}(캠브리콘 CNE1000041R8 등). 운용사(명칭 슬러그)·펀드 운용사(code-{기관코드})와 다른 키 공간이라 충돌하지 않는다. 해외 종목은 운용사별 이름 표기가 달라 rdfs:label 을 복수로 가진다. 출처: KRX 정보데이터시스템 ETF PDF(구성종목), 조회 기준일 2026-07-10."@ko .
+
+fp:holdsConstituent a owl:ObjectProperty ;
+    rdfs:domain fp:ExchangeTradedProduct ;
+    rdfs:range  fp:ListedCompany ;
+    rdfs:label "…을 구성종목으로 보유한다"@ko ;
+    owl:inverseOf fp:isConstituentOf ;
+    rdfs:comment "상장 종목(국내 ST·DR·RT·IF·MF + 해외 주식)만 관계로 적재한다 — 현금성(원화현금·CP·CD·스왑)·채권(BN)·파생(FU·OP)·ETF/ETN 편입분(EF·EN, 회사가 아니라 상품)은 그래프에 넣지 않고 수집 CSV(SQL 채널)에 보존한다. 비중(COMPST_RTO)·수량 등 수치도 CSV 소관 — 그래프는 membership 관계만 가진다(채널 역할 분담, ROADMAP §4). 실측: ETF 923 · 종목 6,819 · 관계 67,205(국내 32,959 + 해외 34,246)."@ko .
+
+fp:isConstituentOf a owl:ObjectProperty ;
+    rdfs:domain fp:ListedCompany ;
+    rdfs:range  fp:ExchangeTradedProduct ;
+    rdfs:label "…의 구성종목이다"@ko ;
+    owl:inverseOf fp:holdsConstituent .
+
+fp:tickerCode a owl:DatatypeProperty , owl:FunctionalProperty ;
+    rdfs:domain fp:ListedCompany ; rdfs:range xsd:string ;
+    rdfs:label "종목코드(6자리, 국내)"@ko ;
+    rdfs:comment "KRX 단축코드(COMPST_ISU_CD). 종목명 표기 변형과 무관한 안정 키 — 자회사 관계(fp:subsidiaryOf, 후속) 연결 시 이 코드로 매칭한다. 국내 종목 전용(해외는 fp:securityIsin)."@ko .
+
+fp:securityIsin a owl:DatatypeProperty , owl:FunctionalProperty ;
+    rdfs:domain fp:ListedCompany ; rdfs:range xsd:string ;
+    rdfs:label "종목 ISIN(해외)"@ko ;
+    rdfs:comment "해외 상장 주식의 식별 키(COMPST_ISU_CD 가 ISIN 형식인 행). 상품의 fp:isin 과 별개 속성 — 도메인이 회사 노드다. 현금성 센티널(CASH·USDZZ·JPYZZ — ISIN 형식을 통과함)은 이름·코드로 차단한다(8/13 정정)."@ko .

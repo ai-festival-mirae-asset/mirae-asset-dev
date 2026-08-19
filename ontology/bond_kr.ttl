@@ -1,0 +1,117 @@
+# ============================================================================
+# 금융상품 온톨로지 · 국내채권 도메인 (bond_kr.ttl)
+#
+# 대상 데이터: PRBD01N001 국내채권마스터 (2026-07-11 스냅샷, 42,394행)
+# 공통 어휘(fp:Product·fp:riskGrade·fp:productId 등)는 ontology/common.ttl 을 imports.
+# 인스턴스 생성: kg/build_kg.py extract_bond_row → kg/output/kr_bond.nt
+#
+# 이 도메인에서 특히 중요한 것
+#   - 신용등급(AAA~D, 발행사의 상환 능력)과 위험등급(1~6, 상품 위험도 — common.ttl
+#     fp:riskGrade)은 서로 다른 축이며 채권은 둘 다 가진다(8/19 확인, 공식 자료 p.5
+#     "신용·위험등급"). 질문이 '신용등급'이면 AAA~D, '위험등급'이면 1~6 으로 답한다.
+#   - 위험등급 1등급(15,950건)에는 무등급·투기등급·조건부자본증권이 몰려 있고,
+#     6등급(10,408건)은 국고채류, 5등급(13,696건)은 AAA~AA- 회사채·금융채다.
+#     0(58건)은 미분류라 적재하지 않는다.
+#   - 38%가 이미 만기 도래(스냅샷 기준). 기본 검색은 만기 미경과(active)만.
+# ============================================================================
+
+@prefix fp:   <http://mafest.ai/product#> .
+@prefix fpr:  <http://mafest.ai/resource/> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+<http://mafest.ai/product/bond_kr>
+    a owl:Ontology ;
+    owl:imports <http://mafest.ai/product/common> ;
+    rdfs:label "금융상품 온톨로지 — 국내채권"@ko ;
+    owl:versionInfo "1.0 — 2026-08-19 (finance.ttl 0.2 의 채권 절 계승)" .
+
+# ---------------------------------------------------------------------------
+# 1. 클래스
+# ---------------------------------------------------------------------------
+
+fp:Bond a owl:Class ;
+    rdfs:subClassOf fp:Product ;
+    rdfs:label "채권"@ko ;
+    owl:disjointWith fp:ExchangeTradedProduct , fp:PublicFund ;
+    rdfs:comment "국내채권 마스터(PRBD01N001). 발행 주체(issuedBy)·만기·표면금리·신용등급·위험등급을 가진다. 상장지수상품·공모펀드와 disjoint — 교차 질의 시 상품군 오분류 방지."@ko .
+
+fp:Issuer a owl:Class ;
+    rdfs:subClassOf fp:Organization ;
+    rdfs:label "발행기관"@ko ;
+    rdfs:comment "채권 발행 주체(PD_PBCM). 국채는 '대한민국'. fp:ManagementCompany 와 disjoint 가 아니다 — 같은 기관이 발행도 운용도 할 수 있다."@ko .
+
+# ---------------------------------------------------------------------------
+# 2. 관계
+# ---------------------------------------------------------------------------
+
+fp:issuedBy a owl:ObjectProperty , owl:FunctionalProperty ;
+    rdfs:domain fp:Bond ;
+    rdfs:range  fp:Issuer ;
+    rdfs:label "…에 의해 발행되었다"@ko ;
+    owl:inverseOf fp:issues ;
+    rdfs:comment "채권 1건의 발행기관은 하나(Functional). 역관계 issues 로 '○○이 발행한 채권' 질의(CQ2 의 채권판)가 성립한다."@ko .
+
+fp:issues a owl:ObjectProperty ;
+    rdfs:domain fp:Issuer ;
+    rdfs:range  fp:Bond ;
+    rdfs:label "…을 발행했다"@ko ;
+    owl:inverseOf fp:issuedBy .
+
+# ---------------------------------------------------------------------------
+# 3. 채권 전용 속성 — 분류·일자·상태
+# ---------------------------------------------------------------------------
+
+fp:bondClass a owl:DatatypeProperty ;
+    rdfs:domain fp:Bond ; rdfs:range xsd:string ;
+    rdfs:label "채권 대분류"@ko ;
+    rdfs:comment "STD_PD_MCLS_NM: 국공채/특수채/회사채/개인투자용국채/외화채권-회사채/외화채권-금융채."@ko .
+
+fp:bondKind a owl:DatatypeProperty ;
+    rdfs:domain fp:Bond ; rdfs:range xsd:string ;
+    rdfs:label "채권종류"@ko ;
+    rdfs:comment "BD_KND 원시 표기(국고채·통안채·회사채·전단채 등)."@ko .
+
+fp:issueDate a owl:DatatypeProperty ;
+    rdfs:domain fp:Bond ; rdfs:range xsd:date ;
+    rdfs:label "발행일"@ko .
+
+fp:maturityDate a owl:DatatypeProperty ;
+    rdfs:domain fp:Bond ; rdfs:range xsd:date ;
+    rdfs:label "만기일"@ko ;
+    rdfs:comment "영구채(원천 센티널 99991231)는 만기일 트리플을 만들지 않고 isPerpetual=true 로 표기. 잔존만기는 저장하지 않는다 — 요청 시점에 재계산(pipeline/time_policy.py)."@ko .
+
+fp:maturityStatus a owl:DatatypeProperty ;
+    rdfs:domain fp:Bond ; rdfs:range xsd:string ;
+    rdfs:label "만기상태"@ko ;
+    rdfs:comment "active / matured / matures_on_snapshot / unknown (drv_maturity_status, 기준일 스냅샷 기준). 기본 검색은 active 만 — 38%가 이미 만기 실측."@ko .
+
+fp:isPerpetual a owl:DatatypeProperty ;
+    rdfs:domain fp:Bond ; rdfs:range xsd:boolean ;
+    rdfs:label "영구채 여부"@ko .
+
+fp:isBuyable a owl:DatatypeProperty ;
+    rdfs:domain fp:Bond ; rdfs:range xsd:boolean ;
+    rdfs:label "매수가능 여부(파생)"@ko ;
+    rdfs:comment "drv_is_buyable. 'BUYABLE_QUANTITY>0 = 매수가능' 업무 규칙은 미확정(§8.4) — 확정 전 참고 속성."@ko .
+
+# ---------------------------------------------------------------------------
+# 4. 채권 전용 속성 — 금리·신용등급
+# ---------------------------------------------------------------------------
+
+fp:couponRate a owl:DatatypeProperty ;
+    rdfs:domain fp:Bond ; rdfs:range xsd:decimal ;
+    rdfs:label "표면이율(연 %)"@ko ;
+    rdfs:comment "SRFC_IRT."@ko .
+
+fp:creditRating a owl:DatatypeProperty ;
+    rdfs:domain fp:Bond ; rdfs:range xsd:string ;
+    rdfs:label "신용등급(정규화)"@ko ;
+    rdfs:comment "drv_crd_grd_norm — AAA~D, 무부호 플랫 표기(AA0→AA) 정규화 완료. 허용 값 목록은 shapes.ttl(fp:BondShape)에 선언 — 값 도메인 밖 등급(예: AAAA)은 존재하지 않는다 = 함정 방어의 근거. 무등급(NULL 17,644건)은 트리플 없음."@ko .
+
+fp:creditRatingRank a owl:DatatypeProperty ;
+    rdfs:domain fp:Bond ; rdfs:range xsd:integer ;
+    rdfs:label "신용등급 서열"@ko ;
+    rdfs:comment "AAA=1 ~ D=20 (external_data/dictionaries/credit_rating.csv). 'AA 이상' = rank ≤ 3(문자 그대로, 8/14 확정 해석) · 'AA급/AA등급대' = rank 2~4 · 투자등급 = rank ≤ 10."@ko .

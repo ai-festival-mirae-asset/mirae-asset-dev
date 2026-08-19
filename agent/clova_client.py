@@ -49,6 +49,7 @@ if _ROOT not in _sys.path:
     _sys.path.insert(0, _ROOT)
 from config.env_loader import load_env  # noqa: E402
 load_env()
+from agent.net_guard import post_json  # noqa: E402  — 벽시계 상한이 걸린 POST(8/19)
 # --------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
@@ -163,11 +164,16 @@ class ClovaChatClient:
         tool_choice: str | dict = "auto",
         max_completion_tokens: int = MIN_COMPLETION_TOKENS,
         request_id: str | None = None,
+        temperature: float | None = None,
+        top_p: float | None = None,
+        seed: int | None = None,
     ) -> tuple[str, dict, dict]:
         """(url, headers, body) 를 만들되 전송은 하지 않는다 — --dry-run 이 이 출력물을 검증.
 
         토큰 파라미터: HCX-007 은 추론 모델이라 maxCompletionTokens, 그 외는 maxTokens.
         FC 제약으로 둘 다 1024 이상이어야 한다(문서 명시).
+        생성 흔들림 억제(8/19 ⑧): temperature(0~1, 낮을수록 일관)·topP·seed(0=랜덤, 양수=같은 입력에
+        같은 결과를 시도)는 지정했을 때만 body 에 넣는다 — 기본값은 서비스 기본(0.5 등)을 따른다.
         """
         if max_completion_tokens < MIN_COMPLETION_TOKENS:
             raise ValueError(
@@ -179,6 +185,12 @@ class ClovaChatClient:
         if tools:
             body["tools"] = tools
             body["toolChoice"] = tool_choice
+        if temperature is not None:
+            body["temperature"] = float(temperature)
+        if top_p is not None:
+            body["topP"] = float(top_p)
+        if seed is not None:
+            body["seed"] = int(seed)
 
         if self.model in REASONING_MODELS:
             body["maxCompletionTokens"] = max_completion_tokens
@@ -205,13 +217,17 @@ class ClovaChatClient:
         tool_choice: str | dict = "auto",
         max_completion_tokens: int = MIN_COMPLETION_TOKENS,
         request_id: str | None = None,
+        temperature: float | None = None,
+        top_p: float | None = None,
+        seed: int | None = None,
     ) -> dict:
         """1회 chat-completions 호출. 성공 시 응답 JSON 전체(dict)를 반환.
 
         모든 호출은 성공/실패와 무관하게 감사 로그에 기록된다(강제 3).
         """
         url, headers, body = self.build_request(
-            messages, tools, tool_choice, max_completion_tokens, request_id
+            messages, tools, tool_choice, max_completion_tokens, request_id,
+            temperature=temperature, top_p=top_p, seed=seed,
         )
         mode = "live" if self._transport is None else "mock"
         audit = {
@@ -223,8 +239,8 @@ class ClovaChatClient:
             "mode": mode,
         }
         try:
-            with httpx.Client(transport=self._transport, timeout=self._timeout) as http:
-                resp = http.post(url, headers=headers, json=body)
+            # 벽시계 상한(timeout+2초): DNS 조회 정지 등 httpx timeout 밖의 멈춤도 예산 안에서 끊는다(8/19)
+            resp = post_json(self._transport, self._timeout, url, headers, body)
             audit["http_status"] = resp.status_code
             resp.raise_for_status()
             data = resp.json()

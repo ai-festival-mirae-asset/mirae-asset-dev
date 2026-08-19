@@ -15,6 +15,7 @@ Router Stage B — HCX-005 Function Calling 라우팅 (S2 순서 ③, 8/13).
 """
 import json
 import os
+import re
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))            # engine/
@@ -26,10 +27,98 @@ from engine.router import ChannelCall, RoutePlan              # noqa: E402
 from engine.sql_templates import TEMPLATES, validate_params   # noqa: E402
 
 GRAPH_OPS = ("holding_etfs", "company_products", "product_info", "constituents_of")
+ROUTER_TEMPERATURE = 0.1          # 계획은 결정적일수록 좋다(8/19 ⑧-6)
+ROUTER_SEED = 20260711
 
 # LIKE 계열 파라미터 — LLM 에게는 *_raw(원문)로 받고 이스케이프는 실행기가 한다
 _LIKE_PARAMS = {"pattern": "pattern_raw", "attr_pattern": "attr_pattern_raw",
-                "region_pattern": "region_pattern_raw"}
+                "region_pattern": "region_pattern_raw", "prefix": "prefix_raw",
+                "exclude_region_pattern": "exclude_region_pattern_raw", "name_pattern": "name_pattern_raw"}
+
+# 8/19 ⑧-2 — 파라미터 의미 검증(첫 성적표: 상품명을 id 자리에(M-08), '만기 3년 이하' 같은 글자를 숫자
+# 자리에(H-26) 넣어 0건 → "없다"고 답할 위험). 스키마(이름·enum) 검증 위에 값의 종류를 본다.
+_KEY_PARAMS = {"pd_itm_no", "itm_no", "code", "code_a", "code_b", "code_c", "code_d", "etf_id"}
+_NUMERIC_PARAMS = {"limit", "top_etfs", "per_etf", "min_weight", "max_fee", "min_grade", "max_grade",
+                   "min_risk", "max_risk", "min_coupon", "max_coupon", "max_rating_rank",
+                   "min_rating_rank", "grade"}
+_DATE_PARAMS = {"as_of_date", "until", "date_from", "date_to"}
+_RANGES = {"min_grade": (1, 6), "max_grade": (1, 6), "min_risk": (1, 6), "max_risk": (1, 6),
+           "grade": (1, 6), "max_rating_rank": (1, 20), "min_rating_rank": (1, 20),
+           "limit": (1, 100), "top_etfs": (1, 10), "per_etf": (1, 50)}
+_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+_KEY_LIKE_RE = re.compile(r"^(?:[A-Z]{2}[A-Z0-9]{9}\d|\d{6}|[A-Za-z0-9\-]{6,20})$")
+
+
+def _grounded_lookup(partial_plan):
+    """Stage A grounding → {정규화 이름: [ref]}, {키} — 이름을 키 자리에 넣은 값을 되돌리는 데 쓴다."""
+    by_name, keys = {}, set()
+    for name, refs in partial_plan.entities:
+        by_name.setdefault(str(name), []).extend(refs)
+        by_name.setdefault(re.sub(r"\s+", "", str(name)).casefold(), []).extend(refs)
+        for r in refs:
+            keys.add(str(r.key))
+            by_name.setdefault(re.sub(r"\s+", "", str(r.display)).casefold(), []).append(r)
+    return by_name, keys
+
+
+def coerce_llm_params(template_id, params, partial_plan):
+    """LLM 이 낸 파라미터를 실행 가능한 값으로 고친다 — 못 고치면 ValueError(수리 콜 유도).
+
+    - 키 자리(code·pd_itm_no·itm_no·etf_id…): grounded 키면 통과, grounded 이름이면 키로 변환,
+      키 모양도 아니고 이름도 아니면 오류("이름을 키 자리에 넣지 말고 grounded 키를 쓰라").
+    - 숫자 자리: 숫자·숫자 문자열만(글자 섞인 '3년 이하' 등은 오류), 정해진 범위 밖이면 오류.
+    - 날짜 자리: YYYY-MM-DD 만.
+    """
+    by_name, keys = _grounded_lookup(partial_plan)
+    fixed = {}
+    for k, v in params.items():
+        if v is None:
+            continue
+        if k in _KEY_PARAMS:
+            sv = str(v).strip()
+            if sv in keys:
+                fixed[k] = sv
+                continue
+            norm = re.sub(r"\s+", "", sv).casefold()
+            refs = by_name.get(sv) or by_name.get(norm)
+            if refs:
+                fixed[k] = str(refs[0].key)          # 이름 → grounded 키
+                continue
+            if _KEY_LIKE_RE.match(sv):
+                fixed[k] = sv                        # 키 모양(코드·ISIN) — 실행 결과로 검증됨
+                continue
+            raise ValueError(f"[{template_id}] {k} 에 이름 '{sv}' 이(가) 들어감 — grounded 엔티티의 키를 써야 함")
+        elif k in _NUMERIC_PARAMS:
+            try:
+                num = float(str(v).replace(",", "").strip())
+            except ValueError:
+                raise ValueError(f"[{template_id}] {k} 는 숫자여야 함: {v!r}")
+            if k in _RANGES and not (_RANGES[k][0] <= num <= _RANGES[k][1]):
+                raise ValueError(f"[{template_id}] {k}={num:g} 는 허용 범위 {_RANGES[k]} 밖")
+            fixed[k] = int(num) if num.is_integer() else num
+        elif k in _DATE_PARAMS:
+            sv = str(v).strip()
+            if not _DATE_RE.match(sv):
+                raise ValueError(f"[{template_id}] {k} 는 YYYY-MM-DD 형식이어야 함: {v!r}")
+            fixed[k] = sv
+        else:
+            fixed[k] = v
+    return fixed
+
+
+def coerce_graph_query(op, query, partial_plan):
+    """graph 호출 query — holding_etfs 는 종목 키(코드/ISIN)여야 한다. 이름이면 grounded 키로 바꾼다."""
+    by_name, keys = _grounded_lookup(partial_plan)
+    sq = str(query).strip()
+    if op != "holding_etfs" or sq in keys:
+        return sq
+    refs = by_name.get(sq) or by_name.get(re.sub(r"\s+", "", sq).casefold())
+    for r in refs or []:
+        if r.kind == "constituent":
+            return str(r.key)
+    if _KEY_LIKE_RE.match(sq):
+        return sq
+    raise ValueError(f"graph holding_etfs: query 는 종목 코드/ISIN 이어야 함(받은 값 {sq!r})")
 
 
 # ---------------------------------------------------------------------------
@@ -175,7 +264,8 @@ def args_to_plan(args, partial_plan, stage="llm"):
         params = call.get("params") or {}
         if not isinstance(params, dict):
             raise ValueError(f"[{tid}] params 는 객체여야 함")
-        validate_params(tid, resolve_raw_params(params))   # KeyError/ValueError 그대로 전파
+        validate_params(tid, resolve_raw_params(params))   # KeyError/ValueError 그대로 전파(이름·enum·필수)
+        params = coerce_llm_params(tid, params, partial_plan)   # 값의 종류(키/숫자/날짜) — 8/19
         plan.calls.append(ChannelCall("sql", tid, params))
 
     for call in args.get("graph_calls") or []:
@@ -185,7 +275,7 @@ def args_to_plan(args, partial_plan, stage="llm"):
         if not call.get("query"):
             raise ValueError(f"graph {op}: query 누락")
         plan.calls.append(ChannelCall("graph", op,
-                                      {"query": call["query"],
+                                      {"query": coerce_graph_query(op, call["query"], partial_plan),
                                        "limit": int(call.get("limit") or 10)}))
 
     for kq in args.get("keyword_queries") or []:
@@ -231,11 +321,12 @@ def make_llm_router(client=None):
         client = ClovaChatClient(model="HCX-005")
     tool = build_router_tool()
     force = {"type": "function", "function": {"name": "submit_route_plan"}}
+    gen_kwargs = {"temperature": ROUTER_TEMPERATURE, "seed": ROUTER_SEED}   # 계획의 흔들림 억제(8/19)
 
     def llm_router(question, partial_plan):
         messages = build_router_messages(question, partial_plan)
         try:
-            resp = client.chat(messages, tools=[tool], tool_choice=force)
+            resp = client.chat(messages, tools=[tool], tool_choice=force, **gen_kwargs)
         except Exception:
             return None                                   # API 오류 — 규칙 폴백
         try:
@@ -254,7 +345,7 @@ def make_llm_router(client=None):
                         f"submit_route_plan 을 다시 호출하라."},
         ]
         try:
-            resp2 = client.chat(repair_messages, tools=[tool], tool_choice=force)
+            resp2 = client.chat(repair_messages, tools=[tool], tool_choice=force, **gen_kwargs)
             _cid, args2 = extract_tool_args(resp2)
             return args_to_plan(args2, partial_plan, stage="llm_repair")
         except Exception:

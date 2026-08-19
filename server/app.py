@@ -71,7 +71,8 @@ def build_runtime(kg_tables="all", with_vector=True, with_llm=True, with_generat
 
     kg_tables: "all"(전체) | "none"(그래프 끔) | "kr_etf,constituents"(부분).
     HCX 클라이언트는 API 키가 없으면 자동으로 꺼진다(규칙 엔진만으로도 유효 응답).
-    타임아웃: 계획 수립 8초·문장 생성 10초 — Deadline 강등과 함께 15초를 지킨다.
+    타임아웃: 계획 수립 6초·문장 생성 8초(8/19: 8초·10초에서 조정) — Deadline(생성 진입 한계 7초)
+    강등과 함께 최악에도 14초 안에 끝난다.
     """
     import duckdb
     con = duckdb.connect(DB_PATH_DEFAULT, read_only=True)
@@ -97,11 +98,11 @@ def build_runtime(kg_tables="all", with_vector=True, with_llm=True, with_generat
     if with_llm and has_key:
         from agent.clova_client import ClovaChatClient
         from engine.router_llm import make_llm_router
-        llm_router = make_llm_router(ClovaChatClient(model="HCX-005", timeout=8.0))
+        llm_router = make_llm_router(ClovaChatClient(model="HCX-005", timeout=6.0))
     if with_generator and has_key:
         from agent.clova_client import ClovaChatClient
         from engine.generator import make_hcx_generator
-        generator = make_hcx_generator(ClovaChatClient(model="HCX-005", timeout=10.0))
+        generator = make_hcx_generator(ClovaChatClient(model="HCX-005", timeout=8.0))
     return ctx, llm_router, generator
 
 

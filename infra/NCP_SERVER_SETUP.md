@@ -85,41 +85,22 @@
    ```
    비밀번호 입력 → 접속. (첫 접속 후 `passwd`로 비밀번호 변경 권장)
 
-## 7. 서버 초기 세팅 (Ubuntu 기준 — 접속 후 순서대로)
+## 7. 서버 초기 세팅 (Ubuntu 기준 — 접속 후 순서대로) — **[8/19] 스크립트 한 방으로 대체**
+
+배포 묶음이 `infra/deploy/` 에 있다(설치 스크립트 · systemd 서비스 · 상태 점검 cron · 예열 · 운영 안내서).
+자세한 절차·운영법은 **[deploy/README_DEPLOY.md](deploy/README_DEPLOY.md)**. 요약:
 
 ```bash
-apt update && apt install -y python3-pip python3-venv git
+apt-get update && apt-get install -y git
+git clone https://github.com/ai-festival-mirae-asset/mirae-asset-dev.git /opt/mirae-asset-dev
+bash /opt/mirae-asset-dev/infra/deploy/install.sh --branch main
+nano /etc/mirae-api.env        # CLOVASTUDIO_API_KEY= 값 채우기(저장소 밖 · 권한 600 · 커밋 금지)
+bash /opt/mirae-asset-dev/infra/deploy/install.sh --branch main   # 키 반영 재기동
 ```
 
-```bash
-git clone <우리 repo URL> && cd mirae-asset-dev
-python3 -m venv .venv && . .venv/bin/activate
-pip install fastapi uvicorn pandas   # requirements.txt 확정 전 임시
-```
+스크립트가 하는 일: 저장소 받기/갱신 → 가상환경 + `requirements.txt` → DuckDB·그래프 생성(정제 CSV·벡터 인덱스는 저장소에 있음) → `mirae-api.service` 등록(죽으면 5초 뒤 자동 재기동·부팅 시 자동 시작) → 5분마다 `/health` 점검 cron(실패 시 재기동) → 예열 호출.
 
-상시 가동은 systemd 서비스로 (터미널 끊겨도 살아 있고, 서버 재부팅 시 자동 시작):
-
-```ini
-# /etc/systemd/system/mirae-api.service
-[Unit]
-Description=mirae answer API
-After=network.target
-
-[Service]
-WorkingDirectory=/root/mirae-asset-dev
-ExecStart=/root/mirae-asset-dev/.venv/bin/uvicorn app:app --host 0.0.0.0 --port 80
-Restart=always
-RestartSec=3
-
-[Install]
-WantedBy=multi-user.target
-```
-
-```bash
-systemctl daemon-reload && systemctl enable --now mirae-api
-```
-
-검증: 내 PC에서 `curl http://<공인IP>/health` 응답 확인 → 이게 되면 "외부에서 접근 가능한 서버" 완성.
+검증: 내 PC에서 `curl http://<공인IP>/health` 응답 확인 → 이게 되면 "외부에서 접근 가능한 서버" 완성(M2). 이어서 `python evalset/eval_runner.py --mode http --base-url http://<공인IP>` 로 원격 리허설.
 
 ## 8. HTTPS/도메인 — **불필요 확정 (8/13)**
 
@@ -142,7 +123,8 @@ systemctl daemon-reload && systemctl enable --now mirae-api
 - [ ] 공인 IP 할당
 - [ ] ACG: 22(내 IP), 80/443(전체), 아웃바운드 오픈
 - [ ] SSH 접속 + 비밀번호 변경
-- [ ] systemd 서비스 등록, 외부에서 `/health` 응답 확인
-- [ ] (사무국 공지 후) HTTPS/도메인 결정
+- [ ] `infra/deploy/install.sh` 실행 + `/etc/mirae-api.env` 키 기입, 외부에서 `/health` 응답 확인(`hcx_router:true`)
+- [ ] 원격 리허설: `python evalset/eval_runner.py --mode http --base-url http://<공인IP>` — 응답 시간 p95·최대 확인
+- [ ] ~~(사무국 공지 후) HTTPS/도메인 결정~~ 불필요 확정(8/13)
 - [ ] 공인 IP 확정 즉시 `README.md` §5 와 `API_SPEC.md` §1 의 End-point URL 칸 기입(제출 필수)
-- [ ] 2주 무인 운영 점검: `Restart=always` 동작 확인(프로세스 강제 종료 후 자동 복구) · 디스크 여유 · 캐시 파일 크기 · 크레딧 잔량
+- [ ] 2주 무인 운영 점검: `Restart=always` 동작 확인(`kill -9` 후 자동 복구) · `/var/log/mirae-health.log` OK · 디스크 여유 · 크레딧 잔량 (`deploy/README_DEPLOY.md` 4장)

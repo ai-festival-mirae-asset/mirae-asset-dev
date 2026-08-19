@@ -231,7 +231,8 @@ def test_route_L04_bond_top_maturity(index):
     plan = _route(index, "잔존만기가 가장 긴 국고채 5개 알려줘")
     call = plan.calls[0]
     assert call.op == "bond_top_maturity"
-    assert call.params == {"bond_class": "국공채", "limit": 5}
+    # 8/19: 잔존만기(년·일)를 SQL 이 요청 시점 기준으로 계산해 돌려준다(생성기 계산분이 사후 대조에 걸리던 L-04)
+    assert call.params == {"bond_class": "국공채", "as_of_date": TODAY.isoformat(), "limit": 5}
 
 
 @needs_db
@@ -353,7 +354,12 @@ def test_route_H03_constituent_intersection_low_fee(con, index):
     assert plan.intent == "constituent_intersection_low_fee" and plan.behavior_hint == "partial"
     result = execute_plan(plan, RuntimeContext(con=con, index=index))
     fee_rows = next(o.rows for o in result.outcomes if o.op == "constituent_intersection_low_fee")
-    assert fee_rows and float(fee_rows[0]["cu_charge_rt"]) == 0.0
+    # 8/19: 총보수 0 표기는 의미 미확정(미수집 추정 — KODEX 200 도 0)이라 순위에서 제외한다 —
+    # 값 보유(>0) 상품이 오름차순으로 나오고, 제외 사실이 노트에 남는다
+    assert fee_rows and float(fee_rows[0]["cu_charge_rt"]) > 0.0
+    fees = [float(r["cu_charge_rt"]) for r in fee_rows]
+    assert fees == sorted(fees)
+    assert any("0 표기" in n for n in plan.notes)
 
 
 @needs_db
@@ -550,3 +556,181 @@ def test_stage_b_live_intersection_question(index):
     assert plan.calls
     for call in plan.calls:                                 # 플랜 전 호출이 실행 가능형이어야 함
         assert call.channel in ("sql", "graph", "keyword", "vector")
+
+
+# ---------------------------------------------------------------------------
+# 5. ⑧ 다듬기(8/19) — 첫 성적표가 드러낸 유형의 규칙 잠금
+#    (별칭 복수 상장 · 그룹/계열사 · 상품명 조각 우선 · 운용사×테마 · 펀드 상세 · 코스닥 비중 · 리츠 · 분포 결론)
+# ---------------------------------------------------------------------------
+
+@needs_db
+def test_alias_with_multiple_listings_is_one_entity(index):
+    """'구글'(알파벳 A/C 2종) · '알리바바'(홍콩/ADR) — 키가 2개여도 한 개체로 보고 편입 ETF 를 합쳐 조회(M-22/H-27)."""
+    for q, n_keys in (("구글 주식을 담은 국내 상장 ETF 알려줘", 2),
+                      ("알리바바 같은 중국 빅테크를 담은 ETF가 있으면 위험등급이랑 같이 알려줘", 2)):
+        plan = _route(index, q)
+        assert plan.intent == "constituent_reverse", q
+        holders = [c for c in plan.calls if c.op == "constituent_holders"]
+        assert len(holders) == n_keys and len({c.params["code"] for c in holders}) == n_keys
+        assert any("복수 상장" in n for n in plan.notes)
+
+
+@needs_db
+def test_constituent_reverse_orders_by_aum_in_sql(index):
+    """'순자산이 큰 순서로' 는 SQL 이 전체 편입 ETF 에서 정렬한다(비중 상위 30 안에서만 재정렬하면 M-02 오답)."""
+    plan = _route(index, "SK하이닉스를 담은 ETF 중에 순자산이 큰 순서로 5개만 알려줘")
+    holders = [c for c in plan.calls if c.op == "constituent_holders"]
+    assert holders and all(c.params.get("order") == "aum" for c in holders)
+    assert plan.hints.get("order") == "aum"
+
+
+@needs_db
+def test_group_affiliate_questions(con, index):
+    """'X그룹 계열사' — X그룹주 상품 우선 + 회사명 접두 후보 집계 (M-14/H-10/H-23)."""
+    for q, prefix in (("한화그룹 계열사에 투자하는 ETF 있어?", "한화"),
+                      ("한화그룹주 ETF는 계열사별로 몇 퍼센트씩 담고 있어?", "한화"),
+                      ("SK 계열사(하이닉스·스퀘어·리츠 등)를 담은 ETF를 계열사별로 정리해줘", "SK")):
+        plan = _route(index, q)
+        assert plan.intent == "group_holdings" and plan.behavior_hint == "partial", q
+        ops = {c.op for c in plan.calls}
+        assert {"etp_name_search", "etp_pattern_top_constituents", "constituent_group_holders"} <= ops
+        grp = next(c for c in plan.calls if c.op == "constituent_group_holders")
+        assert grp.params["prefix_raw"] == prefix
+        assert any("접두 기준" in n for n in plan.notes)      # 법적 계열 관계 아님을 명시
+    result = execute_plan(_route(index, "SK 계열사를 담은 ETF를 계열사별로 정리해줘"),
+                          RuntimeContext(con=con, index=index))
+    rows = next(o.rows for o in result.outcomes if o.op == "constituent_group_holders")
+    names = [r["COMPST_ISU_NM"] for r in rows]
+    assert names[0] == "SK하이닉스" and "SK스퀘어" in names and "SK리츠" in names
+    assert all(n.upper().startswith("SK") for n in names)
+
+
+@needs_db
+def test_product_fragment_first_grounding(con, index):
+    """'애플 밸류체인 ETF 뭘 담고 있어' 는 애플(종목) 역질의가 아니라 그 상품의 구성 질의(M-19) —
+    구성 공시가 빈 상품은 '구성 공시 없음'을 명시. '위클리 커버드콜'은 후보 여러 개(H-20)."""
+    plan = _route(index, "애플 밸류체인에 투자하는 ETF가 있다던데, 뭘 담고 있어?")
+    assert plan.intent == "product_constituents_by_name" and plan.behavior_hint == "answer"
+    assert plan.hints["product_fragment"] == "애플밸류체인"
+    ctx = RuntimeContext(con=con, index=index)
+    out = answer_question("애플 밸류체인에 투자하는 ETF가 있다던데, 뭘 담고 있어?", ctx, today=TODAY)
+    assert "애플밸류체인" in out["answer"] and "구성 공시 없음" in out["answer"]
+    plan2 = _route(index, "위클리 커버드콜 ETF는 옵션을 실제로 뭘 들고 있어?")
+    assert plan2.intent == "product_constituents_by_name" and plan2.behavior_hint == "partial"
+    assert plan2.hints["product_fragment"] == "위클리커버드콜"
+    # 종목명이 그대로 있는 질문은 가로채지 않는다(구성종목 역질의 유지)
+    assert _route(index, "삼성전자를 담은 ETF 알려줘").intent == "constituent_reverse"
+
+
+@needs_db
+def test_mgmt_theme_constituents(con, index):
+    """운용사 × 지역 테마 × 구성 (H-08): 상품명 표기 변형(중국/차이나/China)으로 순자산 상위 ETF 의 구성 상위."""
+    q = "미래에셋이 운용하는 중국 관련 ETF의 구성 상위 종목 보여줘"
+    plan = _route(index, q)
+    assert plan.intent == "mgmt_theme_constituents"
+    pats = [c.params["pattern_raw"] for c in plan.calls if c.op == "etp_pattern_top_constituents"]
+    assert pats[:2] == ["중국", "차이나"] and all(
+        c.params.get("mgmt") == "미래에셋" for c in plan.calls if c.op == "etp_pattern_top_constituents")
+    out = answer_question(q, RuntimeContext(con=con, index=index), today=TODAY)
+    assert "TIGER 차이나" in out["answer"] or "TIGER 중국" in out["answer"]
+
+
+@needs_db
+def test_fund_unstructured_still_answers_master_fields(con, index):
+    """M-10: 구조·전략 서술은 없어도 부분 명칭(국민성장펀드)으로 펀드를 찾아 마스터 필드는 답한다."""
+    q = "국민성장펀드의 구조와 투자전략 동향을 찾아서 알려줘"
+    plan = _route(index, q)
+    assert plan.intent == "unstructured_info" and any(c.op == "fund_detail" for c in plan.calls)
+    out = answer_question(q, RuntimeContext(con=con, index=index), today=TODAY)
+    assert "국민성장" in out["answer"] and "비정형 자료" in out["answer"]
+    assert "위험등급" in out["answer"] or "drv_risk_grade" in out["answer"]
+
+
+@needs_db
+def test_theme_ksq_share_and_reit_breakdown(con, index):
+    """H-22 코스닥 비중 · H-07 리츠 ETF vs 개별 상장 리츠."""
+    plan = _route(index, "바이오 ETF 중에 코스닥 종목 비중이 높은 상품은?")
+    assert plan.intent == "theme_ksq_share"
+    rows = next(o.rows for o in execute_plan(plan, RuntimeContext(con=con, index=index)).outcomes
+                if o.op == "constituent_ksq_share")
+    assert rows and rows[0]["ksq_weight_pct"] >= rows[-1]["ksq_weight_pct"] and rows[0]["ksq_weight_pct"] > 90
+    plan2 = _route(index, "리츠에 투자하는 방법을 ETF랑 개별 상장 리츠로 나눠 정리해줘")
+    assert plan2.intent == "reit_breakdown"
+    out = answer_question("리츠에 투자하는 방법을 ETF랑 개별 상장 리츠로 나눠 정리해줘",
+                          RuntimeContext(con=con, index=index), today=TODAY)
+    assert "리츠부동산인프라" in out["answer"] and ("SK리츠" in out["answer"] or "신한알파리츠" in out["answer"])
+
+
+@needs_db
+def test_distribution_conclusion_and_missing_index_note(con, index):
+    """L-20/L-30 분포 답변은 '전부 X — 다른 것 없음' 결론을, L-28 은 기초지수 결측을 명시한다."""
+    ctx = RuntimeContext(con=con, index=index)
+    out = answer_question("달러 말고 다른 통화로 거래되는 해외 ETF도 있어?", ctx, today=TODAY)
+    assert "전부 USD" in out["answer"] and "다른 거래통화 없음" in out["answer"]
+    out2 = answer_question("TIGER 200이 추종하는 지수가 뭐야?", ctx, today=TODAY)
+    assert "기초지수 값이 이 상품 행에 없음" in out2["answer"]
+    from engine.answer_service import dist_sentence
+    assert dist_sentence("etp_currency_dist", [{"drv_curr_cd": "KRW", "n": 1500}, {"drv_curr_cd": "USD", "n": 5}]) \
+        == "거래통화 분포: KRW 1,500건(99.7%), USD 5건(0.3%) — 총 1,505건, 이 밖의 거래통화 없음"
+    assert dist_sentence("bond_class_dist", []) is None
+
+
+def test_new_templates_registered_with_like_conventions():
+    """8/19 신규 템플릿 5종 — 등록·파라미터 규약(pattern/prefix 는 *_raw 로 플랜에 실림)."""
+    for tid in ("etp_pattern_top_constituents", "constituent_group_holders", "fund_detail",
+                "constituent_ksq_share", "reit_constituents"):
+        assert tid in TEMPLATES, tid
+    assert resolve_raw_params({"prefix_raw": "SK_", "limit": 5}) == {"prefix": r"SK\_%", "limit": 5}
+    assert resolve_raw_params({"pattern_raw": "50%", "top_etfs": 3}) == {"pattern": r"%50\%%", "top_etfs": 3}
+    assert TEMPLATES["constituent_holders"].params[-1].enum == ("aum", "weight")
+
+
+@needs_db
+def test_fragment_intersection_and_per_product_details(con, index):
+    """'방산 테마 레버리지 ETF' 는 '방산' ∩ '레버리지' 상품 3종(ETF·ETN)의 상세+구성 — 조선업은 '업' 을 떼고 본다(M-20/H-21)."""
+    plan = _route(index, "방산 테마 레버리지 ETF의 구성이 궁금해")
+    assert plan.intent == "product_constituents_by_name" and plan.hints["product_fragment"] == "방산+레버리지"
+    ops = [c.op for c in plan.calls]
+    assert ops.count("etp_detail") == 3 and ops.count("constituent_top_weights") == 3
+    plan2 = _route(index, "조선업 테마 레버리지 ETF의 구성과 위험 특성을 알려줘")
+    assert plan2.intent == "product_constituents_by_name" and plan2.hints["product_fragment"] == "조선+레버리지"
+    out = answer_question("조선업 테마 레버리지 ETF의 구성과 위험 특성을 알려줘",
+                          RuntimeContext(con=con, index=index), today=TODAY)
+    assert "SOL 조선TOP3플러스레버리지" in out["answer"] and "파생" in out["answer"]
+    # 비교·선택형 질문(코스닥 비중)은 상품명 조각 규칙이 가로채지 않는다
+    assert _route(index, "바이오 ETF 중에 코스닥 종목 비중이 높은 상품은?").intent == "theme_ksq_share"
+
+
+@needs_db
+def test_common_holdings_and_target_maturity_templates(con, index):
+    """H-09 수익률 상위 N 의 공통 종목(현금성 제외) · H-12 만기형 채권 ETF 의 만기 창."""
+    q = "올해 수익률 상위 10개 국내 ETF가 공통으로 담고 있는 종목이 있어?"
+    plan = _route(index, q)
+    assert plan.intent == "etp_ranking_common_holdings"
+    rows = next(o.rows for o in execute_plan(plan, RuntimeContext(con=con, index=index)).outcomes
+                if o.op == "etp_top_return_common_holdings")
+    assert rows and all(r["n_etfs_holding"] >= 2 for r in rows)
+    assert not any("현금" in r["COMPST_ISU_NM"] for r in rows)
+    plan2 = _route(index, "지금부터 1년 안에 만기가 도래하는 만기형 채권 ETF 있어?")
+    assert plan2.intent == "etp_target_maturity"
+    call = plan2.calls[0]
+    assert call.op == "etp_target_maturity_within" and call.params["date_from"] == "2026-08-01" \
+        and call.params["date_to"] == "2027-08-14"
+    rows2 = next(o.rows for o in execute_plan(plan2, RuntimeContext(con=con, index=index)).outcomes
+                 if o.op == "etp_target_maturity_within")
+    assert rows2 and all("2026-08" <= r["maturity_yyyymm"] <= "2027-08" for r in rows2)
+
+
+@needs_db
+def test_count_and_residual_maturity_are_data_notes(con, index):
+    """건수 결과는 문장으로(L-05 — 생성기가 'n=306' 을 정보 없음으로 오독), 잔존만기는 SQL 계산값(L-04)."""
+    ctx = RuntimeContext(con=con, index=index)
+    out = answer_question("신용등급이 BBB 이하인 회사채는 몇 개나 돼?", ctx, today=TODAY)
+    assert "조건 일치 건수 — 건수 306건" in out["answer"]
+    out2 = answer_question("잔존만기가 가장 긴 국고채 5개 알려줘", ctx, today=TODAY)
+    assert "residual_years=" in out2["answer"] and "2074" in out2["answer"]
+    from engine.answer_service import count_sentence
+    assert count_sentence("fund_counts", [{"products": 11138, "share_classes": 95618}]) \
+        == "조건 일치 건수 — 상품(마스터) 수 11,138건 · 판매 클래스 수 95,618건"
+    assert count_sentence("etp_count", [{"drv_instrument_type": "ETF", "drv_listing_status": "active", "n": 1139}]) \
+        == "조건 일치 건수 — ETF active: 건수 1,139건"

@@ -32,6 +32,7 @@ if _ROOT not in _sys.path:
     _sys.path.insert(0, _ROOT)
 from config.env_loader import load_env  # noqa: E402
 load_env()
+from agent.net_guard import post_json  # noqa: E402  — 벽시계 상한이 걸린 POST(8/19)
 # --------------------------------------------------------------------------
 
 DEFAULT_BASE_URL = "https://clovastudio.stream.ntruss.com"
@@ -118,8 +119,8 @@ class ClovaEmbeddingClient:
             "mode": "live" if self._transport is None else "mock",
         }
         try:
-            with httpx.Client(transport=self._transport, timeout=self._timeout) as http:
-                resp = http.post(url, headers=headers, json={"text": text})
+            # 벽시계 상한(timeout+2초) — DNS 조회 정지도 예산 안에서 끊는다(8/19, agent/net_guard.py)
+            resp = post_json(self._transport, self._timeout, url, headers, {"text": text})
             audit["http_status"] = resp.status_code
             if resp.status_code != 200:      # 404(경로 변형)·401(앱 범위) 등 — 다음 후보 시도
                 body = resp.text[:200]

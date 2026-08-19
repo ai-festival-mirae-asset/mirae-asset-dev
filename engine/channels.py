@@ -23,14 +23,17 @@ sys.path.insert(0, ROOT)
 
 from engine.keyword_channel import keyword_lookup             # noqa: E402
 from engine.policy import load_policy                         # noqa: E402
-from engine.sql_templates import like_param, run_template     # noqa: E402
+from engine.sql_templates import like_param, like_prefix_param, run_template  # noqa: E402
 from pipeline.evidence import (AS_OF_CONSTITUENTS, AS_OF_MASTER,  # noqa: E402
                                Evidence)
 from pipeline.themes import detect_theme_terms, expand_anchors, load_themes  # noqa: E402
 
 # 플랜에는 원문(*_raw)이 실리고 실행 직전 이스케이프된 정식 파라미터로 바뀐다
 _RAW_LIKE_PARAMS = {"pattern_raw": "pattern", "attr_pattern_raw": "attr_pattern",
-                    "region_pattern_raw": "region_pattern"}
+                    "region_pattern_raw": "region_pattern",
+                    "exclude_region_pattern_raw": "exclude_region_pattern", "name_pattern_raw": "name_pattern"}
+# 앞부분 일치(text%) — 그룹 계열사 후보(회사명 접두) 조회 (8/19)
+_RAW_PREFIX_PARAMS = {"prefix_raw": "prefix"}
 
 
 @dataclass
@@ -62,11 +65,13 @@ class RuntimeContext:
 
 
 def resolve_raw_params(params):
-    """*_raw → like_param 이스케이프 적용된 정식 파라미터 dict."""
+    """*_raw → like_param/like_prefix_param 이스케이프 적용된 정식 파라미터 dict."""
     out = {}
     for k, v in params.items():
         if k in _RAW_LIKE_PARAMS:
             out[_RAW_LIKE_PARAMS[k]] = like_param(v)
+        elif k in _RAW_PREFIX_PARAMS:
+            out[_RAW_PREFIX_PARAMS[k]] = like_prefix_param(v)
         else:
             out[k] = v
     return out
@@ -181,6 +186,8 @@ def _exec_graph(ctx, call):
                               ("상장상태", "listingStatus")):
                 v = store.object(s, FP + local)
                 if v is not None:
+                    if local == "expenseRatio" and str(v).strip() in ("0", "0.0"):
+                        v = "0(원천 표기 — 무보수인지 미수집인지 미확정)"   # KODEX 200 도 0 으로 표기(8/19)
                     fields[ko] = v
             idx = store.object(s, FP + "tracksIndex") or store.object(s, FP + "hasBenchmark")
             if idx:

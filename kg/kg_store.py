@@ -149,15 +149,38 @@ class TripleStore:
                 yield s
 
     def search_products(self, query, limit=10):
-        """이름(라벨·약칭) 부분일치 검색 — 공백·대소문자 무시. (subject, label) 목록."""
+        """이름(라벨·약칭) 부분일치 검색 — 공백·대소문자 무시. (subject, label) 목록.
+
+        순위(8/19): 정규화 이름과 정확히 같은 상품 → 이름이 질의로 시작하는 상품 → 그 밖의
+        포함 순, 같은 등급이면 이름이 짧은 순. 'tiger200' 이 'TIGER 200' 대신
+        'TIGER 200 IT'로 잡히던 문제(L-28 실측)를 막는다.
+        """
         q = norm_name(query)
-        hits = []
-        for s in self.product_subjects():
-            names = self.objects(s, RDFS_LABEL) + self.objects(s, FP + "shortName")
-            for n in names:
-                if q in norm_name(n):
-                    hits.append((s, self.label(s) or n))
-                    break
-            if len(hits) >= limit:
-                break
-        return hits
+        if not q:
+            return []
+        scored = []
+        for s, names in self._product_names():
+            best = None
+            for nn, n in names:
+                if q not in nn:
+                    continue
+                rank = 0 if nn == q else (1 if nn.startswith(q) else 2)
+                key = (rank, len(nn))
+                if best is None or key < best[0]:
+                    best = (key, n)
+            if best is not None:
+                scored.append((best[0], len(scored), s, self.label(s) or best[1]))
+        scored.sort()
+        return [(s, label) for _key, _order, s, label in scored[:limit]]
+
+    def _product_names(self):
+        """상품별 (정규화 이름, 원문) 목록 캐시 — 검색마다 6만 상품의 이름을 다시 정규화하지 않는다."""
+        cache = getattr(self, "_names_cache", None)
+        if cache is None or cache[0] != self.triples:
+            rows = []
+            for s in self.product_subjects():
+                names = self.objects(s, RDFS_LABEL) + self.objects(s, FP + "shortName")
+                rows.append((s, [(norm_name(n), n) for n in names]))
+            cache = (self.triples, rows)
+            self._names_cache = cache
+        return cache[1]

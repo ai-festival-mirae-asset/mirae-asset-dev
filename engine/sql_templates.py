@@ -35,6 +35,12 @@ def like_param(text):
     return f"%{t}%"
 
 
+def like_prefix_param(text):
+    """사용자 텍스트 → 앞부분 일치 ILIKE 패턴(text%) — 그룹 계열사 후보(회사명 접두) 조회용."""
+    t = str(text).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    return f"{t}%"
+
+
 @dataclass(frozen=True)
 class Param:
     name: str
@@ -67,7 +73,7 @@ TEMPLATES = {t.id: t for t in [
     _t("bond_filter",
        "국내채권 필터 목록 — 통화·신용등급 서열(AA이상=4 이하)·만기상태·매수가능·표면금리·대분류. "
        "대상: L-01/03/05, H-26. 매수가능 판정 기준(§8.4 미확정)은 답변에 명시할 것.",
-       """SELECT PD_NO, PD_NM, STD_PD_MCLS_NM, CURR_CD, drv_crd_grd_norm, drv_crd_grd_rank,
+       """SELECT PD_NO, PD_NM, PD_ABRV_NM, STD_PD_MCLS_NM, CURR_CD, drv_crd_grd_norm, drv_crd_grd_rank,
                  SRFC_IRT, MAT_DT, drv_maturity_status, drv_is_buyable
           FROM kr_bond
           WHERE ($currency IS NULL OR CURR_CD = $currency)
@@ -119,7 +125,7 @@ TEMPLATES = {t.id: t for t in [
        "잔존만기 상한 복합 필터 — 만기일이 $as_of_date(요청 시점, time_policy)와 $until 사이인 "
        "활성 채권에 통화·신용등급·표면금리·대분류 조건을 함께 적용한다. 저장된 잔존일수 "
        "컬럼은 행별 기준일이 달라 쓰지 않는다. 대상: L-04/H-26.",
-       """SELECT PD_NO, PD_NM, STD_PD_MCLS_NM, CURR_CD, MAT_DT,
+       """SELECT PD_NO, PD_NM, PD_ABRV_NM, STD_PD_MCLS_NM, CURR_CD, MAT_DT,
                  drv_crd_grd_norm, drv_crd_grd_rank, SRFC_IRT
           FROM kr_bond
           WHERE drv_maturity_status = 'active'
@@ -141,15 +147,22 @@ TEMPLATES = {t.id: t for t in [
        source="PRBD01N001", key_col="PD_NO"),
 
     _t("bond_top_maturity",
-       "활성 채권 만기일 내림차순(잔존만기 긴 순) — 영구채(만기 없음) 제외, 대분류 필터 "
-       "선택. 잔존 일수는 답변 시 time_policy 로 재계산해 병기. 대상: L-04(국고채→국공채).",
-       """SELECT PD_NO, PD_NM, STD_PD_MCLS_NM, MAT_DT, drv_crd_grd_norm, SRFC_IRT
+       "활성 채권 만기일 내림차순(잔존만기 긴 순) — 영구채(만기 없음) 제외, 대분류 필터 선택. "
+       "잔존만기(년·일)는 $as_of_date(요청 시점) 기준으로 SQL 이 계산해 돌려준다(생성기가 계산하면 "
+       "사후 대조에 걸림 — 8/19 L-04 실측). 대상: L-04(국고채→국공채).",
+       """SELECT PD_NO, PD_NM, PD_ABRV_NM, STD_PD_MCLS_NM, MAT_DT,
+                 round(datediff('day', TRY_CAST($as_of_date AS DATE),
+                                TRY_CAST(TRY_STRPTIME(replace(MAT_DT,'-',''), '%Y%m%d') AS DATE)) / 365.25, 1)
+                     AS residual_years,
+                 datediff('day', TRY_CAST($as_of_date AS DATE),
+                          TRY_CAST(TRY_STRPTIME(replace(MAT_DT,'-',''), '%Y%m%d') AS DATE)) AS residual_days,
+                 drv_crd_grd_norm, SRFC_IRT
           FROM kr_bond
           WHERE drv_maturity_status = 'active'
             AND upper(coalesce(drv_is_perpetual,'')) NOT IN ('Y','TRUE','1')
             AND ($bond_class IS NULL OR STD_PD_MCLS_NM = $bond_class)
           ORDER BY replace(coalesce(MAT_DT,''),'-','') DESC, PD_NO LIMIT $limit""",
-       [Param("bond_class"), Param("limit", required=True)],
+       [Param("bond_class"), Param("as_of_date", required=True), Param("limit", required=True)],
        source="PRBD01N001", key_col="PD_NO"),
 
     # ---------------- 국내 ETP (L-09~16, L-26, L-28, L-30, M-15/17/18, H-16/24/28/30) ----------------
@@ -229,11 +242,12 @@ TEMPLATES = {t.id: t for t in [
        [], source="PREF01N001"),
 
     _t("etp_low_fee",
-       "총보수 상한 필터(값 보유분만) — 커버리지(실질결측 87.5%)와 0의 의미 미확정을 "
-       "답변에 반드시 명시(partial). 대상: L-26, H-03/30.",
+       "총보수 상한 필터(값 보유분만, 0 표기 제외) — 커버리지(실질결측 87.5%)와 0의 의미 미확정을 "
+       "답변에 반드시 명시(partial). 0 은 '무보수'가 아니라 미수집일 가능성이 커(KODEX 200 도 0 으로 "
+       "표기됨 — 실제 0.15%) 순위에서 뺀다(8/19). 대상: L-26, H-03/30.",
        """SELECT pd_itm_no, pd_abrv_nm, cu_charge_rt FROM kr_etp
           WHERE drv_instrument_type = 'ETF' AND drv_listing_status = 'active'
-            AND TRY_CAST(cu_charge_rt AS DOUBLE) IS NOT NULL
+            AND TRY_CAST(cu_charge_rt AS DOUBLE) > 0
             AND TRY_CAST(cu_charge_rt AS DOUBLE) <= $max_fee
           ORDER BY TRY_CAST(cu_charge_rt AS DOUBLE), pd_itm_no LIMIT $limit""",
        [Param("max_fee", required=True), Param("limit", required=True)],
@@ -266,16 +280,20 @@ TEMPLATES = {t.id: t for t in [
 
     # ---------------- 해외 ETF (L-17~20, M-29 방어는 Validation) ----------------
     _t("global_etf_filter",
-       "해외ETF 필터 — 지역·인버스·거래통화. 위험등급 컬럼은 원천에 없음(요청 시 "
-       "Validation 이 refuse — T-13/M-29). 대상: L-18/19/20.",
-       """SELECT pd_itm_no, pd_abrv_nm, pd_nm, wu_inv_rgn, pd_trd_ccy FROM global_etf
+       "해외ETF 필터 — 지역(포함/제외)·상품명/전략 서술 패턴·인버스·거래통화. 위험등급 컬럼은 원천에 없음(요청 시 "
+       "Validation 이 refuse — T-13/M-29). exclude_region_pattern='United States' + name_pattern='dividend' 이면 "
+       "'미국 말고 다른 지역 배당형'(H-18). 대상: L-18/19/20, H-18.",
+       """SELECT pd_itm_no, pd_abrv_nm, pd_nm, wu_inv_rgn, pd_trd_ccy, du_last_aum FROM global_etf
           WHERE ($region_pattern IS NULL OR wu_inv_rgn ILIKE $region_pattern ESCAPE '\\')
+            AND ($exclude_region_pattern IS NULL OR coalesce(wu_inv_rgn, '') NOT ILIKE $exclude_region_pattern ESCAPE '\\')
+            AND ($name_pattern IS NULL OR pd_nm ILIKE $name_pattern ESCAPE '\\'
+                 OR pd_abrv_nm ILIKE $name_pattern ESCAPE '\\' OR cu_strtegy ILIKE $name_pattern ESCAPE '\\')
             AND ($inverse_only IS NULL OR upper(coalesce(drv_is_inverse,'')) IN ('Y','TRUE','1'))
             AND ($ccy IS NULL OR pd_trd_ccy = $ccy)
             AND ($exclude_ccy IS NULL OR pd_trd_ccy <> $exclude_ccy)
-          ORDER BY pd_itm_no LIMIT $limit""",
-       [Param("region_pattern"), Param("inverse_only"), Param("ccy"),
-        Param("exclude_ccy"), Param("limit", required=True)],
+          ORDER BY TRY_CAST(du_last_aum AS DOUBLE) DESC NULLS LAST, pd_itm_no LIMIT $limit""",
+       [Param("region_pattern"), Param("exclude_region_pattern"), Param("name_pattern"),
+        Param("inverse_only"), Param("ccy"), Param("exclude_ccy"), Param("limit", required=True)],
        source="PREF02N001", key_col="pd_itm_no"),
 
     _t("global_etf_count",
@@ -336,14 +354,17 @@ TEMPLATES = {t.id: t for t in [
     # ---------------- 구성종목 (M-01~07/16/21/25, H-10/14/22 — 기준일 7/10!) ----------------
     _t("constituent_holders",
        "특정 종목(코드/ISIN)을 편입한 ETF 목록 + 비중 — 기준일 2026-07-10(직전 거래일) "
-       "명시 필수. 대상: M-01/02/16/21, H-06/27.",
-       """SELECT c.etf_isin, c.etf_name, c.COMPST_ISU_NM,
+       "명시 필수. order='aum' 이면 순자산 큰 순(M-02 '순자산 큰 순서로'), 기본은 비중 큰 순. "
+       "상품명은 마스터 약칭(pd_abrv_nm)으로 표시. 대상: M-01/02/16/21, H-06/27.",
+       """SELECT c.etf_isin, coalesce(e.pd_abrv_nm, c.etf_name) AS pd_abrv_nm, c.COMPST_ISU_NM,
                  TRY_CAST(replace(c.COMPST_RTO, ',', '') AS DOUBLE) AS weight_pct,
                  e.pd_net_tamt, e.drv_risk_grade
           FROM etf_constituent c LEFT JOIN kr_etp e ON c.etf_isin = e.pd_itm_no
           WHERE c.COMPST_ISU_CD = $code
-          ORDER BY weight_pct DESC NULLS LAST, c.etf_isin LIMIT $limit""",
-       [Param("code", required=True), Param("limit", required=True)],
+          ORDER BY CASE WHEN $order = 'aum' THEN TRY_CAST(e.pd_net_tamt AS DOUBLE) END DESC NULLS LAST,
+                   weight_pct DESC NULLS LAST, c.etf_isin LIMIT $limit""",
+       [Param("code", required=True), Param("limit", required=True),
+        Param("order", enum=("aum", "weight"))],
        source="KRX-PDF", key_col="etf_isin", as_of=AS_OF_CONSTITUENTS),
 
     _t("constituent_top_weights",
@@ -367,7 +388,7 @@ TEMPLATES = {t.id: t for t in [
           FROM a JOIN b USING (etf_isin)
           JOIN kr_etp e ON e.pd_itm_no = etf_isin
           WHERE e.drv_instrument_type = 'ETF' AND e.drv_listing_status = 'active'
-            AND TRY_CAST(e.cu_charge_rt AS DOUBLE) IS NOT NULL
+            AND TRY_CAST(e.cu_charge_rt AS DOUBLE) > 0          -- 0 표기(의미 미확정·미수집 추정)는 순위에서 제외(8/19)
           ORDER BY TRY_CAST(e.cu_charge_rt AS DOUBLE),
                    TRY_CAST(e.pd_net_tamt AS DOUBLE) DESC NULLS LAST, e.pd_itm_no
           LIMIT $limit""",
@@ -429,15 +450,163 @@ TEMPLATES = {t.id: t for t in [
         Param("limit", required=True)],
        source="KRX-PDF", key_col="etf_isin", as_of=AS_OF_CONSTITUENTS),
 
+    # ---------------- 8/19 ⑧ 신규 — 상품명 우선·그룹(계열사)·운용사×테마·펀드 상세 ----------------
+    _t("etp_pattern_top_constituents",
+       "상품명 패턴에 맞는 국내 ETP(상장중) 중 순자산 상위 $top_etfs 개의 구성종목 상위 $per_etf 개. "
+       "운용사($mgmt — 오염 복구값 또는 원시값)로 좁힐 수 있다. 구성 공시가 빈 상품은 행이 없다 → "
+       "'구성 공시 없음'을 답변에 명시할 것. 대상: M-19(애플밸류체인), H-08(미래에셋×중국), "
+       "H-10(한화그룹주 계열사별 비중), H-20(위클리커버드콜 보유 종목).",
+       """WITH t AS (
+              SELECT e.pd_itm_no, e.pd_abrv_nm, TRY_CAST(e.pd_net_tamt AS DOUBLE) AS aum
+              FROM kr_etp e LEFT JOIN mgmt_resolved m ON e.pd_itm_no = m.pd_itm_no
+              WHERE (e.pd_nm ILIKE $pattern ESCAPE '\\' OR e.pd_abrv_nm ILIKE $pattern ESCAPE '\\')
+                AND e.drv_listing_status = 'active'
+                AND ($mgmt IS NULL OR m.resolved = $mgmt OR e.cu_fund_mgmt_co = $mgmt)
+              ORDER BY aum DESC NULLS LAST, e.pd_itm_no LIMIT $top_etfs
+          ), c AS (
+              SELECT t.pd_itm_no, t.pd_abrv_nm, t.aum, x.COMPST_ISU_NM, x.COMPST_ISU_CD, x.SECUGRP_ID,
+                     TRY_CAST(replace(x.COMPST_RTO, ',', '') AS DOUBLE) AS weight_pct,
+                     -- 정렬 키에 NULL 을 남기지 않는다(coalesce): 비중이 전부 비어 있는 ETF(차이나전기차 등)에서
+                     -- DuckDB 1.5 의 row_number()<=N 최적화가 행을 전부 버리는 현상을 8/19 실측 — 회피책
+                     row_number() OVER (PARTITION BY t.pd_itm_no
+                                        ORDER BY coalesce(TRY_CAST(replace(x.COMPST_RTO, ',', '') AS DOUBLE), -1) DESC,
+                                                 x.COMPST_ISU_NM) AS rn
+              FROM t JOIN etf_constituent x ON x.etf_isin = t.pd_itm_no
+          )
+          SELECT pd_itm_no, pd_abrv_nm AS etf_name, COMPST_ISU_NM, COMPST_ISU_CD, SECUGRP_ID, weight_pct
+          FROM c WHERE rn <= $per_etf
+          ORDER BY aum DESC NULLS LAST, pd_itm_no, rn""",
+       [Param("pattern", required=True), Param("mgmt"),
+        Param("top_etfs", required=True), Param("per_etf", required=True)],
+       source="KRX-PDF·PREF01N001", key_col="pd_itm_no", as_of=AS_OF_CONSTITUENTS),
+
+    _t("constituent_group_holders",
+       "회사명이 $prefix 로 시작하는 국내 상장 종목(그룹 계열사 후보)별 편입 ETF 수와 최대 비중 ETF. "
+       "법적 계열 관계 데이터는 없으므로 '회사명 접두 기준 후보'임을 답변에 명시할 것. "
+       "대상: M-14(한화그룹 계열사), H-23(SK 계열사별 정리).",
+       """WITH w AS (
+              SELECT c.COMPST_ISU_NM, c.COMPST_ISU_CD, c.etf_isin, c.etf_name,
+                     TRY_CAST(replace(c.COMPST_RTO, ',', '') AS DOUBLE) AS weight_pct
+              FROM etf_constituent c
+              WHERE c.SECUGRP_ID IS NOT NULL AND c.COMPST_ISU_NM ILIKE $prefix ESCAPE '\\'
+          ), agg AS (
+              SELECT COMPST_ISU_NM, COMPST_ISU_CD, count(DISTINCT etf_isin) AS n_etfs,
+                     max(weight_pct) AS max_weight_pct
+              FROM w GROUP BY 1, 2
+          )
+          SELECT agg.COMPST_ISU_NM, agg.COMPST_ISU_CD, agg.n_etfs, agg.max_weight_pct,
+                 (SELECT w2.etf_name FROM w w2 WHERE w2.COMPST_ISU_CD = agg.COMPST_ISU_CD
+                   ORDER BY coalesce(w2.weight_pct, -1) DESC, w2.etf_isin LIMIT 1) AS top_etf
+          FROM agg ORDER BY n_etfs DESC, COMPST_ISU_NM LIMIT $limit""",
+       [Param("prefix", required=True), Param("limit", required=True)],
+       source="KRX-PDF", key_col="COMPST_ISU_CD", as_of=AS_OF_CONSTITUENTS),
+
+    _t("fund_detail",
+       "공모펀드 1종 상세(마스터 단위) — 키(itm_no)로 조회: 운용속성·위험등급·수익률·순자산·판매상태·"
+       "벤치마크·투자지역·판매 클래스 수. 대상: M-10(국민성장펀드 — 비정형 서술은 없지만 마스터 필드는 답한다).",
+       """SELECT itm_no, itm_nm, itm_abrv_nm, or_attr_desc, drv_risk_grade, zrin_fd_ivst_risk_grd_nm,
+                 fd_yr1_ern_r, fd_mm3_ern_r, fd_nast_suma, sale_yn, thco_sale_yn, bmrk_nm,
+                 fd_ivst_rgn_desc, share_class_count
+          FROM fund_master WHERE itm_no = $itm_no""",
+       [Param("itm_no", required=True)], source="PRFD01N001", key_col="itm_no"),
+
+    _t("constituent_ksq_share",
+       "상품명 패턴 ETF별 코스닥(MKT_ID=KSQ) 종목 비중 합계·종목 수 — 비중 높은 순. "
+       "대상: H-22(바이오 ETF 중 코스닥 비중 높은 상품).",
+       """WITH t AS (
+              SELECT etf_isin, etf_name,
+                     sum(CASE WHEN MKT_ID = 'KSQ' THEN TRY_CAST(replace(COMPST_RTO, ',', '') AS DOUBLE) ELSE 0 END) AS ksq_weight_pct,
+                     sum(TRY_CAST(replace(COMPST_RTO, ',', '') AS DOUBLE)) AS total_weight_pct,
+                     count(CASE WHEN MKT_ID = 'KSQ' THEN 1 END) AS n_ksq_stocks
+              FROM etf_constituent
+              WHERE etf_name ILIKE $pattern ESCAPE '\\'
+              GROUP BY 1, 2
+          )
+          SELECT t.etf_isin, coalesce(e.pd_abrv_nm, t.etf_name) AS pd_abrv_nm, t.ksq_weight_pct,
+                 t.total_weight_pct, t.n_ksq_stocks, e.pd_net_tamt
+          FROM t LEFT JOIN kr_etp e ON e.pd_itm_no = t.etf_isin
+          WHERE e.drv_listing_status IS NULL OR e.drv_listing_status = 'active'
+          ORDER BY t.ksq_weight_pct DESC, t.etf_isin LIMIT $limit""",
+       [Param("pattern", required=True), Param("limit", required=True)],
+       source="KRX-PDF·PREF01N001", key_col="etf_isin", as_of=AS_OF_CONSTITUENTS),
+
+    _t("etp_top_return_common_holdings",
+       "수익률(metric: ytd/1y) 상위 $top_n 개 국내 ETF 가 공통으로 담은 종목 — 종목별 보유 ETF 수(상위 N 중)·"
+       "평균 비중·보유 ETF 명. 2개 이상이 담은 종목만, 많이 겹치는 순. 대상: H-09.",
+       """WITH top AS (
+              SELECT pd_itm_no, pd_abrv_nm FROM kr_etp
+              WHERE drv_instrument_type = 'ETF' AND drv_listing_status = 'active'
+              ORDER BY CASE WHEN $metric = 'ytd' THEN TRY_CAST(du_er_ytd AS DOUBLE)
+                            ELSE TRY_CAST(du_er_1y AS DOUBLE) END DESC NULLS LAST, pd_itm_no
+              LIMIT $top_n
+          ), held AS (
+              SELECT c.COMPST_ISU_NM, c.COMPST_ISU_CD, t.pd_abrv_nm,
+                     TRY_CAST(replace(c.COMPST_RTO, ',', '') AS DOUBLE) AS weight_pct
+              FROM top t JOIN etf_constituent c ON c.etf_isin = t.pd_itm_no
+              WHERE (c.SECUGRP_ID IS NOT NULL OR regexp_matches(c.COMPST_ISU_CD, '^[A-Z]{2}[A-Z0-9]{9}[0-9]$'))
+                AND NOT starts_with(c.COMPST_ISU_CD, 'CASH')
+                AND NOT regexp_matches(c.COMPST_ISU_CD, '^KR[DZY]')
+                AND NOT regexp_matches(coalesce(c.COMPST_ISU_NM, ''), '현금|예금|설정현금액')   -- 현금성은 종목이 아니다
+          )
+          SELECT COMPST_ISU_NM, COMPST_ISU_CD, count(DISTINCT pd_abrv_nm) AS n_etfs_holding,
+                 round(avg(weight_pct), 2) AS avg_weight_pct,
+                 string_agg(DISTINCT pd_abrv_nm, ' / ' ORDER BY pd_abrv_nm) AS held_by
+          FROM held GROUP BY 1, 2
+          HAVING count(DISTINCT pd_abrv_nm) >= 2
+          ORDER BY n_etfs_holding DESC, avg_weight_pct DESC NULLS LAST, COMPST_ISU_NM LIMIT $limit""",
+       [Param("metric", required=True, enum=("ytd", "1y")), Param("top_n", required=True),
+        Param("limit", required=True)],
+       source="PREF01N001·KRX-PDF", key_col="COMPST_ISU_CD", as_of=AS_OF_CONSTITUENTS),
+
+    _t("etp_target_maturity_within",
+       "만기형(존속기한) 채권 ETF — 상품명의 'YY-MM' 표기(예: 'KODEX 25-11 은행채(AA-이상)액티브')를 만기 연월로 "
+       "읽어 $date_from ~ $date_to 사이에 만기가 오는 상장중 ETF 를 만기 순으로. 상품명 표기 규칙에 기댄 파싱임을 "
+       "답변에 명시할 것. 대상: H-12.",
+       """WITH parsed AS (
+              SELECT pd_itm_no, pd_abrv_nm, pd_nm, drv_risk_grade, pd_net_tamt,
+                     regexp_extract(coalesce(pd_abrv_nm, pd_nm), '(\\d{2})-(\\d{2})', 1) AS yy,
+                     regexp_extract(coalesce(pd_abrv_nm, pd_nm), '(\\d{2})-(\\d{2})', 2) AS mm
+              FROM kr_etp
+              WHERE drv_instrument_type = 'ETF' AND drv_listing_status = 'active'
+                AND regexp_matches(coalesce(pd_abrv_nm, pd_nm), '\\d{2}-\\d{2}')
+                AND (pd_nm ILIKE '%채%' OR pd_abrv_nm ILIKE '%채%')
+          ), dated AS (
+              SELECT *, ('20' || yy || '-' || mm || '-01')::DATE AS maturity_month
+              FROM parsed WHERE yy <> '' AND mm BETWEEN '01' AND '12'
+          )
+          SELECT pd_itm_no, pd_abrv_nm, strftime(maturity_month, '%Y-%m') AS maturity_yyyymm,
+                 drv_risk_grade, pd_net_tamt
+          FROM dated
+          WHERE maturity_month >= TRY_CAST($date_from AS DATE)::DATE
+            AND maturity_month <= TRY_CAST($date_to AS DATE)::DATE
+          ORDER BY maturity_month, pd_itm_no LIMIT $limit""",
+       [Param("date_from", required=True), Param("date_to", required=True), Param("limit", required=True)],
+       source="PREF01N001", key_col="pd_itm_no"),
+
+    _t("reit_constituents",
+       "ETF 구성종목에 등장하는 개별 상장 리츠(SECUGRP_ID=RT) 목록 — 편입 ETF 수 많은 순. "
+       "대상: H-07(리츠 ETF vs 개별 상장 리츠).",
+       """SELECT COMPST_ISU_NM, COMPST_ISU_CD, count(DISTINCT etf_isin) AS n_etfs
+          FROM etf_constituent WHERE SECUGRP_ID = 'RT'
+          GROUP BY 1, 2 ORDER BY n_etfs DESC, COMPST_ISU_NM LIMIT $limit""",
+       [Param("limit", required=True)], source="KRX-PDF", key_col="COMPST_ISU_CD",
+       as_of=AS_OF_CONSTITUENTS),
+
     _t("mgmt_top_share",
-       "운용사별 국내 ETF 수·순자산 합계 상위 — 오염 복구값(mgmt_resolved) 기준. "
+       "운용사별 국내 ETF 수·순자산 합계·점유율(%) 상위 — 오염 복구값(mgmt_resolved) 기준. "
+       "점유율은 상장중 ETF 순자산 합계 대비이며 템플릿이 미리 계산한다(생성기가 계산하면 사후 대조에 걸림). "
        "대상: M-09, H-29.",
-       """SELECT m.resolved AS mgmt_co, count(*) AS n_etf,
-                 sum(TRY_CAST(e.pd_net_tamt AS DOUBLE)) AS total_aum
-          FROM kr_etp e JOIN mgmt_resolved m ON e.pd_itm_no = m.pd_itm_no
-          WHERE e.drv_instrument_type = 'ETF' AND e.drv_listing_status = 'active'
-            AND m.resolved IS NOT NULL
-          GROUP BY 1 ORDER BY total_aum DESC NULLS LAST LIMIT $limit""",
+       """WITH by_mgmt AS (
+              SELECT m.resolved AS mgmt_co, count(*) AS n_etf,
+                     sum(TRY_CAST(e.pd_net_tamt AS DOUBLE)) AS total_aum
+              FROM kr_etp e JOIN mgmt_resolved m ON e.pd_itm_no = m.pd_itm_no
+              WHERE e.drv_instrument_type = 'ETF' AND e.drv_listing_status = 'active'
+                AND m.resolved IS NOT NULL
+              GROUP BY 1
+          )
+          SELECT mgmt_co, n_etf, total_aum,
+                 round(total_aum / sum(total_aum) OVER () * 100, 1) AS share_pct
+          FROM by_mgmt ORDER BY total_aum DESC NULLS LAST LIMIT $limit""",
        [Param("limit", required=True)], source="PREF01N001(복구)"),
 
     # ---------------- 커버리지 (Validation 게이트 ⑤ 의 분모) ----------------
@@ -504,6 +673,42 @@ def validate_params(template_id, params=None):
     return t, params
 
 
+# 원화 금액 열 — 사람이 읽는 환산 표기(억원·조원)를 같은 행에 붙인다(8/19).
+# 생성기(HCX)가 원 단위 큰 수를 스스로 환산하다 단위를 틀리는 일(346,687,108,988원 → "약 346조",
+# M-03 실측)을 막는다: 환산값을 근거에 넣어 두면 그대로 옮겨 쓰고, 사후 대조도 그 숫자를 허용한다.
+KRW_AMOUNT_COLS = ("pd_net_tamt", "du_last_aum", "total_aum", "fd_nast_suma")
+
+
+def krw_readable(value):
+    """원 단위 숫자 → '28.4조원' / '3,467억원' / '1,235만원' / '900원'. 숫자가 아니면 None."""
+    try:
+        v = float(str(value).replace(",", ""))
+    except (TypeError, ValueError):
+        return None
+    if v != v:                                            # NaN
+        return None
+    if abs(v) >= 1e12:
+        return f"{v / 1e12:,.1f}조원"
+    if abs(v) >= 1e8:
+        return f"{v / 1e8:,.0f}억원"
+    if abs(v) >= 1e4:
+        return f"{v / 1e4:,.0f}만원"
+    return f"{v:,.0f}원"
+
+
+def _attach_readable_amounts(rows, template):
+    """원화 금액 열에 환산 표기 첨부 — 해외ETF(PREF02N001) 결과는 통화(USD 등)가 원이 아니므로 붙이지 않는다."""
+    if (template.source or "").startswith("PREF02N001"):
+        return rows
+    for row in rows:
+        for col in KRW_AMOUNT_COLS:
+            if col in row and row.get(col) is not None:
+                readable = krw_readable(row[col])
+                if readable is not None:
+                    row[col + "_krw"] = readable
+    return rows
+
+
 def run_template(con, template_id, params=None):
     """템플릿 실행 — validate_params 검증 후 실행. 결과 행 + Evidence 목록."""
     t, params = validate_params(template_id, params)
@@ -513,7 +718,7 @@ def run_template(con, template_id, params=None):
     else:
         cur = con.execute(t.sql, params)
         cols = [d[0] for d in cur.description]
-        rows = [dict(zip(cols, r)) for r in cur.fetchall()]
+        rows = _attach_readable_amounts([dict(zip(cols, r)) for r in cur.fetchall()], t)
 
     evidences = []
     for row in rows[:MAX_EVIDENCE_ROWS]:

@@ -14,9 +14,13 @@ import time
 
 
 class Deadline:
-    """요청 1건의 시간 예산. cutoff 값들은 '요청 시작 후 경과 초' 기준."""
+    """요청 1건의 시간 예산. cutoff 값들은 '요청 시작 후 경과 초' 기준.
 
-    def __init__(self, total=15.0, vector_cutoff=6.0, generation_cutoff=8.0):
+    8/19 조정: 생성 진입 한계 8초 → 7초. 서버의 HCX 호출 상한이 계획 6초·생성 8초라
+    최악(계획 6초 소진 → 생성 8초)에도 14초 안에 끝난다(첫 성적표 최대 15.83초 사례 방지).
+    """
+
+    def __init__(self, total=15.0, vector_cutoff=6.0, generation_cutoff=7.0):
         self.t0 = time.monotonic()
         self.total = total
         self.vector_cutoff = vector_cutoff

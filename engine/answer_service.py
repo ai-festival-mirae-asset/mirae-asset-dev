@@ -12,6 +12,7 @@
 구조 주의: 테스트가 순수 함수를 import 한다 — import 부작용 금지.
 """
 import os
+import re
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))            # engine/
@@ -40,15 +41,18 @@ def _fmt_value(v):
 
 
 def _fmt_row(row, max_fields=4):
-    """행 1개 → '이름 (필드=값 · …)' — 테이블 무관 요약."""
+    """행 1개 → '이름 (필드=값 · …)' — 테이블 무관 요약. 비중·수익률 열(*_pct)은 % 를 붙인다."""
     name = next((str(row[c]) for c in _NAME_COLS if row.get(c)), None)
     parts = []
     for k, v in row.items():
         if k in _SKIP_COLS or v is None or (name is not None and str(v) == name):
             continue
+        if (str(k) + "_krw") in row:                      # 원 단위 원값 대신 환산 표기(…억원)만 보여 준다
+            continue
         if isinstance(v, list):
             v = " / ".join(str(x) for x in v[:5]) + (" 외" if len(v) > 5 else "")
-        parts.append(f"{k}={_fmt_value(v)}")
+        unit = "%" if str(k).endswith("_pct") and isinstance(v, (int, float)) else ""
+        parts.append(f"{k}={_fmt_value(v)}{unit}")
         if len(parts) >= max_fields:
             break
     body = " · ".join(parts)
@@ -112,11 +116,20 @@ def _draft_rating_compare(plan):
             f"(근거: 신용등급 서열 사전 — 신용평가 3사 공식 등급체계)")
 
 
+# 구성종목 조회 템플릿 — 0건이면 "조건 불일치"가 아니라 "구성 공시 없음(빈 응답·미수집)"이 맞는 표현
+_CONSTITUENT_OPS = {"etp_pattern_top_constituents", "constituent_top_weights"}
+
+
 def _draft_answer(plan, result):
     """규칙 기반 요약 답변 — 생성기가 없거나 실패했을 때의 폴백(항상 동작)."""
     if plan.intent == "unstructured_info":
         lines = ["요청하신 상품의 구조·투자전략·동향을 설명할 비정형 자료는 "
                  "현재 보유 데이터에서 확인할 수 없습니다."]
+        # 마스터에 있는 사실(운용속성·위험등급·수익률·순자산·판매상태·벤치마크)은 답한다 (M-10)
+        for o in result.outcomes:
+            if o.ok and o.channel == "sql" and o.op == "fund_detail" and o.rows:
+                lines.append("확인된 상품의 마스터 정보:")
+                lines += [f"  - {_fmt_row(r, max_fields=8)}" for r in o.rows[:3]]
         if plan.notes:
             lines.append("")
             lines += [f"※ {n}" for n in plan.notes]
@@ -128,7 +141,10 @@ def _draft_answer(plan, result):
         if not o.ok:
             continue
         if not o.rows:
-            if o.channel == "sql":
+            if o.channel == "sql" and o.op in _CONSTITUENT_OPS:
+                lines.append(f"[{o.op}] 구성 공시 없음 — 해당 상품의 {AS_OF_CONSTITUENTS} KRX 구성종목 공시가 "
+                             "비어 있거나 미수집이라 구성종목을 확인할 수 없습니다")
+            elif o.channel == "sql":
                 lines.append(f"[{o.op}] 조건 일치 결과 0건")
             continue
         rows = o.rows
@@ -170,6 +186,78 @@ def _draft_answer(plan, result):
         lines += [f"※ {n}" for n in plan.notes]
     lines.append(f"(데이터 기준일: 마스터 {AS_OF_MASTER} · 구성종목 {AS_OF_CONSTITUENTS})")
     return "\n".join(lines)
+
+
+# 분포형 템플릿 — (첫 열 이름, 우리말 라벨). 한 갈래뿐이면 "전부 X — 다른 것 없음"을 명시한다 (L-20/L-30)
+_DIST_OPS = {"global_ccy_dist": ("pd_trd_ccy", "거래통화"), "etp_currency_dist": ("drv_curr_cd", "거래통화"),
+             "bond_currency_dist": ("CURR_CD", "통화"), "bond_class_dist": ("STD_PD_MCLS_NM", "대분류")}
+
+
+def dist_sentence(op, rows):
+    """분포 결과 → 결론 문장. 순수 함수(테스트 대상)."""
+    col, label = _DIST_OPS[op]
+    buckets = [(str(r.get(col)), int(r.get("n") or 0)) for r in rows if r.get(col) is not None]
+    total = sum(n for _v, n in buckets)
+    if not buckets or total == 0:
+        return None
+    if len(buckets) == 1:
+        return f"{label}: 전부 {buckets[0][0]}({total:,}건) — 다른 {label} 없음"
+    parts = ", ".join(f"{v} {n:,}건({n / total * 100:.1f}%)" for v, n in buckets[:5])
+    more = f" 외 {len(buckets) - 5}종" if len(buckets) > 5 else ""
+    return f"{label} 분포: {parts}{more} — 총 {total:,}건, 이 밖의 {label} 없음"
+
+
+# 건수 템플릿 — 숫자 한 개짜리 결과는 생성기가 "정보 없음"으로 오독하기 쉬워(L-05 실측) 문장으로 승격한다
+_COUNT_OPS = {"bond_count", "etp_count", "global_etf_count", "fund_counts"}
+_COUNT_LABELS = {"n": "건수", "products": "상품(마스터) 수", "share_classes": "판매 클래스 수"}
+# 구성종목에 선물·옵션이 보이면 파생 위험을 데이터 사실로 명시한다 (H-21·M-20)
+_DERIV_SECUGRP = {"FU": "선물", "OP": "옵션"}
+
+
+def count_sentence(op, rows):
+    """건수 결과 → '조건 일치 건수: N건' 문장(열이 여럿이면 라벨별로). 순수 함수."""
+    if not rows:
+        return None
+    parts = []
+    for row in rows[:6]:
+        label_cols = [k for k, v in row.items() if isinstance(v, str)]
+        prefix = " ".join(str(row[k]) for k in label_cols[:2])
+        nums = [f"{_COUNT_LABELS.get(k, k)} {int(v):,}건" for k, v in row.items()
+                if isinstance(v, (int, float)) and not isinstance(v, bool)]
+        if nums:
+            parts.append((prefix + ": " if prefix else "") + " · ".join(nums))
+    if not parts:
+        return None
+    return "조건 일치 건수 — " + " / ".join(parts)
+
+
+def data_notes(question, plan, result):
+    """조회 결과에서 도출한 사실 노트 목록 — 분포 결론·건수·요청 필드 결측·파생 구성 명시."""
+    notes = []
+    for o in result.outcomes:
+        if not o.ok or o.channel != "sql":
+            continue
+        if o.op in _DIST_OPS:
+            s = dist_sentence(o.op, o.rows)
+            if s:
+                notes.append(s)
+        if o.op in _COUNT_OPS:
+            s = count_sentence(o.op, o.rows)
+            if s:
+                notes.append(s)
+        if o.op in _CONSTITUENT_OPS and o.rows:
+            kinds = {_DERIV_SECUGRP[r.get("SECUGRP_ID")] for r in o.rows if r.get("SECUGRP_ID") in _DERIV_SECUGRP}
+            if kinds:
+                notes.append(f"구성종목에 {'·'.join(sorted(kinds))}(파생상품)이 포함됨 — 레버리지·인버스형은 지수 선물로 "
+                             "배수를 만들므로 기초지수 변동의 배수로 손익이 움직이는 파생 위험이 있음(위험등급은 상품 행 참조)")
+        if o.op == "etp_detail" and o.rows and re.search(r"지수|추종|벤치마크|따라가", question):
+            idx = o.rows[0].get("cu_base_index")
+            if idx:
+                notes.append(f"기초지수(cu_base_index): {idx}")
+            else:
+                notes.append("기초지수 값이 이 상품 행에 없음(cu_base_index 결측) — 국내ETF 마스터의 기초지수 컬럼은 "
+                             "전체의 0.18%만 채워져 있어 추종 지수는 제공 데이터로 확인할 수 없음")
+    return notes
 
 
 def _ensure_notes(text, plan):
@@ -241,6 +329,19 @@ def answer_question(question, ctx, question_id="", today=None,
                                  f"({row['coverage_pct']}%) 기준")
                 if coverage_note not in plan.notes:
                     plan.notes.append(coverage_note)
+    # 조회 결과에서만 알 수 있는 사실도 노트로 승격한다(8/19 ⑧): 분포 답변의 "전부/없음" 결론,
+    # 상세 답변에서 물어본 필드(기초지수)가 결측인 사실 — 생성기가 흐리게 쓰거나 빼먹기 쉬운 것들.
+    for note in data_notes(question, plan, result):
+        if note not in plan.notes:
+            plan.notes.append(note)
+    # HCX 라우터(Stage B)가 세운 계획이 0건이면 "없다"가 아니라 "이 조건 해석으로는 못 찾음"이다 —
+    # 계획의 파라미터가 질문과 어긋났을 수 있어(M-08·H-26 유형) 단정을 막는 노트를 강제한다(8/19).
+    if plan.stage in ("llm", "llm_repair") and verdict.behavior != "refuse" \
+            and not any(o.ok and o.rows for o in result.outcomes):
+        zero_note = ("조회 계획(HCX 라우터)이 세운 조건으로는 일치하는 항목을 찾지 못함 — 질문 조건의 해석이 "
+                     "다를 수 있어 '해당 상품이 없다'고 단정하지 않음(조건을 바꿔 다시 물으면 확인 가능)")
+        if zero_note not in plan.notes:
+            plan.notes.append(zero_note)
 
     evidences = list(result.evidences) + list(verdict.evidences)
     gen_note = ""
@@ -271,8 +372,17 @@ def answer_question(question, ctx, question_id="", today=None,
                     extra_allowed=" ".join(plan.notes))
                 if checked is not None:
                     answer = _ensure_notes(checked, plan)
-                    gen_note = ("HCX-005 생성 · 사후 대조 통과" if not removed else
-                                f"HCX-005 생성 · 사후 대조로 {len(removed)}줄 제거")
+                    fixes = [r for _s, r in removed if r.startswith("표기 정정")]
+                    dropped = [(s, r) for s, r in removed if not r.startswith("표기 정정")]
+                    parts = ["HCX-005 생성"]
+                    if fixes:                            # 이름 오기를 근거 표기로 되돌린 기록(8/19)
+                        parts.append(f"이름 {len(fixes)}건 정정({'; '.join(fixes[:2])})")
+                    if not dropped:
+                        parts.append("사후 대조 통과")
+                    else:                                # 무엇을 왜 지웠는지 남긴다(과잉 삭제 진단용, 8/19)
+                        why = "; ".join(f"'{s[:28]}…'({r})" for s, r in dropped[:3])
+                        parts.append(f"사후 대조로 {len(dropped)}줄 제거: {why}")
+                    gen_note = " · ".join(parts)
                 else:
                     gen_note = "생성 답변 전체가 근거 대조 실패 — 규칙 요약으로 강등"
             else:

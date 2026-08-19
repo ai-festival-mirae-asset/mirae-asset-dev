@@ -180,3 +180,147 @@ def test_live_generation_l01(ctx):
     assert not out["answer"].startswith("요청하신 내용은")
     assert "AA" in out["answer"] and "기준일" in out["answer"]
     assert "HCX-005 생성" in out["think_trace"] or "폴백" in out["think_trace"]
+
+
+# ---------------------------------------------------------------------------
+# 5. ⑧-3 (8/19) — 사후 대조가 맞는 줄까지 지우던 사례 · HCX 라우터 파라미터 의미 검증
+# ---------------------------------------------------------------------------
+
+def test_post_check_allows_unit_scaled_amounts_and_rank_words():
+    """큰 금액의 조·억 환산('약 28.4조원')과 순위 표기('1위')는 근거 밖 숫자가 아니다(L-04·M-02·H-29 유형)."""
+    evidences = [_ev(pd_abrv_nm="KODEX 200", pd_net_tamt="28359162282520.0"),
+                 Evidence(source="PREF01N001", source_id="KR7102110004", channel="sql", as_of="2026-07-11",
+                          fields={"pd_abrv_nm": "TIGER 200", "pd_net_tamt": "11278564148232.0"})]
+    text = ("1위 KODEX 200 — 순자산 약 28.4조원 [근거1]\n"
+            "2위 TIGER 200 — 순자산 약 11.3조원 [근거2]\n"
+            "3위 지어낸ETF — 순자산 약 9.9조원")
+    clean, removed = post_check_answer(text, evidences, "순자산 상위 알려줘")
+    assert "28.4조" in clean and "11.3조" in clean
+    assert len(removed) == 1 and "9.9조" in removed[0][1]
+    # 억 단위·정수 반올림도 같은 규칙 — 28조 3,591억 (283591 억)
+    clean2, removed2 = post_check_answer("KODEX 200 순자산은 283,592억원입니다.", evidences, "질문")
+    assert clean2 and not removed2
+    # 단위가 붙어도 값이 다르면 여전히 지운다
+    clean3, removed3 = post_check_answer("KODEX 200 순자산은 30.1조원입니다.", evidences, "질문")
+    assert clean3 is None and removed3
+
+
+@needs_db
+def test_post_check_keeps_name_variants_of_evidence_products(con, index):
+    """근거에는 약칭(KODEX 200TR)만 있고 답변이 정식 명칭(…Total Return…)을 써도 같은 상품(키 일치)이면 남긴다."""
+    key, full_name = con.execute(
+        "SELECT pd_itm_no, pd_nm FROM kr_etp WHERE pd_abrv_nm = 'KODEX 200TR' LIMIT 1").fetchone()
+    ev = Evidence(source="PREF01N001", source_id=key, channel="sql", as_of="2026-07-11",
+                  fields={"pd_abrv_nm": "KODEX 200TR", "pd_itm_no": key})
+    # 상품 키가 근거 안에 있으므로 정식 명칭 표기도 허용된다
+    text = f"{full_name}이 해당합니다."
+    clean, removed = post_check_answer(text, [ev], "질문", index=index)
+    assert clean == text and not removed
+    # 근거에 전혀 없는 실존 상품명은 여전히 지운다
+    text2 = "TIGER 반도체TOP10 도 해당합니다."
+    clean2, removed2 = post_check_answer(text2, [ev], "질문", index=index)
+    assert clean2 is None and "근거 밖 이름" in removed2[0][1]
+
+
+def test_generation_prompt_has_three_part_format_and_low_temperature():
+    from engine.generator import GENERATION_SEED, GENERATION_TEMPERATURE
+    plan = RoutePlan(intent="x", notes=["노트1"])
+    result = ExecutionResult([ChannelOutcome("sql", "etp_top_aum", rows=[])])
+    msgs = build_generation_messages("질문", plan, result, type("V", (), {"evidences": []})())
+    system = msgs[0]["content"]
+    assert "3단" in system and "결론" in system and "근거·기준일" in system
+    assert "환산 표기" in system and "0건이면" in system      # 금액은 근거의 환산 표기(…억원)를 옮겨 쓴다
+    from engine.sql_templates import krw_readable
+    assert krw_readable("28359162282520.0") == "28.4조원" and krw_readable(346687108988) == "3,467억원"
+    assert krw_readable("12345678") == "1,235만원" and krw_readable("abc") is None
+    assert GENERATION_TEMPERATURE <= 0.3 and GENERATION_SEED > 0
+
+
+def test_llm_router_param_coercion_and_rejection():
+    """HCX 라우터 플랜: 이름→키 변환, 숫자 자리의 글자 거부, 범위 밖 거부, 날짜 형식 검사."""
+    from engine.router_llm import coerce_graph_query, coerce_llm_params
+    from pipeline.entity_index import EntityRef
+    partial = RoutePlan(intent="unresolved", entities=[
+        ("삼성전자", [EntityRef("constituent", "005930", "삼성전자", "KRX-PDF")]),
+        ("tiger200", [EntityRef("product_kr_etp", "KR7102110004", "TIGER 200", "PREF01N001")]),
+    ])
+    fixed = coerce_llm_params("constituent_holders", {"code": "삼성전자", "limit": "10"}, partial)
+    assert fixed == {"code": "005930", "limit": 10}
+    fixed2 = coerce_llm_params("etp_detail", {"pd_itm_no": "TIGER 200"}, partial)
+    assert fixed2 == {"pd_itm_no": "KR7102110004"}
+    with pytest.raises(ValueError, match="grounded"):
+        coerce_llm_params("constituent_holders", {"code": "없는 종목 이름", "limit": 5}, partial)
+    with pytest.raises(ValueError, match="숫자"):
+        coerce_llm_params("bond_maturing_within", {"as_of_date": "2026-08-19", "until": "2029-08-19",
+                                                   "min_coupon": "만기 3년 이하", "limit": 20}, partial)
+    with pytest.raises(ValueError, match="범위"):
+        coerce_llm_params("etp_filter_risk", {"instrument_type": "ETF", "min_grade": 0, "max_grade": 9,
+                                              "limit": 20}, partial)
+    with pytest.raises(ValueError, match="YYYY-MM-DD"):
+        coerce_llm_params("bond_maturing_within", {"as_of_date": "지금", "until": "2029-08-19", "limit": 5}, partial)
+    assert coerce_graph_query("holding_etfs", "삼성전자", partial) == "005930"
+    assert coerce_graph_query("holding_etfs", "US0378331005", partial) == "US0378331005"
+    assert coerce_graph_query("product_info", "TIGER 200", partial) == "TIGER 200"
+    with pytest.raises(ValueError):
+        coerce_graph_query("holding_etfs", "모르는 회사", partial)
+
+
+def test_llm_zero_row_plan_gets_non_assertive_note(ctx):
+    """HCX 라우터 계획이 0건이면 '없다' 단정 대신 해석 차이 가능성 노트가 강제된다."""
+    plan = RoutePlan(intent="llm_plan", stage="llm")
+    plan.calls.append(__import__("engine.router", fromlist=["ChannelCall"]).ChannelCall(
+        "sql", "etp_name_search", {"pattern_raw": "존재하지않는이름", "limit": 5}))
+    def fake_router(question, partial):
+        return plan
+    q = "표면금리와 순자산을 곱한 값이 가장 큰 상품은?"     # 규칙이 못 정하는 질문 → Stage B(가짜 라우터)
+    out = answer_question(q, ctx, today=TODAY, llm_router=fake_router)
+    assert "stage=llm" in out["think_trace"]
+    assert "단정하지 않음" in out["answer"]
+
+
+def test_wall_clock_guard_cuts_stalled_calls():
+    """8/19 실측(HCX 호출 1건 368초 정지 — DNS 조회 멈춤): httpx timeout 밖의 멈춤도 timeout+2초 안에 끊는다."""
+    import time
+    import httpx
+    from agent import net_guard
+    from agent.clova_client import ClovaChatClient
+    from agent.net_guard import WallClockTimeout, call_with_wall_clock
+
+    def sleepy():
+        time.sleep(30)
+        return "늦은 응답"
+    t0 = time.monotonic()
+    with pytest.raises(WallClockTimeout):
+        call_with_wall_clock(sleepy, 0.5)
+    assert time.monotonic() - t0 < 5                       # 0.5 + 2초 근처에서 끊긴다(30초를 기다리지 않음)
+
+    # 클라이언트 경유: 멈추는 transport 로도 chat() 이 timeout+2초 안에 예외로 끝나고 감사 로그에 남는다
+    def stalled_handler(request):
+        time.sleep(30)
+        return httpx.Response(200, json={"status": {"code": "20000"}, "result": {"message": {"content": "x"}}})
+    client = ClovaChatClient("HCX-005", api_key="test-key", transport=httpx.MockTransport(stalled_handler),
+                             timeout=0.5, audit_path=os.path.join(os.path.dirname(__file__), "..", "storage",
+                                                                    "output", "_test_audit.jsonl"))
+    t1 = time.monotonic()
+    with pytest.raises(Exception):
+        client.chat([{"role": "user", "content": "안녕"}])
+    assert time.monotonic() - t1 < 6
+    assert net_guard.WALL_MARGIN_SEC == 2.0
+
+
+def test_autocorrect_single_char_name_typos():
+    """생성기의 이름 한 글자 오기('퀀타매트릭스'→'퀸타매트릭스', L-06 실측)는 지우지 않고 근거 표기로 되돌린다."""
+    from engine.generator import autocorrect_names
+    ev = Evidence(source="PRBD01N001", source_id="KR6317691FC9", channel="sql", as_of="2026-07-11",
+                  fields={"PD_NM": "퀀타매트릭스 3CB(신종)(사모/전환/콜/후)", "PD_ABRV_NM": "퀀타매트릭스3CB(신종)"})
+    text = "2. 퀸타매트릭스 3CB(신종)(사모/전환/콜/후) — 영구채입니다."
+    fixed, corrections = autocorrect_names(text, [ev])
+    assert "퀀타매트릭스 3CB(신종)(사모/전환/콜/후)" in fixed and len(corrections) == 1
+    # 사후 대조 전체 경로에서도 정정되고, 정정은 '삭제'로 세지 않는다
+    clean, removed = post_check_answer(text, [ev], "만기가 없는 영구채도 있어?")
+    assert "퀀타매트릭스" in clean and all(r.startswith("표기 정정") for _s, r in removed)
+    # 두 글자 이상 다르거나 짧은 이름은 건드리지 않는다(다른 상품으로 바꿔치기 방지)
+    ev2 = Evidence(source="PREF01N001", source_id="X", channel="sql", as_of="2026-07-11",
+                   fields={"pd_abrv_nm": "TIGER 200"})
+    same, corr2 = autocorrect_names("TIGER 300 은 다른 상품", [ev2])
+    assert same == "TIGER 300 은 다른 상품" and not corr2

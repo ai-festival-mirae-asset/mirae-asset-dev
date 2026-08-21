@@ -208,19 +208,33 @@ def _exec_graph(ctx, call):
     return ChannelOutcome("graph", call.op, ok=False, error=f"모르는 그래프 op: {call.op}")
 
 
-def lexical_anchor_ids(con, anchors, per_term=40):
-    """테마 anchor 들로 해외ETF 명칭·전략 서술을 ILIKE 검색 → 상품 id 순위 목록."""
-    ids, names = [], {}
-    sql = (r"""SELECT pd_itm_no, coalesce(pd_nm, pd_abrv_nm) FROM global_etf
-               WHERE pd_nm ILIKE $p ESCAPE '\' OR pd_abrv_nm ILIKE $p ESCAPE '\'
-                  OR cu_strtegy ILIKE $p ESCAPE '\'
-               ORDER BY pd_itm_no LIMIT """ + str(int(per_term)))
+def lexical_anchor_ids(con, anchors, per_term=40, market=None):
+    """테마 anchor 들로 해외+국내 ETP 명칭·전략 서술을 ILIKE 검색 → 상품 id 순위 목록.
+
+    8/22(KG_NEXT 2순위): 해외 전용이던 anchor 검색을 국내(kr_etp)로 확장. 종전 결과의
+    순서를 보존하기 위해 해외를 먼저, 국내를 뒤에 잇는다. 세 번째 반환값은 {id: 시장}.
+    market('국내상장'/'해외상장')을 주면 그 시장으로 후보를 제한한다 — 질문이 시장을
+    명시한 경우('배당 해외 ETF')에 다른 시장 근거가 섞이는 것을 막는다(M-12 실측).
+    """
+    ids, names, markets = [], {}, {}
+    where_market = "AND mkt = $m " if market else ""
+    sql = (r"""SELECT pd_itm_no, coalesce(pd_nm, pd_abrv_nm), mkt FROM (
+                 SELECT pd_itm_no, pd_nm, pd_abrv_nm, cu_strtegy, '해외상장' AS mkt FROM global_etf
+                 UNION ALL
+                 SELECT pd_itm_no, pd_nm, pd_abrv_nm, cu_strtegy, '국내상장' FROM kr_etp)
+               WHERE (pd_nm ILIKE $p ESCAPE '\' OR pd_abrv_nm ILIKE $p ESCAPE '\'
+                  OR cu_strtegy ILIKE $p ESCAPE '\') """ + where_market
+           + "ORDER BY (mkt = '국내상장'), pd_itm_no LIMIT " + str(int(per_term)))
     for term in anchors[:4]:
-        for pid, name in con.execute(sql, {"p": like_param(term)}).fetchall():
+        params = {"p": like_param(term)}
+        if market:
+            params["m"] = market
+        for pid, name, mkt in con.execute(sql, params).fetchall():
             if pid not in names:
                 ids.append(pid)
                 names[pid] = name
-    return ids, names
+                markets[pid] = mkt
+    return ids, names, markets
 
 
 def _exec_vector(ctx, call):
@@ -233,23 +247,29 @@ def _exec_vector(ctx, call):
         return ChannelOutcome("vector", call.op, ok=False,
                               error="시간 예산 초과로 의미 검색 생략(강등)")
     query, k = call.params.get("query", ""), call.params.get("k", 8)
+    market = call.params.get("market")            # '국내상장'/'해외상장' — 질문이 시장을 명시(8/22)
+    want_table = {"국내상장": "kr_etp", "해외상장": "global_etf"}.get(market)
     themes = load_themes()
     anchors = expand_anchors(detect_theme_terms(query, themes), themes)
 
-    vec_ids, vec_names, vec_scores = [], {}, {}
+    vec_ids, vec_names, vec_scores, vec_tables = [], {}, {}, {}
     if ctx.vstore is not None and ctx.embedder is not None:
         vec, _tokens = ctx.embedder(query)
-        for _sha, score, products in ctx.vstore.search(vec, k):
+        for _sha, score, products in ctx.vstore.search(vec, max(k * 3, k) if want_table else k):
             for p in products:
                 pid = p.get("pd_itm_no")
-                if pid and pid not in vec_names:
+                table = p.get("table", "global_etf")                 # 8/22 국내 확장 전 meta 호환
+                if want_table and table != want_table:
+                    continue
+                if pid and pid not in vec_names and len(vec_ids) < k:
                     vec_ids.append(pid)
                     vec_names[pid] = p.get("pd_nm", pid)
                     vec_scores[pid] = score
+                    vec_tables[pid] = table
 
-    lex_ids, lex_names = ([], {})
+    lex_ids, lex_names, lex_markets = [], {}, {}
     if ctx.con is not None and anchors:
-        lex_ids, lex_names = lexical_anchor_ids(ctx.con, anchors)
+        lex_ids, lex_names, lex_markets = lexical_anchor_ids(ctx.con, anchors, market=market)
 
     if not vec_ids and not lex_ids:
         return ChannelOutcome("vector", call.op, ok=False,
@@ -264,23 +284,29 @@ def _exec_vector(ctx, call):
         fused = [(pid, score) for pid, score in fused if pid in lex_names]
     mode = ("RRF(벡터+lexical)" if vec_ids and lex_ids else
             "벡터 단독" if vec_ids else "lexical anchor 단독(임베더 미탑재)")
+    if market:
+        mode += f" · 시장 필터: {market}"
 
     rows, evidences = [], []
     for pid, _score in fused[:k]:
         name = vec_names.get(pid) or lex_names.get(pid, pid)
         in_vec, in_lex = pid in vec_names, pid in lex_names
-        rows.append({"pd_itm_no": pid, "pd_nm": name,
+        table = vec_tables.get(pid) or ("kr_etp" if lex_markets.get(pid) == "국내상장" else "global_etf")
+        market = "국내상장" if table == "kr_etp" else "해외상장"
+        rows.append({"pd_itm_no": pid, "pd_nm": name, "market": market,
                      "vector": in_vec, "anchor": in_lex})
         basis = "+".join([b for b, on in (("의미검색", in_vec), ("명칭/서술 일치", in_lex)) if on])
         note = f"{mode} · 근거: {basis}"
         if in_vec and not in_lex and anchors:
             note += " · 주의: 테마 anchor 미일치(의미 유사만)"
-        fields = {"상품명": name}
+        fields = {"상품명": name, "시장": market}
         if pid in vec_scores:
             fields["유사도"] = round(vec_scores[pid], 3)
         if anchors:
             fields["anchor"] = ", ".join(anchors[:3])
-        evidences.append(Evidence(source="PREF02N001·cu_strtegy", source_id=str(pid),
+        source = ("PREF01N001·명칭/기초지수(합성)" if table == "kr_etp"
+                  else "PREF02N001·cu_strtegy")
+        evidences.append(Evidence(source=source, source_id=str(pid),
                                   channel="vector", as_of=AS_OF_MASTER,
                                   fields=fields, note=note))
     return ChannelOutcome("vector", call.op, rows=rows, evidences=evidences, note=mode)

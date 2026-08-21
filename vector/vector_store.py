@@ -12,8 +12,10 @@ import os
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-NPZ_DEFAULT = os.path.join(HERE, "output", "index_global_etf.npz")
-META_DEFAULT = os.path.join(HERE, "output", "index_meta_global_etf.json")
+NPZ_DEFAULT = os.path.join(HERE, "output", "index_corpus.npz")            # 8/22 국내 확장 이름
+META_DEFAULT = os.path.join(HERE, "output", "index_meta_corpus.json")
+NPZ_LEGACY = os.path.join(HERE, "output", "index_global_etf.npz")         # 8/22 이전(해외 전용)
+META_LEGACY = os.path.join(HERE, "output", "index_meta_global_etf.json")
 
 
 def normalize(matrix):
@@ -46,6 +48,8 @@ class VectorStore:
 
     @classmethod
     def load(cls, npz_path=NPZ_DEFAULT, meta_path=META_DEFAULT):
+        if npz_path == NPZ_DEFAULT and not os.path.exists(npz_path) and os.path.exists(NPZ_LEGACY):
+            npz_path, meta_path = NPZ_LEGACY, META_LEGACY      # 재조립 전 과도기 — 해외 전용 인덱스로 동작
         if not os.path.exists(npz_path):
             raise FileNotFoundError(f"인덱스가 없다: {npz_path} — 먼저 python vector/build_index.py --all")
         data = np.load(npz_path, allow_pickle=False)

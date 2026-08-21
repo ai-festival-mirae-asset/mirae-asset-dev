@@ -405,3 +405,37 @@ def test_build_constituents_e2e(tmp_path):
     samsung = bk.res("company", "krx-005930")[1:-1]
     etfs = store.subjects(FP + "holdsConstituent", samsung)
     assert [store.label(s) for s in etfs] == ["TIGER 200"]
+
+
+# ---------------------------------------------------------------------------
+# 별칭 통합 (8/22, KG_NEXT 1순위) — 병합 없이 skos:altLabel 이름표 + 검색 합집합
+# ---------------------------------------------------------------------------
+
+def test_company_alias_map_longest_prefix_wins():
+    """정식명은 접두어가 가장 긴 원시 표기에만 붙는다 — '삼성액티브자산운용'이 '삼성'에 붙으면 오귀속."""
+    rows = [{"분류": "별칭사전|국내ETF브랜드", "키": "KODEX", "한글명": "삼성자산운용 KODEX", "동의어": ""},
+            {"분류": "별칭사전|국내ETF브랜드", "키": "KoAct", "한글명": "삼성액티브자산운용 KoAct", "동의어": ""},
+            {"분류": "별칭사전|국내ETF브랜드", "키": "KBSTAR", "한글명": "RISE(KB자산운용)의 구 브랜드", "동의어": ""}]
+    m = bk.company_alias_map(["삼성", "삼성액티브", "미래에셋"], "domestic", alias_rows=rows)
+    assert m["삼성"] == ["삼성자산운용"]
+    assert m["삼성액티브"] == ["삼성액티브자산운용"]
+    assert "미래에셋" not in m                    # 형식 밖(구 브랜드 설명행)은 아무 데도 안 붙는다
+
+
+def test_index_alias_map_exact_normalized_only():
+    """지수 통칭은 정규화 동등일 때만 — '나스닥(=나스닥100)' 통칭이 다른 지수에 번지면 안 된다."""
+    rows = [{"분류": "별칭사전|지수통칭", "키": "코스피200", "한글명": "KOSPI200 지수", "동의어": "KOSPI200;코스피 200"}]
+    m = bk.index_alias_map(["KOSPI 200", "KOSPI 200 선물"], alias_rows=rows)
+    assert "코스피200" in m["KOSPI 200"]
+    assert "KOSPI 200 선물" not in m
+
+
+def test_alias_union_company_query(tmp_path):
+    """CQ2 별칭 합집합: 정식명 '미래에셋자산운용'으로 물어도 원시 표기 '미래에셋' 노드가 잡힌다."""
+    df = pd.DataFrame([KR_ETF_ROW], dtype=str)
+    stats = bk.build_table("kr_etf", df, str(tmp_path))
+    assert stats["alt_labels"] >= 1               # 별칭 사전에서 정식명 이름표가 생성됨
+    store = TripleStore.from_dir(str(tmp_path))
+    from kg.query_kg import find_company_products
+    found = find_company_products(store, "미래에셋자산운용", 5)
+    assert found and found[0][0] == "미래에셋"     # 표시는 정식 라벨(원시 표기), 대조는 별칭 포함

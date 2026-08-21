@@ -37,6 +37,7 @@
 """
 import argparse
 import io
+import csv
 import json
 import os
 import re
@@ -59,7 +60,11 @@ ONTOLOGY_FILES = ("ontology/common.ttl", "ontology/bond_kr.ttl", "ontology/etf_k
                   "ontology/etf_gl.ttl", "ontology/fund_pub.ttl")
 RDF_TYPE = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
 RDFS_LABEL = "<http://www.w3.org/2000/01/rdf-schema#label>"
+SKOS_ALT = "<http://www.w3.org/2004/02/skos/core#altLabel>"   # 별칭 이름표 (8/22, KG_NEXT 1순위)
 XSD = "http://www.w3.org/2001/XMLSchema#"
+
+ALIAS_DICT_CSV = os.path.join(ROOT, "external_data", "dictionaries", "alias_dictionary.csv")
+CONSTITUENT_ALIAS_CSV = os.path.join(ROOT, "external_data", "dictionaries", "constituent_aliases.csv")
 
 # 처리 대상: (슬러그, CSV 파일명, 테이블ID, 상품군 표기)
 TABLES = {
@@ -214,6 +219,99 @@ def valid_risk_grade(s, violations):
 # ---------------------------------------------------------------------------
 # 트리플 방출기
 # ---------------------------------------------------------------------------
+# 별칭(altLabel) 재료 — 사전 파일 → 노드별 별칭 목록 (8/22, kg/KG_NEXT.md 1순위)
+# 원칙: 노드를 병합하지 않는다("삼성"≠"삼성액티브" — 별개 법인). 이름표만 추가한다.
+# ---------------------------------------------------------------------------
+
+def _read_alias_rows(path=ALIAS_DICT_CSV):
+    if not os.path.exists(path):
+        return []
+    with io.open(path, encoding="utf-8-sig") as fh:
+        return list(csv.DictReader(fh))
+
+
+def _norm_alias_text(s):
+    return re.sub(r"\s+", "", str(s or "")).casefold()
+
+
+def company_alias_map(mgmt_values, market, alias_rows=None):
+    """운용사 원시 표기 → 별칭 목록.
+
+    국내: 별칭 사전 '국내ETF브랜드'의 한글명("{운용사명} {브랜드}")에서 정식 운용사명을
+    뽑아, 그 이름의 접두어인 원시 표기 중 **가장 긴 것 하나**에만 붙인다
+    (정식명 '삼성액티브자산운용'은 '삼성'이 아니라 '삼성액티브'에 붙는다 — 오귀속 방지).
+    해외: '해외운용사' 항목의 키가 원시 표기의 단어로 나타나면 한글 별칭들을 붙인다
+    (짧은 키는 단어 단위로만 대조 — 'ARK' 가 다른 단어 속 문자열로 잡히지 않게).
+    """
+    rows = alias_rows if alias_rows is not None else _read_alias_rows()
+    raws = sorted({str(m).strip() for m in mgmt_values if m and str(m).strip()},
+                  key=len, reverse=True)
+    out = {}
+    if market == "domestic":
+        for r in rows:
+            if not (r.get("분류") or "").endswith("국내ETF브랜드"):
+                continue
+            key, han = (r.get("키") or "").strip(), (r.get("한글명") or "").strip()
+            if han.endswith(" " + key) and key:
+                formal = han[: -len(key) - 1].strip()
+            elif " " not in han and "운용" in han:
+                formal = han                        # "에셋플러스자산운용"처럼 브랜드=사명
+            else:
+                continue                            # 구 브랜드 설명행 등 — 형식 밖은 제외
+            for raw in raws:                        # 긴 표기부터 — 첫 접두 일치가 가장 긴 것
+                if formal != raw and formal.startswith(raw):
+                    out.setdefault(raw, []).append(formal)
+                    break
+    else:
+        for r in rows:
+            if not (r.get("분류") or "").endswith("해외운용사"):
+                continue
+            key = (r.get("키") or "").strip()
+            if not key:
+                continue
+            alts = [(r.get("한글명") or "").strip()]
+            alts += [a.strip() for a in (r.get("동의어") or "").split(";")]
+            kl = key.casefold()
+            for raw in raws:
+                rl = raw.casefold()
+                tokens = re.split(r"[^0-9a-z가-힣&]+", rl)
+                if kl in tokens or rl.startswith(kl) or (len(kl) >= 6 and kl in rl):
+                    out.setdefault(raw, []).extend([key] + alts)
+    return {k: [a for a in dict.fromkeys(v) if a and a != k] for k, v in out.items()}
+
+
+def index_alias_map(index_values, alias_rows=None):
+    """지수 원시 표기 → 통칭 별칭 목록 — 정규화 동등('KOSPI200'=='KOSPI 200')일 때만 붙인다.
+
+    부분일치를 쓰지 않는 이유: '나스닥' 통칭 항목은 나스닥100 지수를 가리키므로,
+    '나스닥 종합' 같은 다른 지수에 잘못 붙으면 안 된다.
+    """
+    rows = [r for r in (alias_rows if alias_rows is not None else _read_alias_rows())
+            if (r.get("분류") or "").endswith("지수통칭")]
+    out = {}
+    for idx in {str(v).strip() for v in index_values if v and str(v).strip()}:
+        nn = _norm_alias_text(idx)
+        for r in rows:
+            syns = [a.strip() for a in (r.get("동의어") or "").split(";") if a.strip()]
+            keys = {_norm_alias_text(r.get("키"))} | {_norm_alias_text(a) for a in syns}
+            if nn in keys:
+                alts = [(r.get("키") or "").strip()] + syns
+                out[idx] = [a for a in dict.fromkeys(alts) if a and _norm_alias_text(a) != nn]
+    return out
+
+
+def constituent_alias_map(path=CONSTITUENT_ALIAS_CSV):
+    """구성종목 별칭 사전 → {ISIN: [한글 별칭…]} — 해외 종목 한글명("캠브리콘")용."""
+    out = {}
+    if not os.path.exists(path):
+        return out
+    with io.open(path, encoding="utf-8-sig") as fh:
+        for r in csv.DictReader(fh):
+            isin, alias = (r.get("isin") or "").strip(), (r.get("alias") or "").strip()
+            if isin and alias:
+                out.setdefault(isin, []).append(alias)
+    return out
+
 
 class TableEmitter:
     """테이블 1개 분량의 트리플을 모아 정렬 없이 순서대로 쓴다(입력 행 순서 = 출력 순서).
@@ -259,6 +357,20 @@ class TableEmitter:
         if k not in self._seen_labels:
             self._seen_labels.add(k)
             self.t(res(kind, key), RDFS_LABEL, lit(label))
+
+    def aux_alt_label(self, kind, key, alt):
+        """별칭 이름표(skos:altLabel) — 정식 라벨(rdfs:label)과 겹치면 쓰지 않는다.
+
+        8/22(KG_NEXT 1순위): 노드 병합 대신 별칭을 선언해 두고 검색이 정식명+별칭을
+        한 색인으로 본다. 같은 별칭이 여러 노드에 걸리면 검색 계층이 합집합으로 답한다.
+        """
+        if not alt or (kind, key, alt) in self._seen_labels:
+            return
+        k = (kind, key, "alt␟" + alt)          # rdfs 라벨 키와 구분되는 별칭 키
+        if k not in self._seen_labels:
+            self._seen_labels.add(k)
+            self.t(res(kind, key), SKOS_ALT, lit(alt))
+            self.alt_count = getattr(self, "alt_count", 0) + 1
 
 
 def emit_common(em, s_iri, row, table_id, group_label, name_col, short_col, id_col):
@@ -341,9 +453,13 @@ def _emit_etp_shared(em, s, row, cls, stats):
     mgmt = sv(row, "cu_fund_mgmt_co")
     if mgmt:
         em.t(s, fp_term("managedBy"), em.aux_node("company", mgmt, "ManagementCompany", label=mgmt))
+        for alt in getattr(em, "company_aliases", {}).get(mgmt, ()):
+            em.aux_alt_label("company", mgmt, alt)
     idx = sv(row, "cu_base_index")
     if idx and not any(t in idx for t in INDEX_SENTINEL_SUBSTRINGS):
         em.t(s, fp_term("tracksIndex"), em.aux_node("index", idx, "Index", label=idx))
+        for alt in getattr(em, "index_aliases", {}).get(idx, ()):
+            em.aux_alt_label("index", idx, alt)
     e = as_decimal(sv(row, "cu_charge_rt"))
     em.t(s, fp_term("expenseRatio"), lit_typed(e, "decimal") if e else None)
     if not cls.endswith("ETN"):  # ETN 의 du_last_aum 은 전량 0 실측 — 규모는 netAssets 로
@@ -477,6 +593,8 @@ def extract_constituent_row(em, row, stats, seen_etf):
         stats["etf_nodes"] += 1
     company = em.aux_node("company", key, "ListedCompany", label=name, **kwargs)
     em.aux_label("company", key, name)         # 이름 변형 추가 라벨(중복이면 no-op)
+    for alt in getattr(em, "constituent_aliases", {}).get(code, ()):  # 해외 종목 한글명(8/22)
+        em.aux_alt_label("company", key, alt)
     em.t(s, fp_term("holdsConstituent"), company)
     stats["edges"] += 1
 
@@ -502,11 +620,13 @@ def build_constituents(df, out_dir, source_csv):
     path = os.path.join(out_dir, CONSTITUENTS_SLUG + ".nt")
     with io.open(path, "w", encoding="utf-8", newline="\n") as fh:
         em = TableEmitter(fh)
+        em.constituent_aliases = constituent_alias_map()   # 해외 종목 한글명 이름표(8/22)
         seen_etf = set()
         for row in df.to_dict("records"):
             extract_constituent_row(em, row, stats, seen_etf)
         stats["triples"] = em.count
         stats["companies"] = len(em._seen_aux)
+        stats["alt_labels"] = getattr(em, "alt_count", 0)
     stats["as_of"] = CONSTITUENTS_AS_OF
     stats["source"] = CONSTITUENTS_SOURCE
     stats["source_csv"] = os.path.basename(source_csv)
@@ -529,10 +649,15 @@ def build_table(slug_name, df, out_dir):
             extractor = {"kr_bond": extract_bond_row,
                          "kr_etf": extract_kr_etf_row,
                          "global_etf": extract_global_etf_row}[slug_name]
+            if slug_name in ("kr_etf", "global_etf"):    # 별칭 이름표 재료(8/22, KG_NEXT 1순위)
+                market = "domestic" if slug_name == "kr_etf" else "foreign"
+                em.company_aliases = company_alias_map(df.get("cu_fund_mgmt_co", pd.Series(dtype=str)).dropna(), market)
+                em.index_aliases = index_alias_map(df.get("cu_base_index", pd.Series(dtype=str)).dropna())
             for row in df.to_dict("records"):
                 extractor(em, row, stats)
         stats["triples"] = em.count
         stats["aux_nodes"] = len(em._seen_aux)
+        stats["alt_labels"] = getattr(em, "alt_count", 0)
     return stats
 
 

@@ -734,3 +734,18 @@ def test_count_and_residual_maturity_are_data_notes(con, index):
         == "조건 일치 건수 — 상품(마스터) 수 11,138건 · 판매 클래스 수 95,618건"
     assert count_sentence("etp_count", [{"drv_instrument_type": "ETF", "drv_listing_status": "active", "n": 1139}]) \
         == "조건 일치 건수 — ETF active: 건수 1,139건"
+
+
+def test_theme_vector_market_filter(index):
+    """시장 명시 테마 질문은 벡터 호출에 market 필터를 싣는다(8/22 M-12 실측 — 국내 근거 혼입 방지)."""
+    plan = _route(index, "배당 수익 중심 전략을 쓰는 해외 ETF 알려줘")
+    vec = [c for c in plan.calls if c.channel == "vector"]
+    assert vec and vec[0].params.get("market") == "해외상장"
+    # 국내 명시 — 그동안 없던 벡터 호출이 국내 필터로 생긴다(2순위 확장의 목적)
+    plan2 = _route(index, "국내 2차전지 테마 ETF 알려줘")
+    vec2 = [c for c in plan2.calls if c.channel == "vector"]
+    assert vec2 and vec2[0].params.get("market") == "국내상장"
+    # 국내·해외 비교(H-04 유형)는 필터 없음 — 두 시장 다 후보
+    plan3 = _route(index, "반도체에 투자하고 싶은데 국내 상장 ETF랑 해외 상장 ETF 옵션을 비교해줘")
+    vec3 = [c for c in plan3.calls if c.channel == "vector"]
+    assert vec3 and "market" not in vec3[0].params

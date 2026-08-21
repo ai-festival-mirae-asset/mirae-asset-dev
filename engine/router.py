@@ -1192,7 +1192,12 @@ def route_stage_a(question, index, policy=None, today=None):
         start = datetime.date(start_year, start_month0 + 1,
                               min(anchor.day, calendar.monthrange(start_year, start_month0 + 1)[1]))
         theme_query = " ".join(non_region_themes or theme_hits)
-        plan.calls.append(ChannelCall("vector", "semantic", {"query": theme_query, "k": 8}))
+        hist_params = {"query": theme_query, "k": 8}
+        if ("해외" in q or is_global) and "국내" not in q:
+            hist_params["market"] = "해외상장"       # 시장 명시 질문 — 후보를 그 시장으로 제한(8/22)
+        elif "국내" in q and "해외" not in q and not is_global:
+            hist_params["market"] = "국내상장"
+        plan.calls.append(ChannelCall("vector", "semantic", hist_params))
         for term in non_region_themes[:2]:
             plan.calls.append(ChannelCall("sql", "etp_name_search",
                                           {"pattern_raw": term, "limit": 10}))
@@ -1214,10 +1219,17 @@ def route_stage_a(question, index, policy=None, today=None):
             plan.notes.append(f"'{excluded_region} 말고' = 투자지역(wu_inv_rgn)에 '{REGION_INV_RGN_EN[excluded_region]}'가 "
                               f"없는 해외 ETF 중 상품명·전략 서술에 '{anchors[0]}'가 있는 것(순자산 큰 순) — "
                               "Global(전세계) 표기 상품은 미국을 일부 포함할 수 있음")
-        if is_global or "해외" in q or not non_region_themes:
-            plan.calls.append(ChannelCall("vector", "semantic", {"query": q, "k": 8}))
-        elif "국내" not in q:
-            plan.calls.append(ChannelCall("vector", "semantic", {"query": q, "k": 8}))
+        # 시장 명시(해외만/국내만) 질문은 벡터·anchor 후보를 그 시장으로 제한한다(8/22 —
+        # 국내 이름 문장이 코퍼스에 들어온 뒤 '배당 해외 ETF'(M-12)에 국내 근거가 섞인 실측).
+        vec_market = None
+        if ("해외" in q or is_global) and "국내" not in q:
+            vec_market = "해외상장"
+        elif "국내" in q and "해외" not in q and not is_global:
+            vec_market = "국내상장"
+        vec_params = {"query": q, "k": 8}
+        if vec_market:
+            vec_params["market"] = vec_market
+        plan.calls.append(ChannelCall("vector", "semantic", dict(vec_params)))
         for t in (non_region_themes or theme_hits)[:2]:
             plan.calls.append(ChannelCall("sql", "etp_name_search",
                                           {"pattern_raw": t, "limit": 10}))

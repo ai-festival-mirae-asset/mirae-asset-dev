@@ -69,16 +69,22 @@ def describe_product(store, s):
 
 
 def find_company_products(store, query, limit):
-    """운용사명 부분일치 → fp:managedBy 역방향으로 상품 나열 (CQ2 — 역관계 질의)."""
+    """운용사명 부분일치 → fp:managedBy 역방향으로 상품 나열 (CQ2 — 역관계 질의).
+
+    8/22(별칭 통합): 대조는 정식 라벨 + skos:altLabel 전부에 대해 한다. 그래서
+    "미래에셋자산운용"(정식명)으로 물어도 원시 표기 "미래에셋" 노드가 잡히고,
+    같은 별칭이 여러 노드에 걸리면 노드별 항목이 전부 나온다(합집합 — 병합하지 않음).
+    """
     q = norm_name(query)
     out = []
     seen = set()
     for p in (FP + "managedBy", FP + "issuedBy"):
         for company_iri, products in store._pos.get(p, {}).items():
-            name = store.label(company_iri)
-            if name and q in norm_name(name) and company_iri not in seen:
+            names = store.all_names(company_iri)
+            if company_iri not in seen and any(q in norm_name(n) or norm_name(n) == q
+                                               for n in names if n):
                 seen.add(company_iri)
-                out.append((name, p, products[:limit]))
+                out.append((store.label(company_iri) or names[0], p, products[:limit]))
     return out
 
 
@@ -95,13 +101,14 @@ def find_holding_etfs(store, query, limit):
     holds = store._pos.get(FP + "holdsConstituent", {})
     out = []
     for company_iri, etfs in holds.items():
-        names = store.objects(company_iri, RDFS_LABEL)
+        labels = store.objects(company_iri, RDFS_LABEL)
+        names = store.all_names(company_iri)       # 정식 라벨 + 별칭(그래프 선언, 8/22)
         ticker = store.object(company_iri, FP + "tickerCode") or ""
         isin = store.object(company_iri, FP + "securityIsin") or ""
         if (any(q in norm_name(n) for n in names)
                 or (ticker and exact == ticker) or (isin and exact.upper() == isin)
                 or (isin and isin in alias_isins)):
-            out.append((names[0] if names else (ticker or isin), ticker or isin, etfs))
+            out.append((labels[0] if labels else (ticker or isin), ticker or isin, etfs))
     out.sort(key=lambda x: (-len(x[2]), x[1]))     # 편입 ETF 많은 종목 우선, 코드로 안정 정렬
     coverage = {s for subjects in holds.values() for s in subjects}
     return out[:limit], len(coverage)

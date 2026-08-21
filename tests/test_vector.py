@@ -127,3 +127,24 @@ def test_client_rejects_non_clovastudio_endpoint(tmp_path):
     with pytest.raises(ClovaEmbeddingError, match="허용되지 않은"):
         ClovaEmbeddingClient(base_url="https://api.openai.com", api_key="K",
                              audit_path=tmp_path / "a.jsonl")
+
+
+# ---------------------------------------------------------------------------
+# 국내 확장 (8/22, KG_NEXT 2순위) — 합성 문장 + 상품별 출처 테이블 표기
+# ---------------------------------------------------------------------------
+
+def test_build_corpus_table_tagging_and_compat():
+    """4번째 값(table)이 있으면 상품 항목에 담고, 없으면(구 형식) 그대로 동작한다."""
+    _t, m3 = build_corpus([("A1", "이름", "Prose text.")])
+    assert "table" not in m3[text_sha("Prose text.")][0]
+    _t, m4 = build_corpus([("K1", "국내 이름", "국내 이름 · 약칭 KX", "kr_etp")])
+    assert m4[text_sha("국내 이름 · 약칭 KX")][0]["table"] == "kr_etp"
+
+
+def test_kr_synth_text_rules():
+    """국내 cu_strtegy 는 분류값 4종뿐(8/22 실측) — 이름·약칭·기초지수로 합성한다."""
+    from vector.build_index import kr_synth_text
+    assert kr_synth_text("정식명", "약칭A", None) == "정식명 · 약칭 약칭A"
+    assert kr_synth_text("정식명", "정식명", "Index is not provided") == "정식명"   # 결측 지수 문구 제외
+    assert kr_synth_text("정식명", float("nan"), "KOSPI 200") == "정식명 · 기초지수 KOSPI 200"
+    assert kr_synth_text(float("nan"), float("nan"), None) == ""

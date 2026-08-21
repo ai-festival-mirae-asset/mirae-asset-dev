@@ -265,8 +265,42 @@ def test_llm_router_param_coercion_and_rejection():
         coerce_graph_query("holding_etfs", "모르는 회사", partial)
 
 
+def test_coerce_constituent_holders_semantic_key_check():
+    """8/22 H-17 실측: constituent_holders.code 에 ETF 키·지수명이 들어가면 수리 콜을 유도한다."""
+    from engine.router_llm import coerce_llm_params
+    from pipeline.entity_index import EntityRef
+    partial = RoutePlan(intent="unresolved", entities=[
+        ("kodex msci korea", [EntityRef("product_kr_etp", "KR7156080004", "KODEX MSCI KOREA", "PREF01N001")]),
+        ("삼성전자", [EntityRef("constituent", "005930", "삼성전자", "KRX-PDF")]),
+    ])
+    with pytest.raises(ValueError, match="constituent_top_weights"):
+        coerce_llm_params("constituent_holders", {"code": "KR7156080004", "limit": 100}, partial)
+    with pytest.raises(ValueError, match="종목 코드"):
+        coerce_llm_params("constituent_holders", {"code": "KOSPI200", "limit": 100}, partial)
+    fixed = coerce_llm_params("constituent_holders", {"code": "005930", "limit": 30}, partial)
+    assert fixed["code"] == "005930"
+
+
+def test_respace_names_restores_official_spacing():
+    """8/22 M-18 실측: 생성기가 상품명에 공백을 끼워 넣으면('코스닥 150') 근거 정식 표기로 복원한다."""
+    from engine.generator import respace_names
+    official = "미래에셋 TIGER 코스닥150인버스증권상장지수투자신탁(주식-파생형)"
+    ev = Evidence(source="PREF01N001", source_id="KR7XXXX0000", channel="sql", as_of="2026-07-11",
+                  fields={"pd_nm": official})
+    text = "1. 미래에셋 TIGER 코스닥150 인버스 증권상장지수투자신탁 (주식-파생형), [근거1]"
+    fixed, corrections = respace_names(text, [ev])
+    assert official in fixed and corrections == [official]
+    # 정식 표기가 이미 있으면 건드리지 않는다
+    same, corr2 = respace_names(f"1. {official} [근거1]", [ev])
+    assert same == f"1. {official} [근거1]" and not corr2
+    # 사후 대조 전체 경로에서도 '표기 정정'으로 기록되고 줄은 살아남는다
+    clean, removed = post_check_answer(text, [ev], "코스닥150 인버스 상품 알려줘")
+    assert clean is not None and official in clean
+    assert any("띄어쓰기" in r for _s, r in removed)
+
+
 def test_llm_zero_row_plan_gets_non_assertive_note(ctx):
-    """HCX 라우터 계획이 0건이면 '없다' 단정 대신 해석 차이 가능성 노트가 강제된다."""
+    """HCX 라우터 계획이 0건이면 '없다' 단정 대신 해석 차이 노트가 강제되고, 근거 블록도 비지 않는다(8/22)."""
     plan = RoutePlan(intent="llm_plan", stage="llm")
     plan.calls.append(__import__("engine.router", fromlist=["ChannelCall"]).ChannelCall(
         "sql", "etp_name_search", {"pattern_raw": "존재하지않는이름", "limit": 5}))
@@ -276,6 +310,9 @@ def test_llm_zero_row_plan_gets_non_assertive_note(ctx):
     out = answer_question(q, ctx, today=TODAY, llm_router=fake_router)
     assert "stage=llm" in out["think_trace"]
     assert "단정하지 않음" in out["answer"]
+    # 근거 0개 방지망(H-17 실측): 0건이어도 '무엇을 찾아봤는지'가 근거로 남는다
+    assert out["retrieved_context"] != "(근거 없음)"
+    assert "조회 기록" in out["retrieved_context"]
 
 
 def test_wall_clock_guard_cuts_stalled_calls():

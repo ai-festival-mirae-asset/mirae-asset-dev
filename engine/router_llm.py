@@ -61,6 +61,18 @@ def _grounded_lookup(partial_plan):
     return by_name, keys
 
 
+_CONSTITUENT_KEY_RE = re.compile(r"^(\d{6}|[A-Z]{2}[A-Z0-9]{10})$")   # 종목 키: 6자리 코드 또는 ISIN
+
+
+def _ref_by_key(partial_plan, key):
+    """grounded 엔티티 중 키가 일치하는 ref — 키의 종류(상품/종목) 판별용."""
+    for _name, refs in partial_plan.entities:
+        for r in refs:
+            if str(r.key) == key:
+                return r
+    return None
+
+
 def coerce_llm_params(template_id, params, partial_plan):
     """LLM 이 낸 파라미터를 실행 가능한 값으로 고친다 — 못 고치면 ValueError(수리 콜 유도).
 
@@ -76,6 +88,19 @@ def coerce_llm_params(template_id, params, partial_plan):
             continue
         if k in _KEY_PARAMS:
             sv = str(v).strip()
+            # constituent_holders.code 는 '편입 종목(주식)' 키다 — ETF/상품 키나 지수명을
+            # 넣으면 0건 조회가 된다(8/22 H-17 실측: ETF ISIN·'KOSPI200'). 의미가 어긋나면
+            # 오류를 던져 수리 콜에서 올바른 템플릿(constituent_top_weights 등)로 바꾸게 한다.
+            if template_id == "constituent_holders" and k == "code":
+                ref = _ref_by_key(partial_plan, sv)
+                if ref is not None and ref.kind != "constituent":
+                    raise ValueError(f"[{template_id}] code 는 편입 종목(주식) 키여야 함 — '{sv}' 는 "
+                                     f"{ref.kind} 키. ETF 의 구성종목을 보려면 constituent_top_weights(etf_id=…) 사용")
+                norm_sv = re.sub(r"\s+", "", sv).casefold()
+                if ref is None and not _CONSTITUENT_KEY_RE.match(sv) \
+                        and not (by_name.get(sv) or by_name.get(norm_sv)):
+                    raise ValueError(f"[{template_id}] code '{sv}' 는 종목 코드(6자리)/ISIN 이 아님 — "
+                                     f"지수명·조건이면 다른 템플릿을 쓰고, 종목이면 grounded 키를 사용")
             if sv in keys:
                 fixed[k] = sv
                 continue

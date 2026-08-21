@@ -93,6 +93,8 @@ KRX 수집분(`external_data/constituents/constituents_20260710.csv`)을 `consti
 
 ## 7. 후속 (우선순위)
 
+> 8/22 연구: 발전 후보 7개를 효과·비용·위험으로 비교하고 1순위(별칭 통합 skos:altLabel)·2순위(국내 벡터 확장)를 뽑았다 — [KG_NEXT.md](KG_NEXT.md).
+
 1. 운용사 오염 55행 정정 방침 결정(8/8 총검토 또는 팀 논의) → 전처리 규칙 반영 후 재빌드
 2. 회사·지수 entity resolution — 별칭 사전(`alias_dictionary.csv`) 기반 노드 통합 + **해외 종목 한글명 매핑("캠브리콘"→CAMBRICON, 8/13 신규)**
 3. 저장소 선정(8/8) 후 `.nt` 적재 + 질의 채널(Federated Router의 그래프 채널) 연결

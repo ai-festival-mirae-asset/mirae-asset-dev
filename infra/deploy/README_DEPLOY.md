@@ -73,7 +73,7 @@ df -h / | tail -1                                     # 디스크 여유
 |---|---|---|
 | `/health` 무응답 | `systemctl status mirae-api`, `journalctl -u mirae-api -n 50` | `systemctl restart mirae-api`(허용). 기동 실패가 반복되면 로그의 첫 오류 줄을 본다 — 그래프 파일 오류면 `install.sh` 재실행(9/6 전만) |
 | 답변은 오는데 `hcx_router:false` | `/etc/mirae-api.env` 의 키, `journalctl` 의 401/403 | 키를 채우고 `systemctl restart mirae-api`. 키 만료·크레딧 소진이면 CLOVA Studio 콘솔 확인 |
-| 응답이 15초 근처 | 성적표 `--mode http` 응답 시간 | 서버 CPU 부족 — 라우터/생성 타임아웃 하향은 코드 변경이라 9/6 전에만. 이후엔 그대로 둔다(60초 권장 안엔 든다) |
+| 응답이 15초 근처 | 성적표 `--mode http` 응답 시간 | 15초 초과는 감점 위험(설명회 발화, 8/22 확인 — 로컬 실측 최대 9.24초라 여유 5초). 자주 넘보면 서버 CPU 부족 — 라우터/생성 타임아웃 하향은 코드 변경이라 9/6 전에만 |
 | 디스크 90%+ | `du -sh /var/log/journal storage/output` | 저널은 자동 상한. 캐시 파일이 크면 서비스 중지 후 삭제 가능(캐시는 결과물이 아님) |
 | 재부팅됨 | `uptime`, `systemctl is-enabled mirae-api` | enable 돼 있으면 자동 복구. `/health` 만 확인 |
 

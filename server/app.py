@@ -71,8 +71,9 @@ def build_runtime(kg_tables="all", with_vector=True, with_llm=True, with_generat
 
     kg_tables: "all"(전체) | "none"(그래프 끔) | "kr_etf,constituents"(부분).
     HCX 클라이언트는 API 키가 없으면 자동으로 꺼진다(규칙 엔진만으로도 유효 응답).
-    타임아웃: 계획 수립 6초·문장 생성 8초(8/19: 8초·10초에서 조정) — Deadline(생성 진입 한계 7초)
-    강등과 함께 최악에도 14초 안에 끝난다.
+    타임아웃: 계획 수립 6초·문장 생성 8초·임베딩 5초 — Deadline(생성 진입 한계 7초)
+    강등과 함께 15초(무감점 경계 — 설명회 발화, 8/22 확인) 안에 끝난다.
+    (8/22 오전 '정확도 우선 60초'로 올렸다가 감점 경계 확인으로 당일 복원.)
     """
     import duckdb
     con = duckdb.connect(DB_PATH_DEFAULT, read_only=True)

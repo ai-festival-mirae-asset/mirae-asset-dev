@@ -23,7 +23,7 @@ sys.path.insert(0, ROOT)
 from pipeline.entity_index import norm_name                   # noqa: E402
 from pipeline.evidence import to_context_string               # noqa: E402
 
-MAX_GENERATION_TOKENS = 1024      # 응답 상한 — 길이 제한은 없지만 과도하면 초과분 미평가
+MAX_GENERATION_TOKENS = 2048      # 응답 상한 — 두 그룹 목록(M-18 유형)이 정식명으로도 잘리지 않게 8/22 상향
 # 생성 흔들림 억제(8/19 ⑧-6): 같은 근거에 같은 문장이 나오도록 낮은 온도 + 고정 seed
 GENERATION_TEMPERATURE = 0.2
 GENERATION_SEED = 20260711        # 데이터 기준일 — 의미 없는 고정값
@@ -142,6 +142,27 @@ def _evidence_names(evidences):
     return list(dict.fromkeys(names))
 
 
+def respace_names(text, evidences):
+    """근거 상품명의 띄어쓰기 변형을 정식 표기로 복원 — '코스닥 150' → '코스닥150' (8/22 M-18 실측).
+
+    생성기가 상품명 안에 공백을 넣거나 빼면 채점(이름 substring 대조)이 깨진다.
+    글자 내용·순서는 같고 공백만 다른 구간을 찾아 근거의 정식 표기로 되돌린다.
+    같은 줄 안에서만 본다(개행은 공백으로 취급하지 않음 — 목록 구조 보존).
+    반환: (정정된 텍스트, [정정된 이름]).
+    """
+    corrections = []
+    for name in _evidence_names(evidences):
+        compact = re.sub(r"\s+", "", name)
+        if len(compact) < 8 or name in text:
+            continue
+        pattern = r"[ \t]*".join(re.escape(ch) for ch in compact)
+        new_text, n = re.subn(pattern, name, text)
+        if n and new_text != text:
+            text = new_text
+            corrections.append(name)
+    return text, corrections
+
+
 def autocorrect_names(text, evidences):
     """생성기가 이름을 한 글자 잘못 옮긴 경우('퀀타매트릭스'→'퀸타매트릭스', 8/19 L-06 실측)를 근거 표기로 되돌린다.
 
@@ -217,9 +238,11 @@ def post_check_answer(text, evidences, question, index=None, extra_allowed=""):
             pass
     evidence_keys = _evidence_keys(evidences)
 
-    # 이름 한 글자 오기(誤記) 정정 — 지우는 대신 근거 표기로 되돌린다(정정 기록은 removed 에 '표기 정정' 으로 남김)
+    # 이름 띄어쓰기 복원(8/22) → 한 글자 오기 정정(8/19) — 지우는 대신 근거 표기로 되돌린다
+    text, respaced = respace_names(text, evidences)
     text, corrections = autocorrect_names(text, evidences)
-    kept, removed = [], [(w[:60], f"표기 정정: {w} → {n}") for w, n in corrections]
+    kept, removed = [], [(n[:60], f"표기 정정(띄어쓰기): {n}") for n in respaced]
+    removed += [(w[:60], f"표기 정정: {w} → {n}") for w, n in corrections]
     for line in text.splitlines():
         stripped = line.strip()
         if not stripped:

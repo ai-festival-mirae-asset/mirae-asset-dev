@@ -227,7 +227,7 @@ def _exec_vector(ctx, call):
     """벡터 채널 — 쿼리 임베딩 top-k 와 lexical anchor 목록의 RRF 결합.
 
     임베더가 없으면(오프라인) lexical 만으로 동작하고 그 사실을 note 에 남긴다.
-    시간 예산(deadline)을 넘긴 요청은 의미 검색을 생략(강등)한다 — 15초 방어.
+    시간 예산(deadline)을 넘긴 요청은 의미 검색을 생략(강등)한다 — 15초 무감점 경계 방어.
     """
     if ctx.deadline is not None and ctx.deadline.over(ctx.deadline.vector_cutoff):
         return ChannelOutcome("vector", call.op, ok=False,

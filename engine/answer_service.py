@@ -344,6 +344,21 @@ def answer_question(question, ctx, question_id="", today=None,
             plan.notes.append(zero_note)
 
     evidences = list(result.evidences) + list(verdict.evidences)
+    # 근거 0개 방지망(8/22 H-17 실측): HCX 계획이 0건으로 끝나면 근거 블록 없이 답이 나가
+    # 채점 근거 축을 잃는다. 어떤 경로든 근거가 비면 "무엇을 어떤 조회로 찾아봤는지"를
+    # validation 근거로 남긴다 — 0건·실패도 확인 과정의 근거다(거절 경로와 같은 원칙).
+    if not evidences:
+        for outcome in result.outcomes[:5]:
+            n_rows = len(getattr(outcome, "rows", None) or [])
+            evidences.append(Evidence(
+                source="조회 기록", source_id=f"{outcome.channel}.{outcome.op}",
+                channel="validation", as_of=AS_OF_MASTER,
+                fields={"실행": f"{outcome.channel}.{outcome.op}",
+                        "결과": (f"{n_rows}건" if outcome.ok else f"실패({(outcome.error or '')[:80]})")}))
+        if not evidences:
+            evidences.append(Evidence(source="조회 기록", source_id="실행 없음",
+                                      channel="validation", as_of=AS_OF_MASTER,
+                                      fields={"실행": "조회 없음", "결과": "검증 판정만으로 답변"}))
     gen_note = ""
     if generator is not None and deadline is not None and deadline.over(deadline.generation_cutoff):
         generator = None

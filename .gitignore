@@ -14,8 +14,8 @@ kg/output/
 # 주의: 아래는 `vector/output/` 이 아니라 `vector/output/*` 이어야 한다 —
 #       폴더 자체를 제외하면 git 이 안으로 들어가지 않아 ! 예외가 먹지 않는다.
 vector/output/*
-!vector/output/index_global_etf.npz
-!vector/output/index_meta_global_etf.json
+!vector/output/index_corpus.npz
+!vector/output/index_meta_corpus.json
 
 # RDB 파일 — storage/load_duckdb.py 로 재생성 가능
 storage/output/

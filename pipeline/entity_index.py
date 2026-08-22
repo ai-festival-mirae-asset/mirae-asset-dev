@@ -40,6 +40,50 @@ def norm_name(text):
     return re.sub(r"\s+", "", str(text)).casefold()
 
 
+def _norm_with_map(text):
+    """norm_name 과 같은 정규화 문자열 + 각 정규화 글자의 원문 위치(경계 검사용)."""
+    out, omap = [], []
+    for i, ch in enumerate(str(text)):
+        if ch.isspace():
+            continue
+        f = ch.casefold()
+        out.append(f)
+        omap.extend([i] * len(f))
+    return "".join(out), omap
+
+
+# 이름 바로 뒤에 한글이 이어질 때 '이름이 끝났다'고 볼 수 있는 낱말들 — 조사·질문 낱말·
+# 금융 문맥 명사. 이 밖의 한글이 이어지면 다른 이름의 일부로 본다("애플파이", "KB스타골드").
+_FOLLOW_OK = (
+    "이", "가", "을", "를", "은", "는", "의", "도", "로", "과", "와", "에", "만", "랑", "처럼", "부터",
+    "까지", "에서", "한테", "보다", "께", "나", "든", "및", "등", "이라", "이란", "이면", "이랑",
+    "주식", "종목", "회사", "기업", "상품", "펀드", "채권", "지수", "관련", "테마", "편입", "담은",
+    "담고", "담는", "담긴", "포함", "보유", "운용", "투자", "수익", "순자산", "가격", "주가", "정보",
+    "상세", "구성", "비중", "만기", "신용", "위험", "등급", "상장", "보수", "배당", "발행", "잔존",
+    "표면", "거래", "여부", "개수", "목록", "알려", "찾아", "보여", "비교", "정리", "추천", "있어",
+    "있나", "있는", "뭐", "어디", "언제", "몇", "얼마", "어때", "인지", "이야", "이고", "인가",
+    "하고", "중", "그리고", "또는", "대비", "대신", "말고", "빼고", "제외", "기준", "현재", "지금",
+    "최근", "총", "평균", "상위", "하위", "가장", "제일", "순", "선주", "우선주", "보통주", "같은",
+    "쪽", "것", "거", "인", "두", "외", "혹은", "말", "하나만", "통합", "합성",
+)
+
+
+def _boundary_ok(text, omap, start, end):
+    """정규화 문자열 [start, end) 매칭이 원문에서 '이름 하나'로 끝나는가."""
+    s, e = omap[start], omap[end - 1]
+    if s > 0 and text[s - 1].isascii() and text[s - 1].isalnum():
+        return False                                  # 'OKBSTAR' 속 'KBSTAR' — 다른 토큰의 일부
+    if e + 1 >= len(text):
+        return True
+    nxt = text[e + 1]
+    if nxt.isascii():
+        return not nxt.isalnum()                      # 영문·숫자가 이어지면 다른 이름("코스피300")
+    if not ("가" <= nxt <= "힣"):
+        return True                                   # 기호·공백 등 — 경계
+    run = re.match(r"[가-힣]+", text[e + 1:]).group(0)
+    return any(run.startswith(w) for w in _FOLLOW_OK)
+
+
 @dataclass(frozen=True)
 class EntityRef:
     """개체 참조 1건 — kind(종류)·key(데이터 키)·display(대표 표기)·source(출처 테이블)."""
@@ -92,8 +136,14 @@ class EntityIndex:
         부분 일치가 아니므로 존재 근거로 쓸 수 있다. 겹치는 매칭은 긴 이름이
         이긴다("삼성전자우선주" 안의 '삼성전자우' > '삼성전자' > '삼성').
         반환: [(name, [EntityRef])] — 원문 등장 위치 순.
+
+        이름 경계(8/22 블라인드 v2 실측): 공백을 지운 문자열에서 찾기 때문에
+        "TIGER 코스피300" 안의 'tiger코스피', "애플파이" 안의 '애플', 펀드명
+        "KB스타골드…" 안의 별칭 'kb스타'가 정확 일치로 잡혔다(함정 오답·엉뚱한 상품).
+        원문에서 이름 바로 뒤에 영문·숫자가 이어지면 다른 이름이고, 한글이 이어지면
+        조사·질문 낱말(을/를/주식/담은/우선주…)일 때만 경계로 인정한다.
         """
-        q = norm_name(text)
+        q, omap = _norm_with_map(text)
         if not q:
             return []
         occs = []
@@ -101,8 +151,11 @@ class EntityIndex:
             if len(name) < min_len:
                 continue
             pos = q.find(name)
-            if pos >= 0:
-                occs.append((pos, len(name), name, refs))
+            while pos >= 0:
+                if _boundary_ok(text, omap, pos, pos + len(name)):
+                    occs.append((pos, len(name), name, refs))
+                    break
+                pos = q.find(name, pos + 1)        # 경계가 안 맞으면 다음 등장 위치를 본다
         occs.sort(key=lambda t: (-t[1], t[0]))      # 긴 이름 우선 채택
         taken, spans = [], []
         for pos, ln, name, refs in occs:
@@ -186,10 +239,25 @@ def build_entity_index(con):
             SELECT DISTINCT resolved FROM mgmt_resolved
             WHERE resolved IS NOT NULL""").fetchall():
         idx.add(name, EntityRef("company", name, name, "PREF01N001(복구)"))
-    for (name,) in con.execute("""
+    global_cos = [name for (name,) in con.execute("""
             SELECT DISTINCT cu_fund_mgmt_co FROM global_etf
-            WHERE cu_fund_mgmt_co IS NOT NULL""").fetchall():
+            WHERE cu_fund_mgmt_co IS NOT NULL""").fetchall()]
+    for name in global_cos:
         idx.add(name, EntityRef("company", name, name, "PREF02N001"))
+    # ④-2 운용사 별칭(8/22 v2 실측 — "신한자산운용"은 그래프에만 별칭이 있고 라우터엔 없었다):
+    #     정식 운용사명(별칭 사전 국내ETF브랜드)·해외 운용사 한글명 → 같은 company 키
+    try:
+        from kg.build_kg import company_alias_map
+        domestic_raws = [name for (name,) in con.execute(
+            "SELECT DISTINCT resolved FROM mgmt_resolved WHERE resolved IS NOT NULL").fetchall()]
+        for raw, alts in company_alias_map(domestic_raws, "domestic").items():
+            for alt in alts:
+                idx.add(alt, EntityRef("company", raw, raw, "alias_dictionary"))
+        for raw, alts in company_alias_map(global_cos, "foreign").items():
+            for alt in alts:
+                idx.add(alt, EntityRef("company", raw, raw, "alias_dictionary"))
+    except Exception:
+        pass                                          # 사전이 없어도 색인은 성립(원시 표기만)
 
     # ⑤ 지수·벤치마크 — 원시 표기(정규화 사전 승격은 후속)
     for table, col, source in (("kr_etp", "cu_base_index", "PREF01N001"),

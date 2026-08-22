@@ -1,0 +1,158 @@
+# -*- coding: utf-8 -*-
+"""⑧ 2차 다듬기 — 블라인드 v2(8/22)가 드러낸 실패 유형의 회귀 잠금.
+
+1. 이름 경계: 공백 제거 대조에서 "TIGER 코스피300"→'TIGER 코스피', "애플파이"→'애플', 펀드명 속 별칭
+   'KB스타'가 정확 일치로 잡히던 것(함정 오답·엉뚱한 상품)을 막는다.
+4. 거절 문장 통일: 행위 요청·실시간 지수·배당락일·표면금리 100% 초과·미존재 운용사·해외 ETF 위험등급은
+   라우터가 거절로 확정하고, 생성기가 자기 말로 거절하면 출구에서 정해진 거절문으로 바꾼다.
+"""
+import os
+
+import duckdb
+import pytest
+
+from engine.answer_service import _looks_like_free_refusal, answer_question
+from engine.channels import RuntimeContext
+from engine.policy import load_policy
+from engine.router import route
+from pipeline.entity_index import DB_PATH_DEFAULT, EntityIndex, EntityRef, build_entity_index
+
+TODAY = "2026-08-22"
+POLICY = load_policy()
+
+
+@pytest.fixture(scope="module")
+def index():
+    con = duckdb.connect(DB_PATH_DEFAULT, read_only=True)
+    return build_entity_index(con)
+
+
+@pytest.fixture(scope="module")
+def ctx(index):
+    con = duckdb.connect(DB_PATH_DEFAULT, read_only=True)
+    return RuntimeContext(con=con, index=index, policy=POLICY)
+
+
+# ---------------------------------------------------------------------------
+# 1. 이름 경계
+# ---------------------------------------------------------------------------
+
+def test_scan_rejects_name_followed_by_digits_or_letters():
+    idx = EntityIndex()
+    idx.add("TIGER 코스피", EntityRef("product_kr_etp", "KR7277630000", "TIGER 코스피", "PREF01N001"))
+    idx.add("KODEX 200", EntityRef("product_kr_etp", "KR7069500007", "KODEX 200", "PREF01N001"))
+    assert idx.scan("TIGER 코스피300 순자산 얼마야?") == []          # 이름 뒤 숫자 → 다른 이름
+    assert [n for n, _ in idx.scan("TIGER 코스피 순자산 얼마야?")] == ["tiger코스피"]
+    assert idx.scan("KODEX 200TR 알려줘") == []                      # 이름 뒤 영문 → 다른 이름
+    assert [n for n, _ in idx.scan("KODEX 200은 어때?")] == ["kodex200"]   # 조사 → 경계
+
+
+def test_scan_hangul_continuation_needs_particle_or_question_word():
+    idx = EntityIndex()
+    idx.add("애플", EntityRef("constituent", "US0378331005", "APPLE INC", "constituent_aliases"))
+    idx.add("KB스타", EntityRef("company", "KB", "KB", "alias_dictionary"))
+    fund = "KB스타골드특별자산투자신탁(금-파)Ce"
+    idx.add(fund, EntityRef("product_fund", "F1", fund, "PRFD01N001"))
+    assert idx.scan("애플파이 주식을 담은 ETF 있어?") == []            # '파이' — 이름의 연속
+    assert [n for n, _ in idx.scan("애플 주식을 담은 ETF 있어?")] == ["애플"]
+    assert [n for n, _ in idx.scan("애플을 담은 ETF")] == ["애플"]
+    hits = idx.scan(f"{fund} 펀드 위험등급이 몇 등급이야?")
+    assert [r[0].kind for _n, r in hits] == ["product_fund"]           # 별칭 'KB스타'가 아니라 펀드명
+
+
+def test_scan_keeps_preferred_share_convention():
+    idx = EntityIndex()
+    idx.add("삼성전자", EntityRef("constituent", "005930", "삼성전자", "KRX-PDF"))
+    idx.add("삼성전자우", EntityRef("constituent", "005935", "삼성전자우", "KRX-PDF"))
+    assert [n for n, _ in idx.scan("삼성전자 우선주를 담은 ETF도 있어?")] == ["삼성전자우"]
+
+
+# ---------------------------------------------------------------------------
+# 4. 거절 확정 규칙 + 거절 문장 통일
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("question,intent", [
+    ("TIGER 200 10주 매수 주문 넣어줘", "action_request"),
+    ("오늘 코스피 지수 몇이야?", "time_violation"),
+    ("WON 미국빌리어네어 배당락일이 언제야?", "unsupported_field"),
+    ("표면금리 150%인 채권 있어?", "invalid_value"),
+    ("한라산자산운용이 운용하는 ETF 알려줘", "existence_check"),
+    ("Alger 35 ETF 위험등급 몇 등급이야?", "unsupported_field"),
+])
+def test_new_trap_rules_refuse(index, question, intent):
+    plan = route(question, index, policy=POLICY, today=TODAY)
+    assert plan.behavior_hint == "refuse" and plan.intent == intent
+
+
+def test_company_formal_alias_grounds_in_router(index):
+    plan = route("미래에셋자산운용이 운용하는 ETF 중에 순자산이 제일 큰 건 뭐야?", index, policy=POLICY, today=TODAY)
+    kinds = [r.kind for _n, refs in plan.entities for r in refs]
+    assert "company" in kinds and plan.behavior_hint == "answer"
+
+
+def test_free_refusal_detector():
+    assert _looks_like_free_refusal("죄송합니다. 조건에 맞는 항목을 데이터에서 확인하지 못했습니다.")
+    assert _looks_like_free_refusal("질문에 대한 답변을 찾을 수 없습니다.\n\n근거·기준일: 2026-07-11")
+    assert not _looks_like_free_refusal("요청하신 내용은 보유 데이터 기준으로 확인할 수 없습니다.\n- 사유: …")
+    assert not _looks_like_free_refusal("결과 3건\n1. KODEX 200\n2. TIGER 200\n3. RISE 200")
+
+
+def test_trap_answers_start_with_fixed_refusal(ctx):
+    """함정은 어느 경로(규칙·폴백)로 가든 정해진 거절문으로 시작한다 — 채점 인정 조건."""
+    for q in ("TIGER 코스피300 순자산 얼마야?", "애플파이 주식을 담은 ETF 있어?",
+              "한라산자산운용이 운용하는 ETF 알려줘", "TIGER 200 10주 매수 주문 넣어줘"):
+        out = answer_question(q, ctx, today=TODAY)
+        assert out["answer"].startswith("요청하신 내용은 보유 데이터 기준으로 확인할 수 없습니다"), q
+
+
+# ---------------------------------------------------------------------------
+# 2·3·5·6. 속성 규칙 · 운용사 결합 · 띄어쓰기 · 잔여
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("question,intent,op", [
+    ("하나캐피탈390-6 만기일이 언제야?", "bond_detail", "bond_detail"),
+    ("신한카드2276-2 신용등급이 뭐야?", "bond_detail", "bond_detail"),
+    ("KB스타골드특별자산투자신탁(금-파)Ce 펀드 위험등급이 몇 등급이야?", "fund_detail", "fund_detail"),
+    ("키움투자자산운용이 운용하는 국내 ETF는 몇 개야?", "company_product_count", "mgmt_product_count"),
+    ("미래에셋자산운용이 운용하는 ETF 중에 순자산이 제일 큰 건 뭐야?", "company_products_ranked", "etp_by_mgmt"),
+    ("신한자산운용의 반도체 ETF 있어?", "company_products_ranked", "etp_by_mgmt"),
+    ("순자산 상위 3개 국내 ETF의 운용사를 각각 알려줘", "etp_ranking", "etp_top_aum"),
+    ("국내 ETF랑 ETN 중에 어느 쪽 상품 수가 더 많아?", "etp_count", "etp_count"),
+    ("해외에 투자하는 주식형 공모펀드 중에서 순자산 큰 순으로 5개만 알려줘", "fund_filter", "fund_filter"),
+])
+def test_phase_b_rules_route(index, question, intent, op):
+    plan = route(question, index, policy=POLICY, today=TODAY)
+    assert plan.intent == intent and any(c.op == op for c in plan.calls), (plan.intent, [c.op for c in plan.calls])
+
+
+def test_fund_filter_region_and_order(index):
+    plan = route("해외에 투자하는 주식형 공모펀드 중에서 순자산 큰 순으로 5개만 알려줘", index, policy=POLICY, today=TODAY)
+    params = next(c.params for c in plan.calls if c.op == "fund_filter")
+    assert params.get("region") == "해외" and params.get("order") == "aum" and params["limit"] == 5
+
+
+def test_bond_list_defaults_to_unmatured(index):
+    plan = route("표면금리가 6% 이상인 회사채 알려줘", index, policy=POLICY, today=TODAY)
+    params = next(c.params for c in plan.calls if c.op == "bond_filter")
+    assert params.get("maturity_status") == "active" and params.get("bond_class") == "회사채"
+
+
+def test_nospace_questions_are_not_refused(ctx):
+    """띄어쓰기 없는 질문(v2 P-02/05)은 문장 전체를 상품명으로 보고 거절하지 않는다."""
+    for q in ("레버리지ETF찾아줘", "현재판매가능한원화채권중신용등급AA이상인종목을알려줘"):
+        out = answer_question(q, ctx, today=TODAY)
+        assert not out["answer"].startswith("요청하신 내용은 보유 데이터 기준으로 확인할 수 없습니다"), q
+
+
+def test_attribute_notes_from_detail_rows():
+    from engine.answer_service import attribute_notes
+    bond = [{"PD_NO": "X", "MAT_DT": "2026-11-03", "drv_crd_grd_norm": "AA-", "PD_EVCO_CRD_GRD": "AA-, AA-, AA-", "SRFC_IRT": "4.5"}]
+    notes = attribute_notes("하나캐피탈390-6 만기일이 언제야?", "bond_detail", bond)
+    assert notes == ["만기일: 2026-11-03"]
+    notes = attribute_notes("신한카드2276-2 신용등급이 뭐야?", "bond_detail", bond)
+    assert "신용등급(대표): AA-" in notes and "평가사별 신용등급: AA-, AA-, AA-" in notes
+    etp = [{"pd_lstg_dt": "20221220", "drv_instrument_type": "ETF"}]
+    assert attribute_notes("KIWOOM 미국S&P500은 언제 상장됐어?", "etp_detail", etp) == ["상장일(원천 항목명: 상품거래가능일자): 2022-12-20"]
+    fund = [{"drv_risk_grade": "2", "zrin_fd_ivst_risk_grd_nm": "높은 위험"}]
+    assert attribute_notes("펀드 위험등급이 몇 등급이야?", "fund_detail", fund) == ["위험등급(1=매우 높음~6=매우 낮음): 2등급(높은 위험)"]
+    assert attribute_notes("아무 질문", "etp_name_search", etp) == []

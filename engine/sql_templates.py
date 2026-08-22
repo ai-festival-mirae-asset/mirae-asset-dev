@@ -166,6 +166,39 @@ TEMPLATES = {t.id: t for t in [
        source="PRBD01N001", key_col="PD_NO"),
 
     # ---------------- 국내 ETP (L-09~16, L-26, L-28, L-30, M-15/17/18, H-16/24/28/30) ----------------
+    _t("bond_detail",
+       "국내채권 1종 상세 — 키(PD_NO)로 조회: 만기일·신용등급(대표/평가사별)·표면금리·발행일·분류·통화·"
+       "매수가능·영구채 여부. 대상: 8/22 블라인드 v2 L-06~09(채권 만기일·신용등급 질문 — 상품은 잡혔는데 속성 규칙이 없었음).",
+       """SELECT PD_NO, PD_NM, PD_ABRV_NM, STD_PD_MCLS_NM, CURR_CD, ISU_DT, MAT_DT, SRFC_IRT,
+                 drv_crd_grd_norm, PD_EVCO_CRD_GRD, drv_crd_grd_rank, drv_maturity_status,
+                 drv_is_buyable, drv_is_perpetual, drv_risk_grade
+          FROM kr_bond WHERE PD_NO = $pd_no""",
+       [Param("pd_no", required=True)], source="PRBD01N001", key_col="PD_NO"),
+
+    _t("etp_by_mgmt",
+       "운용사(복구값 기준) 상품 목록 — 순자산총액 내림차순, 상품명 패턴·유형·상장중 선택. "
+       "대상: 8/22 v2 M-08/09(운용사 순자산 1위)·H-05(운용사×테마) — 그래프 목록엔 순자산이 없어 AI 가 포기했던 유형.",
+       """SELECT e.pd_itm_no, e.pd_abrv_nm, e.pd_nm, e.drv_instrument_type, e.drv_listing_status,
+                 e.pd_net_tamt, coalesce(m.resolved, e.cu_fund_mgmt_co) AS mgmt
+          FROM kr_etp e LEFT JOIN mgmt_resolved m USING (pd_itm_no)
+          WHERE coalesce(m.resolved, e.cu_fund_mgmt_co) = $mgmt
+            AND ($instrument_type IS NULL OR e.drv_instrument_type = $instrument_type)
+            AND ($active_only IS NULL OR e.drv_listing_status = 'active')
+            AND ($name_pattern IS NULL OR e.pd_nm ILIKE $name_pattern ESCAPE '\\')
+          ORDER BY TRY_CAST(e.pd_net_tamt AS DOUBLE) DESC NULLS LAST, e.pd_itm_no LIMIT $limit""",
+       [Param("mgmt", required=True), Param("instrument_type"), Param("active_only"),
+        Param("name_pattern"), Param("limit", required=True)],
+       source="PREF01N001", key_col="pd_itm_no"),
+
+    _t("mgmt_product_count",
+       "운용사(복구값 기준) 상품 수 — 유형(ETF/ETN)·상장상태별. 대상: 8/22 v2 M-06/07(근거 10줄을 세어 '10개'라던 오답).",
+       """SELECT coalesce(m.resolved, e.cu_fund_mgmt_co) AS mgmt, e.drv_instrument_type,
+                 e.drv_listing_status, count(*) AS n
+          FROM kr_etp e LEFT JOIN mgmt_resolved m USING (pd_itm_no)
+          WHERE coalesce(m.resolved, e.cu_fund_mgmt_co) = $mgmt
+          GROUP BY 1, 2, 3 ORDER BY 2, 3""",
+       [Param("mgmt", required=True)], source="PREF01N001"),
+
     _t("etp_detail",
        "국내 ETP 1종 상세 — 키(pd_itm_no)로 조회. grounding 이 이름→키를 먼저 푼다. "
        "대상: L-09/10/28, H-30.",
@@ -310,14 +343,18 @@ TEMPLATES = {t.id: t for t in [
     _t("fund_counts",
        "공모펀드 상품(마스터)·판매 클래스 수 — 95,619행≠상품 수 함정 방어. 대상: L-21.",
        """SELECT (SELECT count(*) FROM fund_master) AS products,
-                 (SELECT count(*) FROM fund_class)  AS share_classes""",
+                 (SELECT count(*) FROM fund_class)  AS share_classes,
+                 (SELECT count(*) FROM fund_master
+                   WHERE replace(trim(coalesce(sale_yn,'')), ' ', '') = '판매중') AS on_sale_products,
+                 (SELECT count(*) FROM fund_class
+                   WHERE replace(trim(coalesce(sale_yn,'')), ' ', '') = '판매중') AS on_sale_classes""",
        [], source="PRFD01N001"),
 
     _t("fund_filter",
        "공모펀드 필터 — 현재 판매상태(sale_yn)와 당사판매여부(thco_sale_yn)를 구분하고 "
        "운용속성·위험등급을 함께 적용. 마스터(상품) 단위. 대상: L-22/23.",
-       """SELECT itm_no, itm_nm, or_attr_desc, drv_risk_grade, sale_yn, thco_sale_yn,
-                 share_class_count
+       """SELECT itm_no, itm_nm, itm_abrv_nm, or_attr_desc, drv_risk_grade, sale_yn, thco_sale_yn,
+                 share_class_count, ovrs_fd_desc, fd_nast_suma
           FROM fund_master
           WHERE ($on_sale_only IS NULL OR replace(trim(coalesce(sale_yn,'')), ' ', '') = '판매중')
             AND ($thco_sale_only IS NULL OR upper(trim(coalesce(thco_sale_yn,'')))
@@ -325,9 +362,11 @@ TEMPLATES = {t.id: t for t in [
             AND ($attr_pattern IS NULL OR or_attr_desc ILIKE $attr_pattern ESCAPE '\\')
             AND ($min_risk IS NULL OR TRY_CAST(drv_risk_grade AS INT) >= $min_risk)
             AND ($max_risk IS NULL OR TRY_CAST(drv_risk_grade AS INT) <= $max_risk)
-          ORDER BY itm_no LIMIT $limit""",
+            AND ($region IS NULL OR ovrs_fd_desc = $region)
+          ORDER BY CASE WHEN $order = 'aum' THEN TRY_CAST(fd_nast_suma AS DOUBLE) END DESC NULLS LAST,
+                   itm_no LIMIT $limit""",
        [Param("on_sale_only"), Param("thco_sale_only"), Param("attr_pattern"), Param("min_risk"),
-        Param("max_risk"), Param("limit", required=True)],
+        Param("max_risk"), Param("region"), Param("order"), Param("limit", required=True)],
        source="PRFD01N001", key_col="itm_no"),
 
     _t("fund_top_return_1y",

@@ -84,7 +84,7 @@ def gate_value_domain(question, policy):
 # 검문소 2 — 존재 검사: 질문이 전제하는 상품·종목이 데이터에 진짜 있나
 # ---------------------------------------------------------------------------
 
-_ASKS_SPECIFIC_RE = re.compile(r"정보|알려|수익률|보수|어때|있어|찾아|추천|구조")
+_ASKS_SPECIFIC_RE = re.compile(r"정보|알려|수익률|보수|어때|있어|찾아|추천|구조|얼마|몇|언제|뭐야|어디|순자산|비교")   # 8/22 v2: "순자산 얼마야?"도 특정 상품 질문
 _VARIANT_RE = re.compile(r"([가-힣A-Za-z0-9]*)\s*(제?\s?\d+\s?호)")
 _NAME_SUFFIX_RE = re.compile(r"(펀드|투자신탁|증권|상품)$")
 
@@ -122,8 +122,8 @@ def gate_existence(question, index, policy):
     ② 브랜드+미존재 상품명: KODEX 등 브랜드로 시작하는 상품명인데 그 이름이 없음
     ③ 'N호' 변형: 기준일 데이터에 해당 호수로 식별되는 상품이 없음
     """
-    normalized_question = normalize_product_query(question)
-    grounded = ground_entities(index, normalized_question)
+    from engine.router import ground_with_alias_fallback      # 원문이 상품명을 품으면 별칭 치환 안 함(8/22)
+    normalized_question, grounded = ground_with_alias_fallback(index, question)
     matched_names = [name for name, _refs in grounded]
     asks = bool(_ASKS_SPECIFIC_RE.search(question))
     limit = policy["trap_similar_suggest_limit"]

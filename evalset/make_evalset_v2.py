@@ -171,8 +171,10 @@ for i, (formal, raw) in enumerate(pick(MGMT, 2), 6):
 for i, (formal, raw) in enumerate(pick(MGMT, 2), 8):
     add(f"V2-M-{i:02d}", "중", "운용사/순위", f"{formal}이 운용하는 ETF 중에 순자산이 제일 큰 건 뭐야?", "answer", "순자산 1위 상품",
         "du_last_aum 내림차순 1위",
-        [{"type": "sql_names", "name": "순자산 1위", "min_hit": 1, "top": 1,
-          "sql": f"SELECT e.pd_abrv_nm, e.pd_nm FROM kr_etp e LEFT JOIN mgmt_resolved m USING(pd_itm_no) WHERE {mgmt_where(raw)} AND e.drv_instrument_type='ETF' AND e.drv_listing_status='active' ORDER BY TRY_CAST(e.du_last_aum AS DOUBLE) DESC NULLS LAST"}])
+        [{"type": "any_of", "name": "순자산 1위(두 순자산 열 중 하나)", "checks": [
+            {"type": "sql_names", "name": f"1위({col})", "min_hit": 1, "top": 1,
+             "sql": f"SELECT e.pd_abrv_nm, e.pd_nm FROM kr_etp e LEFT JOIN mgmt_resolved m USING(pd_itm_no) WHERE {mgmt_where(raw)} AND e.drv_instrument_type='ETF' AND e.drv_listing_status='active' ORDER BY TRY_CAST(e.{col} AS DOUBLE) DESC NULLS LAST"}
+            for col in ("du_last_aum", "pd_net_tamt")]}])
 themes = [t for t in ["2차전지", "바이오", "원자력", "리츠", "방산"]
           if q(f"SELECT count(*) FROM kr_etp WHERE drv_instrument_type='ETF' AND pd_nm ILIKE '%{t}%'")[0][0] >= 3]
 for i, t in enumerate(pick(themes, 3), 10):
@@ -213,16 +215,16 @@ pairs = [p for p in pairs if q(f"SELECT count(*) FROM ({intersect_sql(*p)})")[0]
 for i, (a, b) in enumerate(pairs, 1):
     add(f"V2-H-{i:02d}", "상", "구성종목/교집합", f"{a}랑 {b} 둘 다 담고 있는 ETF 알려줘", "answer", "교집합", "KRX 수집분",
         [{"type": "sql_names", "name": "교집합 ETF", "min_hit": 1, "sql": intersect_sql(a, b)}])
-top50 = q("""SELECT pd_abrv_nm, TRY_CAST(du_last_aum AS DOUBLE) FROM kr_etp WHERE drv_instrument_type='ETF'
-             AND drv_listing_status='active' AND length(pd_abrv_nm) BETWEEN 6 AND 18
+top50 = q("""SELECT pd_abrv_nm, TRY_CAST(du_last_aum AS DOUBLE), TRY_CAST(pd_net_tamt AS DOUBLE) FROM kr_etp
+             WHERE drv_instrument_type='ETF' AND drv_listing_status='active' AND length(pd_abrv_nm) BETWEEN 6 AND 18
              ORDER BY TRY_CAST(du_last_aum AS DOUBLE) DESC NULLS LAST LIMIT 60""")
 for i in (3, 4):
-    (a, aa), (b, bb) = pick(top50, 2)
-    winner = a if aa >= bb else b
-    add(f"V2-H-{i:02d}", "상", "국내ETF/비교", f"{a}랑 {b} 중에 순자산이 더 큰 건 어느 쪽이야?", "answer", f"{winner}",
-        "du_last_aum 비교",
-        [{"type": "answer_has_any", "name": "큰 쪽 이름", "terms": [winner]},
-         {"type": "answer_has_any", "name": "비교 표현", "terms": ["큽니다", "더 큽", "더 크", "더 많", "큰 쪽", "크다", "보다 큰", "보다 크", "앞선", "높"]}])
+    (a, aa, an), (b, bb, bn) = pick(top50, 2)
+    winners = sorted({a if aa >= bb else b, a if (an or 0) >= (bn or 0) else b})   # 두 순자산 열의 승자 모두 인정
+    add(f"V2-H-{i:02d}", "상", "국내ETF/비교", f"{a}랑 {b} 중에 순자산이 더 큰 건 어느 쪽이야?", "answer", f"{'/'.join(winners)}",
+        "du_last_aum·pd_net_tamt 비교(둘 중 하나 기준)",
+        [{"type": "answer_has_any", "name": "큰 쪽 이름", "terms": winners},
+         {"type": "answer_has_any", "name": "비교 표현", "terms": ["큽니다", "더 큽", "더 크", "더 큰", "더 많", "큰 쪽", "큰 ETF", "큰 상품", "큰 것", "크다", "보다 큰", "보다 크", "앞선", "높"]}])
 for i, (formal, raw) in enumerate(pick(MGMT, 2), 5):
     t = "반도체"
     if q(f"SELECT count(*) FROM kr_etp e LEFT JOIN mgmt_resolved m USING(pd_itm_no) WHERE {mgmt_where(raw)} AND e.pd_nm ILIKE '%{t}%'")[0][0] == 0:
@@ -243,8 +245,10 @@ add("V2-H-08", "상", "구성종목×운용사", f"{nm} 담은 ETF 중에 {forma
          "sql": f"SELECT DISTINCT e.pd_abrv_nm, e.pd_nm FROM etf_constituent c JOIN kr_etp e ON e.pd_itm_no=c.etf_isin LEFT JOIN mgmt_resolved m ON m.pd_itm_no=e.pd_itm_no WHERE c.COMPST_ISU_CD='{esc(cd)}' AND {mgmt_where(raw)}"},
         {"type": "answer_has_any", "name": "없음 명시", "terms": ["없습니다", "없음", "확인되지 않", "해당 상품이 없"]}]}])
 add("V2-H-09", "상", "국내ETF/순위×운용사", "순자산 상위 3개 국내 ETF의 운용사를 각각 알려줘", "answer", "상위 3 운용사", "du_last_aum 상위 3",
-    [{"type": "sql_names", "name": "상위 3 상품", "min_hit": 2, "top": 3,
-      "sql": "SELECT pd_abrv_nm, pd_nm FROM kr_etp WHERE drv_instrument_type='ETF' AND drv_listing_status='active' ORDER BY TRY_CAST(du_last_aum AS DOUBLE) DESC NULLS LAST"},
+    [{"type": "any_of", "name": "상위 3 상품(두 순자산 열 중 하나)", "checks": [
+        {"type": "sql_names", "name": f"상위 3({col})", "min_hit": 2, "top": 3,
+         "sql": f"SELECT pd_abrv_nm, pd_nm FROM kr_etp WHERE drv_instrument_type='ETF' AND drv_listing_status='active' ORDER BY TRY_CAST({col} AS DOUBLE) DESC NULLS LAST"}
+        for col in ("du_last_aum", "pd_net_tamt")]},
      {"type": "sql_names", "name": "운용사명", "min_hit": 1, "top": 3,
       "sql": "SELECT coalesce(m.resolved, e.cu_fund_mgmt_co) FROM kr_etp e LEFT JOIN mgmt_resolved m USING(pd_itm_no) WHERE e.drv_instrument_type='ETF' AND e.drv_listing_status='active' ORDER BY TRY_CAST(e.du_last_aum AS DOUBLE) DESC NULLS LAST"}])
 add("V2-H-10", "상", "국내ETF/집계비교", "국내 ETF랑 ETN 중에 어느 쪽 상품 수가 더 많아?", "answer", "ETF 1,201 > ETN 532", "유형별 건수",
@@ -372,7 +376,9 @@ add("V2-O-09", "중", "국내ETF/집계", "국내 ETF 중에 순자산이 1조�
          "sql": "SELECT count(*) FROM kr_etp WHERE drv_instrument_type='ETF' AND drv_listing_status='active' AND TRY_CAST(du_last_aum AS DOUBLE)>=1e12"},
         {"type": "sql_number", "name": "ETF 전체",
          "sql": "SELECT count(*) FROM kr_etp WHERE drv_instrument_type='ETF' AND TRY_CAST(du_last_aum AS DOUBLE)>=1e12"},
-        {"type": "sql_number", "name": "ETF+ETN", "sql": "SELECT count(*) FROM kr_etp WHERE TRY_CAST(du_last_aum AS DOUBLE)>=1e12"}]}])
+        {"type": "sql_number", "name": "ETF+ETN", "sql": "SELECT count(*) FROM kr_etp WHERE TRY_CAST(du_last_aum AS DOUBLE)>=1e12"},
+        {"type": "sql_number", "name": "ETF 상장중(순자산총액)", "sql": "SELECT count(*) FROM kr_etp WHERE drv_instrument_type='ETF' AND drv_listing_status='active' AND TRY_CAST(pd_net_tamt AS DOUBLE)>=1e12"},
+        {"type": "sql_number", "name": "ETF 전체(순자산총액)", "sql": "SELECT count(*) FROM kr_etp WHERE drv_instrument_type='ETF' AND TRY_CAST(pd_net_tamt AS DOUBLE)>=1e12"}]}])
 add("V2-O-10", "하", "해외ETF/지역", "해외 ETF 중에 일본에 투자하는 상품 알려줘", "answer", "wu_inv_rgn Japan", "투자지역 필터",
     [{"type": "sql_names", "name": "일본 투자 해외 ETF", "min_hit": 1,
       "sql": "SELECT pd_nm FROM global_etf WHERE wu_inv_rgn ILIKE '%Japan%'"}, src("PREF02N001")])

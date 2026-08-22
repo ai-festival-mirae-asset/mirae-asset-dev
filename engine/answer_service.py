@@ -69,6 +69,28 @@ def _sort_rows_by_aum(rows):
     return sorted(rows, key=aum, reverse=True)
 
 
+REFUSE_HEAD = "요청하신 내용은 보유 데이터 기준으로 확인할 수 없습니다"
+_FREE_REFUSAL_RE = re.compile(
+    r"확인할 수 없|확인하지 못|확인되지 않|찾을 수 없|찾지 못|제공(하지|할 수|받지) (못|없)|"
+    r"답변(을|이)?\s*(드릴 수 없|할 수 없|찾을 수 없)|정보(가|는)?\s*(없|포함되어 있지)|"
+    r"데이터(를|가)?\s*(제공받지|없)|죄송|알 수 없습니다")
+_NUMBERED_LINE_RE = re.compile(r"^\s*\d{1,3}[.)]\s*\S", re.M)
+
+
+def _looks_like_free_refusal(text):
+    """정해진 거절문이 아닌 '자기 말 거절'인가 — 앞머리 160자에 거절 표현이 있고 목록이 없을 때.
+
+    채점기(와 주최 채점)는 정해진 거절문으로 시작하는 답만 거절로 본다(8/22 v2 실측 —
+    "죄송합니다. 조건에 맞는 항목을 확인하지 못했습니다"는 '답변'으로 읽혀 함정 오답).
+    """
+    head = (text or "").strip()[:160]
+    if not head or head.startswith(REFUSE_HEAD):
+        return False
+    if len(_NUMBERED_LINE_RE.findall(text or "")) >= 2 or re.search(r"결과\s*\d+\s*건", text or ""):
+        return False                                  # 목록이 있는 답은 거절이 아니다
+    return bool(_FREE_REFUSAL_RE.search(head))
+
+
 def _draft_refusal(plan, result, verdict):
     """사유 기반 템플릿 거절문 — HCX 자유 생성 없음(확정 설계).
 
@@ -209,7 +231,56 @@ def dist_sentence(op, rows):
 
 # 건수 템플릿 — 숫자 한 개짜리 결과는 생성기가 "정보 없음"으로 오독하기 쉬워(L-05 실측) 문장으로 승격한다
 _COUNT_OPS = {"bond_count", "etp_count", "global_etf_count", "fund_counts"}
-_COUNT_LABELS = {"n": "건수", "products": "상품(마스터) 수", "share_classes": "판매 클래스 수"}
+_COUNT_LABELS = {"n": "건수", "products": "상품(마스터) 수", "share_classes": "판매 클래스 수",
+                 "on_sale_products": "판매 중 상품(마스터) 수", "on_sale_classes": "판매 중 클래스 수"}
+# 상품 1종 상세에서 질문이 콕 집은 항목은 노트로 강제한다(8/22 블라인드 v2 L-04~10 — 생성기가
+# 상세 행에서 그 칸을 못 찾거나 빼먹던 실측). (질문 낱말, 열, 라벨, 형식)
+_DETAIL_OPS = {"etp_detail", "bond_detail", "fund_detail"}
+_ATTR_NOTES = [
+    (r"상장|거래\s*가능|언제", "pd_lstg_dt", "상장일(원천 항목명: 상품거래가능일자)", "date"),
+    (r"만기", "MAT_DT", "만기일", "date"),
+    (r"발행일|발행", "ISU_DT", "발행일", "date"),
+    (r"신용\s*등급|등급", "drv_crd_grd_norm", "신용등급(대표)", "text"),
+    (r"신용\s*등급|등급", "PD_EVCO_CRD_GRD", "평가사별 신용등급", "text"),
+    (r"표면\s*금리|금리|쿠폰|이자", "SRFC_IRT", "표면금리(%)", "text"),
+    (r"위험\s*등급|위험", "drv_risk_grade", "위험등급(1=매우 높음~6=매우 낮음)", "risk"),
+    (r"순자산|규모", "fd_nast_suma", "순자산", "krw"),
+    (r"순자산|규모", "pd_net_tamt", "순자산총액", "krw"),
+    (r"기초\s*지수|추종", "cu_base_index", "기초지수", "text"),
+    (r"보수", "cu_charge_rt", "총보수(%)", "text"),
+    (r"수익률", "fd_yr1_ern_r", "1년 수익률(%)", "text"),
+    (r"수익률", "du_er_1y", "1년 수익률(%)", "text"),
+    (r"ETF야|ETN이야|유형|종류", "drv_instrument_type", "상품 유형", "text"),
+]
+
+
+def _fmt_attr(row, col, fmt):
+    v = row.get(col)
+    if v in (None, ""):
+        return None
+    s = str(v).strip()
+    if fmt == "date":
+        d = re.sub(r"\D", "", s)
+        return f"{d[:4]}-{d[4:6]}-{d[6:8]}" if len(d) == 8 else s
+    if fmt == "risk":
+        name = row.get("zrin_fd_ivst_risk_grd_nm")
+        return f"{s}등급" + (f"({name})" if name else "")
+    if fmt == "krw":
+        return row.get(col + "_krw") or s
+    return s
+
+
+def attribute_notes(question, op, rows):
+    """상세 조회 행 + 질문 낱말 → '만기일: 2026-11-03' 같은 사실 노트(순수 함수)."""
+    if op not in _DETAIL_OPS or not rows:
+        return []
+    row, out = rows[0], []
+    for rx, col, label, fmt in _ATTR_NOTES:
+        if col in row and re.search(rx, question):
+            val = _fmt_attr(row, col, fmt)
+            if val:
+                out.append(f"{label}: {val}")
+    return list(dict.fromkeys(out))
 # 구성종목에 선물·옵션이 보이면 파생 위험을 데이터 사실로 명시한다 (H-21·M-20)
 _DERIV_SECUGRP = {"FU": "선물", "OP": "옵션"}
 
@@ -250,6 +321,7 @@ def data_notes(question, plan, result):
             if kinds:
                 notes.append(f"구성종목에 {'·'.join(sorted(kinds))}(파생상품)이 포함됨 — 레버리지·인버스형은 지수 선물로 "
                              "배수를 만들므로 기초지수 변동의 배수로 손익이 움직이는 파생 위험이 있음(위험등급은 상품 행 참조)")
+        notes.extend(attribute_notes(question, o.op, o.rows))        # 질문이 집은 항목 값(8/22)
         if o.op == "etp_detail" and o.rows and re.search(r"지수|추종|벤치마크|따라가", question):
             idx = o.rows[0].get("cu_base_index")
             if idx:
@@ -404,6 +476,20 @@ def answer_question(question, ctx, question_id="", today=None,
                 gen_note = "생성 호출 실패 — 규칙 요약으로 폴백"
         if answer is None:
             answer = _draft_answer(plan, result)
+        # 거절 문장 통일(8/22 블라인드 v2 T-03·05·13·14 실측): 생성기·규칙 요약이 자기 말로
+        # 거절하면("찾을 수 없었습니다"·"죄송합니다"류) 채점상 거절이 아니다. 조회 결과가 있으면
+        # 규칙 요약(목록)으로, 0건이면 정해진 거절문으로 바꾼다 — 거절은 한 문장으로만 시작한다.
+        # partial(한계 명시 답변)은 '확인할 수 없음' 문구가 정상이므로 건드리지 않는다.
+        if verdict.behavior == "answer" and _looks_like_free_refusal(answer):
+            has_rows = any(o.ok and o.rows for o in result.outcomes)
+            if has_rows:
+                draft = _draft_answer(plan, result)
+                if not _looks_like_free_refusal(draft):
+                    answer = draft
+                    gen_note = (gen_note + " · " if gen_note else "") + "생성기가 자유 문장으로 거절 → 조회 결과가 있어 규칙 요약으로 교체"
+            else:
+                answer = _draft_refusal(plan, result, verdict)
+                gen_note = (gen_note + " · " if gen_note else "") + "조회 0건 + 자유 문장 거절 → 정해진 거절문으로 통일"
 
     return serialize_answer(question_id, question, evidences,
                             _think_trace(plan, result, verdict, gen_note), answer)

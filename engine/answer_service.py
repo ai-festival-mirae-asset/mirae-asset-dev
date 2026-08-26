@@ -329,6 +329,15 @@ def data_notes(question, plan, result):
             else:
                 notes.append("기초지수 값이 이 상품 행에 없음(cu_base_index 결측) — 국내ETF 마스터의 기초지수 컬럼은 "
                              "전체의 0.18%만 채워져 있어 추종 지수는 제공 데이터로 확인할 수 없음")
+    # v2 H-08/O-03: 운용사·테마 필터가 걸린 편입 ETF 조회가 0건이면 '없다'를 명시(거절이 아니라 사실 답변)
+    mf = plan.hints.get("mgmt_filter")
+    nf = plan.hints.get("holder_name_filter")
+    if mf or nf:
+        holder_outs = [o for o in result.outcomes
+                       if o.ok and o.channel == "sql" and o.op == "constituent_holders"]
+        if holder_outs and not any(o.rows for o in holder_outs):
+            what = f"'{mf['name']}' 운용 상품" if mf else f"상품명에 '{nf}' 표기가 있는 편입 상품"
+            notes.append(f"{what}은 확인되지 않습니다(조건 일치 0건)")
     return notes
 
 

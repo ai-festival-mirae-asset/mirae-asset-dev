@@ -135,6 +135,8 @@ def rating_condition(question, policy):
     8/14 사용자 확정: 'AA 이상'은 **문자 그대로**(AAA·AA+·AA, rank<=3) — AA- 는
     'AA급'/'AA등급대'라는 band 표현이 있을 때만 포함(rank<=4). 정책 플래그
     (rating_at_or_above_includes_minus)를 true 로 바꾸면 옛 등급대 해석으로 복귀.
+    8/26(v2 O-07): 이상/이하 없이 'AA급'만 있으면 그 등급대 묶음(AA+·AA·AA-,
+    rank 2~4)만 — 상한 없이 두면 AAA 까지 섞여 나온다. 금융권 표기 관례 해석.
     채택 해석은 노트로 반환해 답변에 항상 명시한다.
     """
     valid, _ = extract_ratings(question)
@@ -161,8 +163,38 @@ def rating_condition(question, policy):
         cond["min_rating_rank"] = rank
         notes.append(f"'{token} 이하'=서열 {rank} 이상(등급 낮은 쪽)으로 해석")
     else:
-        cond["max_rating_rank"] = band_low if is_band else rank
+        if is_band:
+            cond["min_rating_rank"] = RATING_RANK.get(token + "+", rank)
+            cond["max_rating_rank"] = band_low
+            notes.append(f"'{token}급(등급대)'={token}+·{token}·{token}- 묶음"
+                         f"(서열 {cond['min_rating_rank']}~{band_low})으로 해석 — 상위 등급(AAA 등)은 미포함")
+        else:
+            cond["max_rating_rank"] = rank
     return cond, notes
+
+
+_AUM_AMOUNT_RE = re.compile(r"(\d+(?:[.,]\d+)?)\s*(조|억)\s*원?\s*(?:이|을|은|가)?\s*(넘|초과|이상|이하|미만|아래)")
+
+
+def extract_aum_bounds(question):
+    """'순자산 1조 넘는/5000억 이상' → 순자산총액 필터 파라미터 + 해석 노트 (v2 O-09). 순수 함수.
+
+    '넘는/초과'는 초과(>), '이상'은 이상(>=)으로 구분해 그대로 SQL 에 전달한다.
+    순자산 문맥(순자산·AUM·규모)이 없으면 금액이 있어도 건드리지 않는다.
+    """
+    if not re.search(r"순자산|AUM|규모", question, re.IGNORECASE):
+        return {}, []
+    params, notes = {}, []
+    key_by_dir = {"넘": "min_aum_gt", "초과": "min_aum_gt", "이상": "min_aum_ge",
+                  "이하": "max_aum_le", "미만": "max_aum_lt", "아래": "max_aum_lt"}
+    label_by_key = {"min_aum_gt": "초과", "min_aum_ge": "이상", "max_aum_lt": "미만", "max_aum_le": "이하"}
+    for m in _AUM_AMOUNT_RE.finditer(question):
+        value = float(m.group(1).replace(",", "")) * (1e12 if m.group(2) == "조" else 1e8)
+        key = key_by_dir[m.group(3)]
+        params[key] = value
+        notes.append(f"순자산 조건은 순자산총액(pd_net_tamt) {m.group(1)}{m.group(2)} 원 "
+                     f"{label_by_key[key]} 기준으로 해석")
+    return params, notes
 
 
 _RISK_RE = re.compile(r"(\d)\s*등급")
@@ -691,34 +723,26 @@ def route_stage_a(question, index, policy=None, today=None):
         plan.hints["display_rows"] = 10
         return done("bond_etf_rating_dist", "partial")
 
-    # ── 5.7 자회사 관계 미수집 상태의 보수적 대체 조회 (H-01) ────────────
+    # ── 5.7 자회사 관계 미수집 상태의 보수적 대체 조회 (H-01 · v2 O-05) ────────
+    #        8/26: 개별 후보 4종 나열 대신 그룹·계열사 질의(6.0)와 같은 접두 집계로 —
+    #        회사명이 base 로 시작하는 종목을 하나라도 편입한 ETF 를 순자산 큰 순으로.
     if has_etf_word and "자회사" in q:
-        base = comp_name or const_name
-        candidates = []
-        if base:
-            base_norm = re.sub(r"\s+", "", base).casefold()
-            seen = set()
-            for _name, ref in index.search(base, limit=30, kinds=("constituent",)):
-                display_norm = re.sub(r"\s+", "", ref.display).casefold()
-                # 국내 상장사 후보만 사용한다. 이름에 회사명이 들어간 선물·채권
-                # 종목을 자회사 후보로 오인하지 않도록 6자리 주식코드로 제한한다.
-                if not re.fullmatch(r"\d{6}", ref.key) or ref.key in seen or display_norm == base_norm:
-                    continue
-                seen.add(ref.key)
-                candidates.append(ref)
+        base = (comp_ref.display if comp_ref else None) or (const_ref.display if const_ref else None)
+        if not base:
+            m_sub = re.search(r"([A-Za-z가-힣0-9&]{2,12}?)(?:의|그룹의|그룹)?\s*자회사", q)
+            base = m_sub.group(1) if m_sub else None
         plan.calls.append(ChannelCall("keyword", "lookup", {"query": base or q, "limit": 10}))
-        for ref in candidates[:4]:
-            plan.calls.append(ChannelCall("graph", "holding_etfs",
-                                          {"query": ref.key, "limit": 30}))
-        if candidates:
-            code_params = {f"code_{chr(ord('a') + i)}": ref.key
-                           for i, ref in enumerate(candidates[:4])}
-            code_params["limit"] = 30
-            plan.calls.append(ChannelCall("sql", "constituent_candidate_holders_by_aum",
-                                          code_params))
+        if base:
+            base = re.sub(r"\s+", "", base)
+            plan.calls.append(ChannelCall("sql", "constituent_prefix_holders_by_aum",
+                                          {"prefix_raw": base, "limit": 12}))
+            plan.hints["group_prefix"] = base
         plan.hints["order"] = "aum"
+        plan.hints["display_rows"] = 10
         plan.hints["skip_generation"] = True
-        plan.notes.append("자회사 법적 관계(subsidiaryOf)는 미수집 — 회사명이 포함된 개별 종목을 후보로만 조회")
+        plan.notes.append("자회사 법적 관계(subsidiaryOf)는 미수집 — 회사명이 같은 이름으로 시작하는 국내 상장 종목"
+                          "(지주사 본체 포함 가능)을 후보로 두고, 이를 편입한 ETF를 순자산 큰 순으로 조회"
+                          "(이름 기준 근사 해석 — 실제 자회사 여부와 다를 수 있음)")
         plan.notes.append("구체적 위험요인 자료는 미수집 — 조회된 ETF의 상품 위험등급만 안내")
         return done("subsidiary_holding_candidates", "partial")
 
@@ -811,6 +835,16 @@ def route_stage_a(question, index, policy=None, today=None):
     if not product_ref and (has_etf_word or re.search(r"커버드콜|그룹주|액티브", q)) \
             and re.search(r"담|들고|구성|비중|편입|보유|퍼센트|%", q):
         cand = resolve_product_candidates(index, q)
+        if cand and const_ref and any(v in q for v in HOLDING_VERBS):
+            # '캠브리콘처럼 …을 담은'(빗댐 표현)은 그 종목의 역질의(규칙 6) 소관 — 상품명 조각이
+            # 가로채면 안 된다 (v2 O-06). 빗댐 표지 없이 종목+테마가 함께 오면('에코프로비엠이
+            # 편입된 2차전지 ETF', v2 O-03) 기존대로 상품명 조각 경로가 맞다. 단 조각이 종목명을
+            # 포함하면('애플 밸류체인') 빗댐이어도 상품 구성 질의다.
+            _nn61 = lambda s: re.sub(r"\s+", "", str(s)).casefold()
+            nq, nc = _nn61(q), _nn61(const_name)
+            likeness = any((nc + m) in nq for m in ("처럼", "같이", "같은"))
+            if likeness and nc not in _nn61(cand[0]):
+                cand = None
         if cand:
             frag, refs = cand
             if len(refs) <= 3 or "+" in frag:
@@ -842,18 +876,38 @@ def route_stage_a(question, index, policy=None, today=None):
         weight_th = next((v for v, k, d in percents
                           if k in ("weight", "unknown") and d in ("이상", "초과", "넘")), None)
         by_aum = bool(re.search(r"순자산|규모|AUM", q, re.IGNORECASE))
+        # v2 H-08: '…담은 ETF 중에 ○○자산운용이 운용하는' — 운용사 조건을 SQL 필터로 함께 적용
+        mgmt_filter = comp_ref if (comp_ref and "운용" in q) else None
+        # v2 O-03: '에코프로비엠이 편입된 2차전지 ETF' — 테마 낱말이 함께 오면 상품명 필터로 교집합.
+        #          빗댐 표현('캠브리콘처럼 …', v2 O-06)의 테마는 종목 쪽 수식이라 필터로 안 쓴다.
+        _nn6 = lambda s: re.sub(r"\s+", "", str(s)).casefold()
+        likeness6 = any((_nn6(const_name) + m) in _nn6(q) for m in ("처럼", "같이", "같은"))
+        theme_pat = non_region_themes[0] if (non_region_themes and not likeness6) else None
         for key in keys:
             if weight_th is not None:
                 plan.calls.append(ChannelCall("sql", "constituent_weight_above",
                                               {"code": key, "min_weight": weight_th,
                                                "limit": limit}))
             else:
-                plan.calls.append(ChannelCall("graph", "holding_etfs",
-                                              {"query": key, "limit": limit}))
+                if not mgmt_filter and not theme_pat:     # 필터 시엔 무필터 그래프 나열이 답을 흐린다
+                    plan.calls.append(ChannelCall("graph", "holding_etfs",   # (O-03 실측: 생성기가 그래프 쪽을 골라 나열)
+                                                  {"query": key, "limit": limit}))
                 holder_params = {"code": key, "limit": max(limit, 30)}
                 if by_aum:                                # M-02: 순자산 큰 순은 SQL 이 전체에서 정렬
                     holder_params["order"] = "aum"
+                if mgmt_filter:
+                    holder_params["mgmt"] = mgmt_filter.key
+                if theme_pat:
+                    holder_params["name_pattern_raw"] = theme_pat
                 plan.calls.append(ChannelCall("sql", "constituent_holders", holder_params))
+        if mgmt_filter:
+            plan.hints["mgmt_filter"] = {"name": comp_name, "key": mgmt_filter.key}
+            plan.notes.append(f"'{const_name}' 편입 ETF 중 '{comp_name}'(운용사 복구값 '{mgmt_filter.key}') "
+                              "운용 상품만 표시")
+        if theme_pat:
+            plan.hints["holder_name_filter"] = theme_pat
+            plan.notes.append(f"'{const_name}' 편입 ETF 중 상품명에 '{theme_pat}' 표기가 있는 상품으로 "
+                              "좁혀 표시(질문의 테마 조건)")
         if by_aum:
             plan.hints["order"] = "aum"
         plan.hints["constituent"] = {"name": const_name, "key": const_ref.key, "keys": keys}
@@ -996,7 +1050,7 @@ def route_stage_a(question, index, policy=None, today=None):
     if is_bond_domain and not has_etf_word and not is_fund_domain:
         cond, notes = rating_condition(q, policy)
         bond_class = next((v for w, v in BOND_CLASS_MAP if w in q), None)
-        buyable = "Y" if re.search(r"판매 가능|매수 가능|매수할 수 있|살 수 있", q) else None
+        buyable = "Y" if re.search(r"판매\s*가능|매수\s*가능|매수할\s*수\s*있|살\s*수\s*있", q) else None   # 붙여쓴 '판매가능한'도 동일 조건 (v2 P-02)
         coupon_min = next((v for v, k, d in percents if k == "coupon" and d in ("이상", "초과", "넘")), None)
         coupon_band = next((v for v, k, d in percents if k == "coupon" and d == "대"), None)
 
@@ -1078,8 +1132,7 @@ def route_stage_a(question, index, policy=None, today=None):
             return done("bond_count")
         if params:                                       # L-01/03
             plan.notes.extend(notes)
-            filter_params = dict(params)
-            filter_params.pop("min_rating_rank", None)   # bond_filter 는 상한만 받는다
+            filter_params = dict(params)                 # 8/26: min_rating_rank 도 템플릿이 받는다 (v2 O-07)
             filter_params["limit"] = max(limit, 20)
             plan.calls.append(ChannelCall("sql", "bond_filter", filter_params))
             count_keys = ("currency", "max_rating_rank", "min_rating_rank",
@@ -1133,8 +1186,10 @@ def route_stage_a(question, index, policy=None, today=None):
             plan.calls.append(ChannelCall("sql", "etp_count", {}))
             plan.notes.append("ETF 와 ETN 의 상품 수를 유형·상장상태별로 비교(전체/상장중 구분)")
             return done("etp_count")
-        if any(w in q for w in COUNT_WORDS) and not is_global and not comp_ref:   # L-13
-            plan.calls.append(ChannelCall("sql", "etp_count", {}))
+        if any(w in q for w in COUNT_WORDS) and not is_global and not comp_ref:   # L-13 · v2 O-09
+            aum_params, aum_notes = extract_aum_bounds(q)
+            plan.calls.append(ChannelCall("sql", "etp_count", aum_params))
+            plan.notes.extend(aum_notes)
             plan.notes.append("전체/상장중(active) 건수를 구분해 답변")
             return done("etp_count")
         if re.search(r"순자산|AUM|규모", q, re.IGNORECASE) and any(w in q for w in TOP_WORDS):  # L-11
@@ -1217,6 +1272,21 @@ def route_stage_a(question, index, policy=None, today=None):
                 if kw == "곱버스":
                     plan.notes.append("'곱버스'=레버리지 인버스(-2X) — 상품명 인버스+2X 조합으로 검색")
                 return done("etp_name_search")
+        # v2 M-12: 'X 관련/테마 (국내) ETF' — 사전에 없는 테마어(원자력 등)도 '관련' 앞 낱말을
+        #          그대로 이름 검색 + 의미 검색해 HCX 라우팅 변동에 기대지 않는다(규칙 우선).
+        #          위 고정 키워드 검색이 먼저 — 기존 경로(v1 H-24 등)를 그대로 보존하기 위함.
+        m_rel = re.search(r"([가-힣A-Za-z0-9&+]{2,12}?)[은는이가]?\s*(?:관련|테마)", q)
+        if m_rel and not const_ref and not product_ref and "이력" not in q:
+            term = _strip_particle(m_rel.group(1))
+            plan.calls.append(ChannelCall("sql", "etp_name_search",
+                                          {"pattern_raw": term, "instrument_type": itype,
+                                           "status": "active", "limit": max(limit, 20)}))
+            vec_params = {"query": q, "k": 8}
+            if "국내" in q and "해외" not in q:
+                vec_params["market"] = "국내상장"
+            plan.calls.append(ChannelCall("vector", "semantic", vec_params))
+            plan.notes.append(f"'{term}' 관련 상품은 상품명 표기(1차) + 의미 검색(보조)으로 조회")
+            return done("etp_name_search")
 
     # ── 12. 공모펀드 (L-21~25) ──────────────────────────────────────────────
     if is_fund_domain:
@@ -1260,6 +1330,8 @@ def route_stage_a(question, index, policy=None, today=None):
             if asks_our_sale:
                 params["thco_sale_only"] = "Y"
                 plan.notes.append("당사 판매는 thco_sale_yn='Y'를 추가로 동시 충족하는 상품 기준")
+            if "on_sale_only" not in params:              # v2 O-08: 가입 관점 기본 정렬
+                plan.notes.append("판매중 상품을 먼저 표시(판매완료 상품도 목록 뒤에 포함)")
             plan.calls.append(ChannelCall("sql", "fund_filter",
                                           params))
             plan.notes.extend(risk[2])
@@ -1283,6 +1355,8 @@ def route_stage_a(question, index, policy=None, today=None):
             if asks_our_sale:
                 params["thco_sale_only"] = "Y"
                 plan.notes.append("당사 판매는 thco_sale_yn='Y'를 추가로 동시 충족하는 상품 기준")
+            if "on_sale_only" not in params and "order" not in params:   # v2 O-08
+                plan.notes.append("판매중 상품을 먼저 표시(판매완료 상품도 목록 뒤에 포함)")
             plan.calls.append(ChannelCall("sql", "fund_filter", params))
             return done("fund_filter")
 

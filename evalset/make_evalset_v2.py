@@ -357,7 +357,8 @@ add("V2-O-04", "상", "테마/이력", "최근 3개월 동안 로봇 테마와 �
 add("V2-O-05", "상", "그룹/자회사", "LG의 자회사를 편입한 ETF 중 순자산이 큰 상품의 위험요인 알려줘", "partial",
     "LG 계열 편입 ETF 순자산 상위 + 위험등급·한계", "공식 상 예시(에코프로) 구조 변형 — 계열 판정은 회사명 접두 기준임을 명시",
     [{"type": "sql_names", "name": "LG 계열 편입 ETF", "min_hit": 1, "top": 10,
-      "sql": "SELECT DISTINCT e.pd_abrv_nm, e.pd_nm FROM etf_constituent c JOIN kr_etp e ON e.pd_itm_no=c.etf_isin WHERE c.COMPST_ISU_NM LIKE 'LG%' ORDER BY 1"},
+      # 질문이 '순자산이 큰 상품'을 물으므로 기대 상위 10 도 순자산 내림차순이어야 답과 같은 기준이 된다 (8/26 3차)
+      "sql": "SELECT e.pd_abrv_nm, e.pd_nm FROM etf_constituent c JOIN kr_etp e ON e.pd_itm_no=c.etf_isin WHERE c.COMPST_ISU_NM LIKE 'LG%' GROUP BY e.pd_abrv_nm, e.pd_nm ORDER BY max(TRY_CAST(e.pd_net_tamt AS DOUBLE)) DESC NULLS LAST"},
      {"type": "note_any", "name": "위험 관련 언급", "terms": ["위험등급", "위험", "파생", "한계", "기준"]}])
 add("V2-O-06", "중", "구성종목/해외종목", "캠브리콘처럼 중국 AI 반도체 기업을 담은 국내 ETF 알려줘", "answer", "CAMBRICON 편입 ETF",
     "공식 중 예시 변형(한글 별칭 → ISIN)",

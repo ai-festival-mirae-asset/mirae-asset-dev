@@ -331,12 +331,14 @@ def test_route_M30_description_resolves_product_constituents(index):
 
 
 @needs_db
-def test_route_H01_subsidiary_query_is_partial_and_excludes_derivatives(index):
+def test_route_H01_subsidiary_query_is_partial_and_prefix_aggregated(index):
+    """8/26(v2 O-05): 자회사 질의는 후보 4종 나열이 아니라 6.0(그룹)과 같은 접두 집계로 —
+    회사명이 base 로 시작하는 종목을 편입한 ETF 를 순자산 큰 순으로 조회한다."""
     plan = _route(index, "에코프로의 자회사를 편입한 ETF 중에 순자산이 큰 상품의 위험요인을 알려줘")
     assert plan.intent == "subsidiary_holding_candidates" and plan.behavior_hint == "partial"
-    holder_call = next(c for c in plan.calls if c.op == "constituent_candidate_holders_by_aum")
-    codes = [v for k, v in holder_call.params.items() if k.startswith("code_")]
-    assert "247540" in codes and all(re.fullmatch(r"\d{6}", code) for code in codes)
+    holder_call = next(c for c in plan.calls if c.op == "constituent_prefix_holders_by_aum")
+    assert holder_call.params["prefix_raw"] == "에코프로"
+    assert plan.hints["group_prefix"] == "에코프로" and plan.hints["order"] == "aum"
     assert plan.hints["skip_generation"]
 
 
@@ -682,7 +684,9 @@ def test_new_templates_registered_with_like_conventions():
         assert tid in TEMPLATES, tid
     assert resolve_raw_params({"prefix_raw": "SK_", "limit": 5}) == {"prefix": r"SK\_%", "limit": 5}
     assert resolve_raw_params({"pattern_raw": "50%", "top_etfs": 3}) == {"pattern": r"%50\%%", "top_etfs": 3}
-    assert TEMPLATES["constituent_holders"].params[-1].enum == ("aum", "weight")
+    order_param = next(p for p in TEMPLATES["constituent_holders"].params if p.name == "order")
+    assert order_param.enum == ("aum", "weight")
+    assert any(p.name == "mgmt" for p in TEMPLATES["constituent_holders"].params)   # 8/26 v2 H-08
 
 
 @needs_db

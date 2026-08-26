@@ -156,3 +156,118 @@ def test_attribute_notes_from_detail_rows():
     fund = [{"drv_risk_grade": "2", "zrin_fd_ivst_risk_grd_nm": "높은 위험"}]
     assert attribute_notes("펀드 위험등급이 몇 등급이야?", "fund_detail", fund) == ["위험등급(1=매우 높음~6=매우 낮음): 2등급(높은 위험)"]
     assert attribute_notes("아무 질문", "etp_name_search", etp) == []
+
+
+# ---------------------------------------------------------------------------
+# ⑧ 3차 (8/26) — 블라인드 v2 잔여 7유형. 규칙마다 '같은 뜻 다른 표현'도 함께
+# 시험한다(시험문제 맞춤 규칙이 아니라 일반 정책임을 잠그는 장치 — 8/26 조사 결론).
+# ---------------------------------------------------------------------------
+
+def test_buyable_matches_spacing_variants(index):
+    """P-02: '판매가능한'(붙임)·'매수가능'·'살수있는' 전부 매수가능 필터로 (띄어쓰기 무시)."""
+    for q in ("현재판매가능한원화채권중신용등급AA이상인종목을알려줘",
+              "지금 매수가능한 원화 채권 알려줘",
+              "지금 살수있는 원화 채권 알려줘"):
+        plan = route(q, index, policy=POLICY, today=TODAY)
+        params = next(c.params for c in plan.calls if c.op == "bond_filter")
+        assert params.get("buyable_only") == "Y", (q, params)
+
+
+def test_rating_band_alone_is_a_band():
+    """O-07: 이상/이하 없는 'AA급'은 AA+·AA·AA- 묶음(서열 2~4) — AAA 미포함.
+    'AA 이상'(문자 그대로)과 'BBB급'(다른 등급대) 해석은 그대로다."""
+    from engine.router import rating_condition
+    cond, notes = rating_condition("신용등급이 AA급이면서 표면금리 4% 이상인 원화채권", POLICY)
+    assert cond == {"min_rating_rank": 2, "max_rating_rank": 4} and any("묶음" in n for n in notes)
+    cond2, _ = rating_condition("신용등급 AA 이상인 채권 알려줘", POLICY)
+    assert cond2 == {"max_rating_rank": 3}
+    cond3, _ = rating_condition("BBB급 회사채 알려줘", POLICY)
+    assert cond3 == {"min_rating_rank": 8, "max_rating_rank": 10}
+
+
+def test_rating_band_reaches_bond_filter(index):
+    """O-07: 하한(min_rating_rank)이 목록 조회(bond_filter)까지 실제로 전달된다."""
+    plan = route("원화채권 중 신용등급이 AA급이면서 표면금리 4% 이상인 것 알려줘", index, policy=POLICY, today=TODAY)
+    params = next(c.params for c in plan.calls if c.op == "bond_filter")
+    assert params.get("min_rating_rank") == 2 and params.get("max_rating_rank") == 4
+    assert params.get("min_coupon") == 4.0
+
+
+def test_subsidiary_uses_prefix_holders(index):
+    """O-05·H-01: 자회사 질의는 회사명 접두 집계(순자산 큰 순) — 어떤 회사든 같은 규칙."""
+    for q, prefix in (("LG의 자회사를 편입한 ETF 중 순자산이 큰 상품의 위험요인 알려줘", "LG"),
+                      ("삼성의 자회사를 담은 ETF 알려줘", "삼성")):
+        plan = route(q, index, policy=POLICY, today=TODAY)
+        params = next(c.params for c in plan.calls if c.op == "constituent_prefix_holders_by_aum")
+        assert params["prefix_raw"].casefold() == prefix.casefold(), (q, params)
+        assert plan.hints.get("order") == "aum"
+
+
+def test_constituent_like_question_prefers_reverse_lookup(index):
+    """O-06: 'X처럼 …을 담은 ETF'(빗댐 표현)는 종목 역질의(규칙 6) — 상품명 조각(6.1)이 가로채지 않는다.
+    빗댐 없이 종목+테마가 함께 오면(O-03) 기존대로 상품명 조각 경로, 조각이 종목명을
+    포함하면('애플 밸류체인') 빗댐이어도 상품 구성 질의다."""
+    plan = route("캠브리콘처럼 중국 AI 반도체 기업을 담은 국내 ETF 알려줘", index, policy=POLICY, today=TODAY)
+    assert plan.intent == "constituent_reverse"
+    assert any(c.op == "constituent_holders" for c in plan.calls)
+    plan1b = route("캠브리콘 같은 중국 반도체주 들어간 국내 ETF 있어?", index, policy=POLICY, today=TODAY)
+    assert plan1b.intent == "constituent_reverse"
+    plan2 = route("애플 밸류체인에 투자하는 ETF가 있다던데, 뭘 담고 있어?", index, policy=POLICY, today=TODAY)
+    assert plan2.intent == "product_constituents_by_name"
+    # v2 O-03(빗댐 아님): 종목 역질의로 가되 테마 낱말('2차전지')이 상품명 필터로 붙는다
+    plan3 = route("에코프로비엠이 편입된 국내 2차전지 ETF 알려줘", index, policy=POLICY, today=TODAY)
+    assert plan3.intent == "constituent_reverse"
+    p3 = next(c.params for c in plan3.calls if c.op == "constituent_holders")
+    assert p3.get("name_pattern_raw") == "2차전지", p3
+    # 빗댐(O-06)의 테마('반도체')는 종목 쪽 수식 — 필터로 쓰지 않는다
+    pl = route("캠브리콘처럼 중국 AI 반도체 기업을 담은 국내 ETF 알려줘", index, policy=POLICY, today=TODAY)
+    pc = next(c.params for c in pl.calls if c.op == "constituent_holders")
+    assert "name_pattern_raw" not in pc, pc
+
+
+def test_theme_related_questions_use_name_search(index):
+    """M-12: 'X 관련/테마 ETF'는 사전에 없는 낱말(원자력)도 이름 검색 + 의미 검색 규칙으로 —
+    HCX 라우팅 변동에 기대지 않는다. 함정(kimi 관련)은 여전히 거절."""
+    for q, term in (("원자력 관련 국내 ETF 알려줘", "원자력"),
+                    ("바이오 테마 국내 ETF 알려줘", "바이오")):
+        plan = route(q, index, policy=POLICY, today=TODAY)
+        assert plan.intent == "etp_name_search", (q, plan.intent)
+        params = next(c.params for c in plan.calls if c.op == "etp_name_search")
+        assert params["pattern_raw"] == term, (q, params)
+        assert any(c.channel == "vector" for c in plan.calls)
+    trap = route("kimi 관련 투자 상품 있어?", index, policy=POLICY, today=TODAY)
+    assert trap.behavior_hint == "refuse"
+
+
+def test_constituent_reverse_mgmt_filter(index):
+    """H-08: '…담은 ETF 중에 ○○운용이 운용하는' — 운용사 필터가 SQL 로 걸리고,
+    운용사 말이 없는 기본 역질의(M-01)는 필터가 없다."""
+    plan = route("STX엔진 담은 ETF 중에 미래에셋자산운용이 운용하는 거 있어?", index, policy=POLICY, today=TODAY)
+    params = next(c.params for c in plan.calls if c.op == "constituent_holders")
+    assert params.get("mgmt"), params
+    assert plan.hints.get("mgmt_filter", {}).get("key") == params["mgmt"]
+    plan2 = route("삼성전자가 포함된 ETF 알려줘", index, policy=POLICY, today=TODAY)
+    ps = [c.params for c in plan2.calls if c.op == "constituent_holders"]
+    assert ps and all("mgmt" not in p for p in ps)
+
+
+def test_etp_count_amount_filter(index):
+    """O-09: '순자산 1조원 넘는(초과)/5000억 이상' 금액 조건이 개수 조회에 걸린다.
+    금액 말이 없는 개수 질문(L-13)은 그대로 전체 카운트."""
+    plan = route("국내 ETF 중에 순자산이 1조원 넘는 상품은 몇 개야?", index, policy=POLICY, today=TODAY)
+    params = next(c.params for c in plan.calls if c.op == "etp_count")
+    assert params == {"min_aum_gt": 1e12}
+    plan2 = route("순자산 5000억 이상인 국내 ETF는 몇 개야?", index, policy=POLICY, today=TODAY)
+    params2 = next(c.params for c in plan2.calls if c.op == "etp_count")
+    assert params2 == {"min_aum_ge": 5000 * 1e8}
+    plan3 = route("국내에 상장된 ETN은 전부 몇 개야?", index, policy=POLICY, today=TODAY)
+    assert next(c.params for c in plan3.calls if c.op == "etp_count") == {}
+
+
+def test_fund_filter_lists_on_sale_first(ctx, index):
+    """O-08: 정렬 미지정 펀드 목록은 판매중 상품 먼저 — 순자산 정렬(M-13) 요청은 그대로."""
+    out = answer_question("공모펀드 중에 국내에 투자하는 채권형 펀드 알려줘", ctx, today=TODAY)
+    first_row = next(l for l in out["answer"].splitlines() if l.strip().startswith("1."))
+    assert "판매중" in first_row, first_row
+    plan = route("해외에 투자하는 주식형 공모펀드 중에서 순자산 큰 순으로 5개만 알려줘", index, policy=POLICY, today=TODAY)
+    assert next(c.params for c in plan.calls if c.op == "fund_filter").get("order") == "aum"

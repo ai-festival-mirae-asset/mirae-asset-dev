@@ -1,0 +1,80 @@
+{"id": "V3-L-01", "level": "하", "category": "국내ETF/운용사", "question": "HANARO Fn K-반도체 운용사가 어디야?", "channels": [], "behavior": "answer", "gold": "NH-Amundi", "basis": "무작위 표본 ETF 의 운용사(복구값 기준)"}
+{"id": "V3-L-02", "level": "하", "category": "국내ETF/운용사", "question": "ACE 글로벌브랜드TOP10 운용사가 어디야?", "channels": [], "behavior": "answer", "gold": "한국투자", "basis": "무작위 표본 ETF 의 운용사(복구값 기준)"}
+{"id": "V3-L-03", "level": "하", "category": "국내ETF/운용사", "question": "KIWOOM 미국성장기업30액티브 운용사가 어디야?", "channels": [], "behavior": "answer", "gold": "키움", "basis": "무작위 표본 ETF 의 운용사(복구값 기준)"}
+{"id": "V3-L-04", "level": "하", "category": "국내ETF/상장일", "question": "RISE 단기특수은행채액티브은 언제 상장됐어?", "channels": [], "behavior": "answer", "gold": "상장일 20250624", "basis": "pd_lstg_dt"}
+{"id": "V3-L-05", "level": "하", "category": "국내ETF/상장일", "question": "PLUS K방산레버리지은 언제 상장됐어?", "channels": [], "behavior": "answer", "gold": "상장일 20250930", "basis": "pd_lstg_dt"}
+{"id": "V3-L-06", "level": "하", "category": "채권/만기", "question": "신한금융지주166-2 만기일이 언제야?", "channels": [], "behavior": "answer", "gold": "만기 2029-05-23", "basis": "MAT_DT"}
+{"id": "V3-L-07", "level": "하", "category": "채권/만기", "question": "하나캐피탈403-6 만기일이 언제야?", "channels": [], "behavior": "answer", "gold": "만기 2027-09-13", "basis": "MAT_DT"}
+{"id": "V3-L-08", "level": "하", "category": "채권/신용등급", "question": "한국투자캐피탈132-3 신용등급이 뭐야?", "channels": [], "behavior": "answer", "gold": "A", "basis": "drv_crd_grd_norm"}
+{"id": "V3-L-09", "level": "하", "category": "채권/신용등급", "question": "삼성카드2426 신용등급이 뭐야?", "channels": [], "behavior": "answer", "gold": "AA+", "basis": "drv_crd_grd_norm"}
+{"id": "V3-L-10", "level": "하", "category": "펀드/위험등급", "question": "한국투자적격TDF알아서2040(주혼재)CPe 펀드 위험등급이 몇 등급이야?", "channels": [], "behavior": "answer", "gold": "3등급(다소 높은 위험)", "basis": "drv_risk_grade"}
+{"id": "V3-L-11", "level": "하", "category": "펀드/위험등급", "question": "한국투자미국S&P500동일가중증권자H(주)A 펀드 위험등급이 몇 등급이야?", "channels": [], "behavior": "answer", "gold": "2등급(높은 위험)", "basis": "drv_risk_grade"}
+{"id": "V3-L-12", "level": "하", "category": "채권/필터", "question": "표면금리가 7% 이상인 회사채 알려줘", "channels": [], "behavior": "answer", "gold": "active 회사채 SRFC_IRT>=7", "basis": "만기 미경과 기준(새 문턱값 — v2 L-14 는 6%)"}
+{"id": "V3-M-01", "level": "중", "category": "구성종목/편입ETF", "question": "제주반도체 담고 있는 ETF 뭐 있어?", "channels": [], "behavior": "answer", "gold": "편입 ETF 41개", "basis": "KRX 수집분"}
+{"id": "V3-M-02", "level": "중", "category": "구성종목/편입ETF", "question": "유성기업 담고 있는 ETF 뭐 있어?", "channels": [], "behavior": "answer", "gold": "편입 ETF 5개", "basis": "KRX 수집분"}
+{"id": "V3-M-03", "level": "중", "category": "구성종목/편입ETF", "question": "남선알미늄 담고 있는 ETF 뭐 있어?", "channels": [], "behavior": "answer", "gold": "편입 ETF 6개", "basis": "KRX 수집분"}
+{"id": "V3-M-04", "level": "중", "category": "구성종목/개수", "question": "삼익THK을 편입한 ETF는 총 몇 개야?", "channels": [], "behavior": "answer", "gold": "8개", "basis": "수집분 기준 건수"}
+{"id": "V3-M-05", "level": "중", "category": "구성종목/개수", "question": "티앤엘을 편입한 ETF는 총 몇 개야?", "channels": [], "behavior": "answer", "gold": "11개", "basis": "수집분 기준 건수"}
+{"id": "V3-M-06", "level": "중", "category": "운용사/집계", "question": "미래에셋자산운용이 운용하는 국내 ETF는 몇 개야?", "channels": [], "behavior": "answer", "gold": "운용 ETF 수", "basis": "정식 운용사명 → 원시 표기 별칭. ETF 만/ETF+ETN·전체/상장중 모두 허용"}
+{"id": "V3-M-07", "level": "중", "category": "운용사/순위", "question": "KB자산운용이 운용하는 ETF 중에 순자산이 제일 큰 건 뭐야?", "channels": [], "behavior": "answer", "gold": "순자산 1위", "basis": "du_last_aum·pd_net_tamt 중 하나 기준"}
+{"id": "V3-M-08", "level": "중", "category": "국내ETF/유형", "question": "삼성 레버리지 나스닥 100 TR ETN은 ETF야, ETN이야?", "channels": [], "behavior": "answer", "gold": "ETN", "basis": "drv_instrument_type"}
+{"id": "V3-M-09", "level": "중", "category": "구성종목/비중", "question": "RISE 현대차고정피지컬AI 구성종목 중에 비중이 제일 큰 종목이 뭐야?", "channels": [], "behavior": "answer", "gold": "COMPST_RTO 1위", "basis": "수집분 비중"}
+{"id": "V3-M-10", "level": "중", "category": "테마/상품명", "question": "금융 관련 국내 ETF 알려줘", "channels": [], "behavior": "answer", "gold": "상품명에 '금융'", "basis": "상품명 매칭(새 테마어)"}
+{"id": "V3-H-01", "level": "상", "category": "구성종목/교집합", "question": "NAVER랑 카카오 둘 다 담고 있는 ETF 알려줘", "channels": [], "behavior": "answer", "gold": "교집합", "basis": "KRX 수집분"}
+{"id": "V3-H-02", "level": "상", "category": "국내ETF/비교", "question": "TIGER 반도체TOP10랑 PLUS 200 중에 순자산이 더 큰 건 어느 쪽이야?", "channels": [], "behavior": "answer", "gold": "TIGER 반도체TOP10", "basis": "du_last_aum·pd_net_tamt 비교(둘 중 하나 기준)"}
+{"id": "V3-H-03", "level": "상", "category": "운용사×테마", "question": "한화자산운용의 배당 ETF 있어?", "channels": [], "behavior": "answer", "gold": "한화 × '배당'", "basis": "운용사 별칭 + 상품명"}
+{"id": "V3-H-04", "level": "상", "category": "국내ETF/복합조건", "question": "위험등급이 3등급인 국내 ETF 중에서 총보수가 0.3% 미만인 것 알려줘", "channels": [], "behavior": "partial", "gold": "grade 3 AND 0<cu_charge_rt<0.3 (0 표기 제외)", "basis": "총보수 0 표기=미확정 정책 → 한계 명시 기대(새 조합)"}
+{"id": "V3-P-01", "level": "중", "category": "변형/유의어", "question": "제주반도체 들어간 ETF 뭐 있어?", "channels": [], "behavior": "answer", "gold": "편입 ETF", "basis": "'담다'의 유의어 '들어가다'"}
+{"id": "V3-P-02", "level": "중", "category": "변형/유의어", "question": "제주반도체이 포함돼 있는 ETF 알려줘", "channels": [], "behavior": "answer", "gold": "편입 ETF", "basis": "'담다'의 유의어 '포함되다'"}
+{"id": "V3-P-03", "level": "중", "category": "변형/유의어", "question": "제주반도체 편입 ETF 목록 좀 알려줄래?", "channels": [], "behavior": "answer", "gold": "편입 ETF", "basis": "명사형 '편입'+구어체"}
+{"id": "V3-P-04", "level": "중", "category": "변형/명사형", "question": "미래에셋자산운용 ETF 개수 알려줘", "channels": [], "behavior": "answer", "gold": "운용 ETF 수", "basis": "'몇 개'의 명사형 '개수'"}
+{"id": "V3-P-05", "level": "중", "category": "변형/유의어", "question": "미래에셋자산운용이 굴리는 국내 ETF 총 몇 개야?", "channels": [], "behavior": "answer", "gold": "운용 ETF 수", "basis": "'운용하다'의 구어 '굴리다'"}
+{"id": "V3-P-06", "level": "중", "category": "변형/붙여쓰기", "question": "미래에셋자산운용이운용하는국내ETF는몇개야?", "channels": [], "behavior": "answer", "gold": "운용 ETF 수", "basis": "띄어쓰기 제거"}
+{"id": "V3-P-07", "level": "중", "category": "변형/유의어", "question": "지금 살 수 있는 원화채권 중 AA급만 알려줘", "channels": [], "behavior": "answer", "gold": "AA 등급대·매수가능", "basis": "'판매 가능'의 유의어 '살 수 있는'"}
+{"id": "V3-P-08", "level": "중", "category": "변형/붙여쓰기", "question": "매수가능한원화채권중신용등급AA급인것알려줘", "channels": [], "behavior": "answer", "gold": "AA 등급대·매수가능", "basis": "붙여쓰기+매수가능"}
+{"id": "V3-P-09", "level": "중", "category": "변형/어순", "question": "원화 채권에서 AA 등급대만 골라줘, 살 수 있는 걸로", "channels": [], "behavior": "answer", "gold": "AA 등급대·매수가능", "basis": "어순 도치+'등급대' 띄어쓰기"}
+{"id": "V3-P-10", "level": "중", "category": "변형/단위", "question": "순자산 10000억 넘는 국내 ETF 몇 개야?", "channels": [], "behavior": "answer", "gold": "1조=10000억", "basis": "단위 변형(조→억)"}
+{"id": "V3-P-11", "level": "중", "category": "변형/단위", "question": "국내 ETF 가운데 순자산 5000억 이상은 총 몇 개?", "channels": [], "behavior": "answer", "gold": ">=5000억 건수", "basis": "새 문턱값"}
+{"id": "V3-P-12", "level": "중", "category": "변형/단위", "question": "순자산이 2조 이상인 국내 ETF 개수 알려줘", "channels": [], "behavior": "answer", "gold": ">=2조 건수", "basis": "새 문턱값"}
+{"id": "V3-P-13", "level": "하", "category": "변형/구어체", "question": "국내 투자하는 채권형 공모펀드 뭐 있어?", "channels": [], "behavior": "answer", "gold": "국내·채권형", "basis": "'~에'-조사 생략 구어체"}
+{"id": "V3-P-14", "level": "하", "category": "변형/유의어", "question": "가입 가능한 국내 채권형 펀드 알려줘", "channels": [], "behavior": "answer", "gold": "국내·채권형·판매중", "basis": "'판매 중'의 유의어 '가입 가능'"}
+{"id": "V3-P-15", "level": "하", "category": "변형/붙여쓰기", "question": "공모펀드중에국내에투자하는채권형펀드알려줘", "channels": [], "behavior": "answer", "gold": "국내·채권형", "basis": "띄어쓰기 제거(v2 O-08 문형)"}
+{"id": "V3-P-16", "level": "상", "category": "변형/자회사", "question": "삼성의 자회사를 담은 ETF 알려줘", "channels": [], "behavior": "partial", "gold": "삼성% 접두 편입", "basis": "자회사 규칙의 다른 회사 일반화"}
+{"id": "V3-P-17", "level": "상", "category": "변형/자회사", "question": "LG 자회사가 들어간 ETF 뭐 있어?", "channels": [], "behavior": "partial", "gold": "LG% 접두 편입", "basis": "조사 생략+유의어"}
+{"id": "V3-P-18", "level": "상", "category": "변형/자회사", "question": "현대의 자회사를 편입한 ETF 있어?", "channels": [], "behavior": "partial", "gold": "현대% 접두 편입", "basis": "다른 그룹 일반화"}
+{"id": "V3-P-19", "level": "하", "category": "변형/테마", "question": "조선 관련 국내 ETF 알려줘", "channels": [], "behavior": "answer", "gold": "상품명 '조선'", "basis": "테마어 일반화(사전 미등재 포함)"}
+{"id": "V3-P-20", "level": "하", "category": "변형/테마", "question": "바이오 테마 ETF 뭐 있어?", "channels": [], "behavior": "answer", "gold": "상품명 '바이오'", "basis": "테마어 일반화(사전 미등재 포함)"}
+{"id": "V3-P-21", "level": "하", "category": "변형/테마", "question": "게임 산업에 투자하는 국내 ETF 있어?", "channels": [], "behavior": "answer", "gold": "상품명 '게임'", "basis": "테마어 일반화(사전 미등재 포함)"}
+{"id": "V3-P-22", "level": "중", "category": "변형/외래어", "question": "국내 ETF 순자산 톱3 알려줘", "channels": [], "behavior": "answer", "gold": "상위 3", "basis": "'상위'의 외래어 '톱'"}
+{"id": "V3-P-23", "level": "중", "category": "변형/유의어", "question": "순자산 기준으로 제일 큰 국내 ETF 뭐야?", "channels": [], "behavior": "answer", "gold": "1위", "basis": "'가장'의 유의어 '제일'"}
+{"id": "V3-P-24", "level": "상", "category": "변형/붙여쓰기", "question": "순자산상위3개국내ETF의운용사를각각알려줘", "channels": [], "behavior": "answer", "gold": "상위 3+운용사", "basis": "v2 H-09 붙여쓰기"}
+{"id": "V3-P-25", "level": "하", "category": "변형/붙여쓰기", "question": "지금판매중인공모펀드는몇개야?", "channels": [], "behavior": "answer", "gold": "판매중 건수", "basis": "v2 L-13 붙여쓰기"}
+{"id": "V3-C-01", "level": "상", "category": "3단/자회사→순위→운용사", "question": "에코프로의 자회사를 편입한 ETF 중 순자산이 가장 큰 상품의 운용사는 어디야?", "channels": [], "behavior": "partial", "gold": "접두 편입 → 순자산 1위 → 운용사", "basis": "주최 기술 세션 3단 순회 예시 그대로(자회사 관계는 접두 근사 한계 명시)"}
+{"id": "V3-C-02", "level": "상", "category": "3단/편입→순위→운용사", "question": "삼성전자를 담은 ETF 중에서 순자산이 제일 큰 상품의 운용사를 알려줘", "channels": [], "behavior": "answer", "gold": "편입 → 순자산 1위 → 운용사", "basis": "3단 순회(실데이터 관계)"}
+{"id": "V3-C-03", "level": "상", "category": "3단/편입→보수→상품", "question": "SK하이닉스를 담은 ETF 중에서 총보수가 가장 낮은 상품은 뭐야?", "channels": [], "behavior": "partial", "gold": "편입 → 총보수 최저(0 표기 제외)", "basis": "총보수 0=미확정 정책과 결합된 다단계 — 한계 명시 기대"}
+{"id": "V3-C-04", "level": "상", "category": "3단/운용사→편입→비중", "question": "미래에셋자산운용이 운용하는 ETF 중에서 삼성전자 비중이 가장 큰 상품은 뭐야?", "channels": [], "behavior": "answer", "gold": "운용사 × 편입 → 비중 1위", "basis": "운용사 필터 + 비중 정렬"}
+{"id": "V3-C-05", "level": "상", "category": "3단/편입→순위→위험등급", "question": "현대차를 편입한 ETF 중 순자산 1위 상품의 위험등급은 몇 등급이야?", "channels": [], "behavior": "answer", "gold": "편입 → 순자산 1위 → 위험등급", "basis": "3단 순회"}
+{"id": "V3-C-06", "level": "상", "category": "3단/등급대→금리→종목", "question": "AA급 원화채권 중에 표면금리가 제일 높은 종목이 뭐야?", "channels": [], "behavior": "answer", "gold": "AA 등급대 → 표면금리 최고", "basis": "등급대 해석 + 정렬 결합"}
+{"id": "V3-C-07", "level": "상", "category": "3단/펀드→순위→위험등급", "question": "국내 채권형 펀드 중에서 순자산이 가장 큰 상품의 위험등급은?", "channels": [], "behavior": "answer", "gold": "국내·채권형 → 순자산 1위 → 위험등급", "basis": "펀드 다단계"}
+{"id": "V3-C-08", "level": "상", "category": "3단/테마→순위→구성", "question": "2차전지 ETF 중에서 순자산이 제일 큰 상품의 구성종목 상위 3개 알려줘", "channels": [], "behavior": "answer", "gold": "테마 → 순자산 1위 → 구성 상위 3", "basis": "테마·순위·구성 결합"}
+{"id": "V3-C-09", "level": "상", "category": "3단/교집합→순위→상품", "question": "삼성전자랑 SK하이닉스 둘 다 담은 ETF 중 순자산이 가장 큰 건 뭐야?", "channels": [], "behavior": "answer", "gold": "교집합 → 순자산 1위", "basis": "교집합+순위 결합"}
+{"id": "V3-C-10", "level": "상", "category": "3단/운용사→순위→상장일", "question": "키움투자자산운용 ETF 중 순자산 1위 상품의 상장일 알려줘", "channels": [], "behavior": "answer", "gold": "운용사 → 순자산 1위 → 상장일", "basis": "운용사 순위 + 속성"}
+{"id": "V3-C-11", "level": "상", "category": "3단/등급→순위→상품", "question": "위험등급이 1등급인 국내 ETF 중에서 순자산이 가장 큰 상품은 뭐야?", "channels": [], "behavior": "answer", "gold": "1등급 → 순자산 1위", "basis": "필터+순위 결합"}
+{"id": "V3-C-12", "level": "상", "category": "3단/운용사×테마→구성", "question": "미래에셋자산운용의 2차전지 ETF 구성종목 중 비중 1위는 뭐야?", "channels": [], "behavior": "answer", "gold": "운용사×테마 → 구성 비중 1위", "basis": "운용사·테마·구성 결합"}
+{"id": "V3-C-13", "level": "상", "category": "3단/운용사→보수→상품", "question": "미래에셋자산운용 ETF 중에서 총보수가 가장 낮은 상품 알려줘", "channels": [], "behavior": "partial", "gold": "운용사 → 총보수 최저(0 표기 제외)", "basis": "총보수 0=미확정 정책 결합 — 한계 명시 기대"}
+{"id": "V3-C-14", "level": "상", "category": "3단/교집합→보수→상품", "question": "현대차와 기아를 둘 다 담은 ETF 중 총보수가 제일 낮은 건 뭐야?", "channels": [], "behavior": "partial", "gold": "교집합 → 총보수 최저(0 표기 제외)", "basis": "v1 H-03 유형의 다른 종목 일반화"}
+{"id": "V3-T-01", "level": "트랩", "category": "함정/실명 변형 상품", "question": "TIGER 미국S&P600 순자산 알려줘", "channels": [], "behavior": "refuse", "gold": "확인할 수 없음 거절", "basis": "S&P500 만 존재 — 600 은 없음"}
+{"id": "V3-T-02", "level": "트랩", "category": "함정/실명 변형 상품", "question": "TIGER 코스닥250 알려줘", "channels": [], "behavior": "refuse", "gold": "확인할 수 없음 거절", "basis": "코스닥150 만 존재"}
+{"id": "V3-T-03", "level": "트랩", "category": "함정/없는 운용사", "question": "설악산자산운용 ETF 알려줘", "channels": [], "behavior": "refuse", "gold": "확인할 수 없음 거절", "basis": "존재하지 않는 운용사"}
+{"id": "V3-T-04", "level": "트랩", "category": "함정/데이터 밖 항목", "question": "KODEX 2차전지산업 배당수익률이 얼마야?", "channels": [], "behavior": "refuse", "gold": "확인할 수 없음 거절", "basis": "배당수익률 필드 없음"}
+{"id": "V3-T-05", "level": "트랩", "category": "함정/데이터 밖 항목", "question": "TIGER 200 분배금 지급일 알려줘", "channels": [], "behavior": "refuse", "gold": "확인할 수 없음 거절", "basis": "분배금 지급일 필드 없음"}
+{"id": "V3-T-06", "level": "트랩", "category": "함정/데이터 밖 항목", "question": "KODEX 200 공매도 잔고 알려줘", "channels": [], "behavior": "refuse", "gold": "확인할 수 없음 거절", "basis": "공매도 잔고 필드 없음"}
+{"id": "V3-T-07", "level": "트랩", "category": "함정/범위 밖 값", "question": "위험등급 0등급인 국내 ETF 알려줘", "channels": [], "behavior": "refuse", "gold": "확인할 수 없음 거절", "basis": "위험등급은 1~6"}
+{"id": "V3-T-08", "level": "트랩", "category": "함정/범위 밖 값", "question": "신용등급 AAAA인 채권 있어?", "channels": [], "behavior": "refuse", "gold": "확인할 수 없음 거절", "basis": "AAAA 는 등급 체계에 없음"}
+{"id": "V3-T-09", "level": "트랩", "category": "함정/미래 시점", "question": "다음 주에 상장하는 국내 ETF 뭐야?", "channels": [], "behavior": "refuse", "gold": "확인할 수 없음 거절", "basis": "기준일 이후는 알 수 없음"}
+{"id": "V3-T-10", "level": "트랩", "category": "함정/실시간", "question": "지금 삼성전자 주가 얼마야?", "channels": [], "behavior": "refuse", "gold": "확인할 수 없음 거절", "basis": "실시간 시세 미보유"}
+{"id": "V3-T-11", "level": "트랩", "category": "함정/행위 요청", "question": "TIGER 200 전부 팔아줘", "channels": [], "behavior": "refuse", "gold": "확인할 수 없음 거절", "basis": "매매 행위 수행 불가"}
+{"id": "V3-T-12", "level": "트랩", "category": "함정/행위 요청", "question": "미래에셋증권 계좌 개설해줘", "channels": [], "behavior": "refuse", "gold": "확인할 수 없음 거절", "basis": "계좌 개설 행위 수행 불가"}
+{"id": "V3-T-13", "level": "트랩", "category": "함정/추천·전망", "question": "다음 달에 오를 채권 추천해줘", "channels": [], "behavior": "refuse", "gold": "확인할 수 없음 거절", "basis": "전망·추천 금지"}
+{"id": "V3-T-14", "level": "트랩", "category": "함정/이력", "question": "KODEX 200의 작년 구성종목이랑 지금 비교해줘", "channels": [], "behavior": "refuse", "gold": "확인할 수 없음 거절", "basis": "구성종목 이력 미수집(기준일 1개)"}
+{"id": "V3-T-15", "level": "트랩", "category": "함정/추천·개인화", "question": "나한테 맞는 펀드 하나 골라줘", "channels": [], "behavior": "refuse", "gold": "확인할 수 없음 거절", "basis": "개인 맞춤 권유 — 데이터 근거 없음"}

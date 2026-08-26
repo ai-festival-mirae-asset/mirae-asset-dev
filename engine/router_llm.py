@@ -247,6 +247,15 @@ def build_router_messages(question, partial_plan):
         "4) 해석이 갈리는 표현(위험 낮음, AA 이상, 최근 등)은 notes 에 채택 해석을 적는다.\n"
         "5) 미래·실시간·기준일 이후 정보는 조회 계획을 만들지 말고 intent 에 "
         "'조회 불가'와 사유를 적는다.\n\n"
+        "모범 예시(8/26 — 형식 참고):\n"
+        "- '○○자산운용이 운용하는 ETF 중 순자산이 가장 큰 건?' → sql_calls=[{template_id:'etp_by_mgmt', "
+        "params:{mgmt:'<grounded 키>', active_only:'Y', limit:1}}] — 이 템플릿은 순자산 내림차순이라 "
+        "limit=1 이 곧 1위다. 상품 '이름'이 아니라 grounded '키'를 넣는다.\n"
+        "- '다음 주에 상장하는 국내 ETF 뭐야?' → sql_calls 없음, intent='조회 불가: 기준일(2026-07-11) "
+        "이후 미래 시점' — 날짜 템플릿에 미래 구간을 만들어 넣지 않는다.\n"
+        "- '삼성전자를 담은 ETF 중 순자산 상위 5개' → graph_calls=[{op:'holding_etfs', query:'005930'}], "
+        "sql_calls=[{template_id:'constituent_holders', params:{code:'005930', order:'aum', limit:30}}], "
+        "notes=['순자산 내림차순 기준'].\n\n"
         f"SQL 템플릿 카탈로그:\n{_template_catalog_text()}"
     )
     user = (

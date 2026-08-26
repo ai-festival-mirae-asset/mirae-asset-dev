@@ -281,6 +281,41 @@ def attribute_notes(question, op, rows):
             if val:
                 out.append(f"{label}: {val}")
     return list(dict.fromkeys(out))
+# 목록 1위 상품의 속성 명시 (8/26 v3 C-05/C-10) — "…중 순자산 1위 상품의 위험등급/상장일/운용사"
+# 처럼 정렬 목록의 최상위 행에서 속성을 되묻는 3단 질문의 마지막 고리. 정렬은 라우터가
+# 이미 SQL 로 해 두므로 여기서는 첫 목록의 첫 행 값을 사실 노트로 밝히기만 한다.
+_RANK_WORD_RE = re.compile(r"1\s*위|가장|제일|최고|최대")
+_TOP_ATTRS = [
+    (r"운용사|어느 운용|누가 운용", "mgmt", "운용사(복구값 기준)", "text"),
+    (r"위험\s*등급", "drv_risk_grade", "위험등급(1=매우 높음~6=매우 낮음)", "risk"),
+    (r"상장일|언제 상장|상장됐", "pd_lstg_dt", "상장일", "date"),
+    (r"기초\s*지수|추종", "cu_base_index", "기초지수", "text"),
+    (r"보수", "cu_charge_rt", "총보수(%)", "text"),
+]
+_TOP_OPS = {"constituent_holders", "etp_by_mgmt", "etp_top_aum", "constituent_intersection_top_aum",
+            "constituent_prefix_holders_by_aum", "fund_filter", "etp_top_return"}
+
+
+def top_rank_attribute_notes(question, result):
+    """정렬 목록형 결과 + 순위 낱말 + 속성 낱말 → '목록 1위 X의 속성: 값' 노트. 순수 함수."""
+    if not _RANK_WORD_RE.search(question):
+        return []
+    for o in result.outcomes:
+        if not (o.ok and o.channel == "sql" and o.op in _TOP_OPS and o.rows):
+            continue
+        row = o.rows[0]
+        name = next((str(row[c]) for c in _NAME_COLS if row.get(c)), None)
+        out = []
+        for rx, col, label, fmt in _TOP_ATTRS:
+            if col in row and re.search(rx, question):
+                val = _fmt_attr(row, col, fmt)
+                if val:
+                    prefix = f"목록 1위 '{name}'" if name else "목록 1위"
+                    out.append(f"{prefix} — {label}: {val}")
+        return out                                        # 첫 목록만 본다(뒤 호출은 보조 근거)
+    return []
+
+
 # 구성종목에 선물·옵션이 보이면 파생 위험을 데이터 사실로 명시한다 (H-21·M-20)
 _DERIV_SECUGRP = {"FU": "선물", "OP": "옵션"}
 
@@ -329,6 +364,7 @@ def data_notes(question, plan, result):
             else:
                 notes.append("기초지수 값이 이 상품 행에 없음(cu_base_index 결측) — 국내ETF 마스터의 기초지수 컬럼은 "
                              "전체의 0.18%만 채워져 있어 추종 지수는 제공 데이터로 확인할 수 없음")
+    notes.extend(top_rank_attribute_notes(question, result))     # v3 C-05/C-10: 1위 상품의 속성
     # v2 H-08/O-03: 운용사·테마 필터가 걸린 편입 ETF 조회가 0건이면 '없다'를 명시(거절이 아니라 사실 답변)
     mf = plan.hints.get("mgmt_filter")
     nf = plan.hints.get("holder_name_filter")

@@ -86,12 +86,15 @@ TEMPLATES = {t.id: t for t in [
             AND ($min_coupon IS NULL OR TRY_CAST(SRFC_IRT AS DOUBLE) >= $min_coupon)
             AND ($max_coupon IS NULL OR TRY_CAST(SRFC_IRT AS DOUBLE) < $max_coupon)
             AND ($bond_class IS NULL OR STD_PD_MCLS_NM = $bond_class)
-          ORDER BY TRY_CAST(drv_crd_grd_rank AS INT) NULLS LAST,
+          ORDER BY CASE WHEN $order = 'coupon' THEN TRY_CAST(SRFC_IRT AS DOUBLE) END DESC NULLS LAST,
+                   CASE WHEN $order = 'coupon_asc' THEN TRY_CAST(SRFC_IRT AS DOUBLE) END ASC NULLS LAST,
+                   TRY_CAST(drv_crd_grd_rank AS INT) NULLS LAST,
                    TRY_CAST(SRFC_IRT AS DOUBLE) DESC NULLS LAST, PD_NO
           LIMIT $limit""",
        [Param("currency"), Param("max_rating_rank"), Param("min_rating_rank"),
         Param("maturity_status"), Param("buyable_only"), Param("min_coupon"),
-        Param("max_coupon"), Param("bond_class"), Param("limit", required=True)],
+        Param("max_coupon"), Param("bond_class"), Param("order", enum=("coupon", "coupon_asc")),
+        Param("limit", required=True)],
        source="PRBD01N001", key_col="PD_NO"),
 
     _t("bond_count",
@@ -182,15 +185,18 @@ TEMPLATES = {t.id: t for t in [
        "운용사(복구값 기준) 상품 목록 — 순자산총액 내림차순, 상품명 패턴·유형·상장중 선택. "
        "대상: 8/22 v2 M-08/09(운용사 순자산 1위)·H-05(운용사×테마) — 그래프 목록엔 순자산이 없어 AI 가 포기했던 유형.",
        """SELECT e.pd_itm_no, e.pd_abrv_nm, e.pd_nm, e.drv_instrument_type, e.drv_listing_status,
-                 e.pd_net_tamt, coalesce(m.resolved, e.cu_fund_mgmt_co) AS mgmt
+                 e.pd_net_tamt, e.pd_lstg_dt, e.drv_risk_grade, e.cu_charge_rt,
+                 coalesce(m.resolved, e.cu_fund_mgmt_co) AS mgmt
           FROM kr_etp e LEFT JOIN mgmt_resolved m USING (pd_itm_no)
           WHERE coalesce(m.resolved, e.cu_fund_mgmt_co) = $mgmt
             AND ($instrument_type IS NULL OR e.drv_instrument_type = $instrument_type)
             AND ($active_only IS NULL OR e.drv_listing_status = 'active')
             AND ($name_pattern IS NULL OR e.pd_nm ILIKE $name_pattern ESCAPE '\\')
-          ORDER BY TRY_CAST(e.pd_net_tamt AS DOUBLE) DESC NULLS LAST, e.pd_itm_no LIMIT $limit""",
+            AND (coalesce($order, '') <> 'fee' OR TRY_CAST(e.cu_charge_rt AS DOUBLE) > 0)
+          ORDER BY CASE WHEN $order = 'fee' THEN TRY_CAST(e.cu_charge_rt AS DOUBLE) END ASC NULLS LAST,
+                   TRY_CAST(e.pd_net_tamt AS DOUBLE) DESC NULLS LAST, e.pd_itm_no LIMIT $limit""",
        [Param("mgmt", required=True), Param("instrument_type"), Param("active_only"),
-        Param("name_pattern"), Param("limit", required=True)],
+        Param("name_pattern"), Param("order", enum=("fee",)), Param("limit", required=True)],
        source="PREF01N001", key_col="pd_itm_no"),
 
     _t("mgmt_product_count",
@@ -213,12 +219,15 @@ TEMPLATES = {t.id: t for t in [
 
     _t("etp_top_aum",
        "국내 ETP 순자산총액 상위 — ETF/ETN 혼재(30.7%) 함정 방어를 위해 유형 필수. "
+       "name_pattern 은 테마어 결합('2차전지 ETF 중 순자산 1위' — 8/26 v3 C-08). "
        "대상: L-11(KODEX 200 1위 검증 완료), M-02 후단.",
-       """SELECT pd_itm_no, pd_abrv_nm, pd_net_tamt, cu_fund_mgmt_co FROM kr_etp
+       """SELECT pd_itm_no, pd_abrv_nm, pd_net_tamt, cu_fund_mgmt_co, drv_risk_grade, pd_lstg_dt
+          FROM kr_etp
           WHERE drv_instrument_type = $instrument_type AND drv_listing_status = 'active'
+            AND ($name_pattern IS NULL OR pd_nm ILIKE $name_pattern ESCAPE '\\')
           ORDER BY TRY_CAST(pd_net_tamt AS DOUBLE) DESC NULLS LAST LIMIT $limit""",
        [Param("instrument_type", required=True, enum=("ETF", "ETN")),
-        Param("limit", required=True)],
+        Param("limit", required=True), Param("name_pattern")],
        source="PREF01N001", key_col="pd_itm_no"),
 
     _t("etp_top_return",
@@ -287,12 +296,15 @@ TEMPLATES = {t.id: t for t in [
        "총보수 상한 필터(값 보유분만, 0 표기 제외) — 커버리지(실질결측 87.5%)와 0의 의미 미확정을 "
        "답변에 반드시 명시(partial). 0 은 '무보수'가 아니라 미수집일 가능성이 커(KODEX 200 도 0 으로 "
        "표기됨 — 실제 0.15%) 순위에서 뺀다(8/19). 대상: L-26, H-03/30.",
-       """SELECT pd_itm_no, pd_abrv_nm, cu_charge_rt FROM kr_etp
+       """SELECT pd_itm_no, pd_abrv_nm, cu_charge_rt, drv_risk_grade FROM kr_etp
           WHERE drv_instrument_type = 'ETF' AND drv_listing_status = 'active'
             AND TRY_CAST(cu_charge_rt AS DOUBLE) > 0
             AND TRY_CAST(cu_charge_rt AS DOUBLE) <= $max_fee
+            AND ($min_grade IS NULL OR TRY_CAST(drv_risk_grade AS INT) >= $min_grade)
+            AND ($max_grade IS NULL OR TRY_CAST(drv_risk_grade AS INT) <= $max_grade)
           ORDER BY TRY_CAST(cu_charge_rt AS DOUBLE), pd_itm_no LIMIT $limit""",
-       [Param("max_fee", required=True), Param("limit", required=True)],
+       [Param("max_fee", required=True), Param("limit", required=True),
+        Param("min_grade"), Param("max_grade")],
        source="PREF01N001", key_col="pd_itm_no"),
 
     _t("etp_currency_dist",
@@ -411,17 +423,19 @@ TEMPLATES = {t.id: t for t in [
        "상품명은 마스터 약칭(pd_abrv_nm)으로 표시. 대상: M-01/02/16/21, H-06/27.",
        """SELECT c.etf_isin, coalesce(e.pd_abrv_nm, c.etf_name) AS pd_abrv_nm, c.COMPST_ISU_NM,
                  TRY_CAST(replace(c.COMPST_RTO, ',', '') AS DOUBLE) AS weight_pct,
-                 e.pd_net_tamt, e.drv_risk_grade,
+                 e.pd_net_tamt, e.drv_risk_grade, e.cu_charge_rt,
                  coalesce(m.resolved, e.cu_fund_mgmt_co) AS mgmt
           FROM etf_constituent c LEFT JOIN kr_etp e ON c.etf_isin = e.pd_itm_no
           LEFT JOIN mgmt_resolved m ON m.pd_itm_no = e.pd_itm_no
           WHERE c.COMPST_ISU_CD = $code
             AND ($mgmt IS NULL OR coalesce(m.resolved, e.cu_fund_mgmt_co) = $mgmt)
             AND ($name_pattern IS NULL OR coalesce(e.pd_nm, c.etf_name) ILIKE $name_pattern ESCAPE '\\')
-          ORDER BY CASE WHEN $order = 'aum' THEN TRY_CAST(e.pd_net_tamt AS DOUBLE) END DESC NULLS LAST,
+            AND (coalesce($order, '') <> 'fee' OR TRY_CAST(e.cu_charge_rt AS DOUBLE) > 0)
+          ORDER BY CASE WHEN $order = 'fee' THEN TRY_CAST(e.cu_charge_rt AS DOUBLE) END ASC NULLS LAST,
+                   CASE WHEN $order = 'aum' THEN TRY_CAST(e.pd_net_tamt AS DOUBLE) END DESC NULLS LAST,
                    weight_pct DESC NULLS LAST, c.etf_isin LIMIT $limit""",
        [Param("code", required=True), Param("limit", required=True),
-        Param("order", enum=("aum", "weight")), Param("mgmt"), Param("name_pattern")],
+        Param("order", enum=("aum", "weight", "fee")), Param("mgmt"), Param("name_pattern")],
        source="KRX-PDF", key_col="etf_isin", as_of=AS_OF_CONSTITUENTS),
 
     _t("constituent_top_weights",
@@ -478,15 +492,38 @@ TEMPLATES = {t.id: t for t in [
        """SELECT c.etf_isin, coalesce(e.pd_abrv_nm, c.etf_name) AS pd_abrv_nm,
                  string_agg(DISTINCT c.COMPST_ISU_NM, ' / ' ORDER BY c.COMPST_ISU_NM) AS matched_candidates,
                  max(TRY_CAST(replace(c.COMPST_RTO, ',', '') AS DOUBLE)) AS max_weight_pct,
-                 e.pd_net_tamt, e.drv_risk_grade
+                 e.pd_net_tamt, e.drv_risk_grade,
+                 coalesce(m.resolved, e.cu_fund_mgmt_co) AS mgmt
           FROM etf_constituent c
           LEFT JOIN kr_etp e ON c.etf_isin = e.pd_itm_no
+          LEFT JOIN mgmt_resolved m ON m.pd_itm_no = e.pd_itm_no
           WHERE c.SECUGRP_ID IS NOT NULL AND c.COMPST_ISU_NM ILIKE $prefix ESCAPE '\\'
-          GROUP BY c.etf_isin, coalesce(e.pd_abrv_nm, c.etf_name), e.pd_net_tamt, e.drv_risk_grade
+          GROUP BY c.etf_isin, coalesce(e.pd_abrv_nm, c.etf_name), e.pd_net_tamt, e.drv_risk_grade,
+                   coalesce(m.resolved, e.cu_fund_mgmt_co)
           ORDER BY TRY_CAST(e.pd_net_tamt AS DOUBLE) DESC NULLS LAST, c.etf_isin
           LIMIT $limit""",
        [Param("prefix", required=True), Param("limit", required=True)],
        source="KRX-PDF·PREF01N001", key_col="etf_isin", as_of=AS_OF_CONSTITUENTS),
+
+    _t("constituent_intersection_top_aum",
+       "두 구성종목을 모두 편입한 국내 상장중 ETF 를 순자산총액 내림차순으로 조회 — "
+       "'둘 다 담은 ETF 중 순자산 1위'(8/26 v3 C-09). 상품명 조각 규칙이 가로채던 유형.",
+       """WITH a AS (
+              SELECT DISTINCT etf_isin FROM etf_constituent WHERE COMPST_ISU_CD = $code_a
+          ), b AS (
+              SELECT DISTINCT etf_isin FROM etf_constituent WHERE COMPST_ISU_CD = $code_b
+          )
+          SELECT e.pd_itm_no, e.pd_abrv_nm, e.pd_net_tamt, e.drv_risk_grade,
+                 coalesce(m.resolved, e.cu_fund_mgmt_co) AS mgmt
+          FROM a JOIN b USING (etf_isin)
+          JOIN kr_etp e ON e.pd_itm_no = etf_isin
+          LEFT JOIN mgmt_resolved m ON m.pd_itm_no = e.pd_itm_no
+          WHERE e.drv_instrument_type = 'ETF' AND e.drv_listing_status = 'active'
+          ORDER BY TRY_CAST(e.pd_net_tamt AS DOUBLE) DESC NULLS LAST, e.pd_itm_no
+          LIMIT $limit""",
+       [Param("code_a", required=True), Param("code_b", required=True),
+        Param("limit", required=True)],
+       source="KRX-PDF·PREF01N001", key_col="pd_itm_no", as_of=AS_OF_CONSTITUENTS),
 
     _t("bond_etf_rating_dist",
        "상품명에 회사채가 표시된 ETF의 BN 구성종목을 채권 마스터와 조인한 신용등급 분포. "

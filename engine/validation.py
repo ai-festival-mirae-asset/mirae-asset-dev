@@ -139,7 +139,8 @@ def gate_existence(question, index, policy):
                     [])
 
     # ② 브랜드 접두 상품명 — 정확 일치·부분 일치 모두 없으면 그 상품은 없다
-    brand = next((b for b in BRAND_TOKENS if b in normalized_question), None)
+    from engine.router import find_brand_token            # 8/26 v3 M-04: 'HK'⊂'삼익THK' 오인 방지(경계 검사)
+    brand = find_brand_token(normalized_question)
     has_product = any(r.kind.startswith("product") for _n, refs in grounded for r in refs)
     if brand and asks and not has_product:
         phrase = re.sub(r"정보|알려줘|알려|수익률|어때|찾아줘|있어|\?", " ",

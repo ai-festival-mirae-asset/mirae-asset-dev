@@ -271,3 +271,125 @@ def test_fund_filter_lists_on_sale_first(ctx, index):
     assert "판매중" in first_row, first_row
     plan = route("해외에 투자하는 주식형 공모펀드 중에서 순자산 큰 순으로 5개만 알려줘", index, policy=POLICY, today=TODAY)
     assert next(c.params for c in plan.calls if c.op == "fund_filter").get("order") == "aum"
+
+
+# ---------------------------------------------------------------------------
+# ⑧ 4차 (8/26) — 블라인드 v3(64/80) 실패 16건의 회귀 잠금. 규칙마다 표현 변형 동반.
+# ---------------------------------------------------------------------------
+
+def test_trap_vocabulary_expansion(index):
+    """v3 T-04/06/09/10/12: 방어 규칙의 어휘 폭 확장 — 배당·공매도, 미래 상장, 종목 시세, 행위."""
+    for q, intent in (("KODEX 2차전지산업 배당수익률이 얼마야?", "unsupported_field"),
+                      ("TIGER 200 배당금 알려줘", "unsupported_field"),
+                      ("KODEX 200 공매도 잔고 알려줘", "unsupported_field"),
+                      ("다음 주에 상장하는 국내 ETF 뭐야?", "time_violation"),
+                      ("내일 출시되는 ETF 있어?", "time_violation"),
+                      ("지금 삼성전자 주가 얼마야?", "time_violation"),
+                      ("현재 에코프로 종가 알려줘", "time_violation"),
+                      ("미래에셋증권 계좌 개설해줘", "action_request"),
+                      ("펀드 해지해줘", "action_request")):
+        plan = route(q, index, policy=POLICY, today=TODAY)
+        assert plan.behavior_hint == "refuse" and plan.intent == intent, (q, plan.intent)
+    plan = route("고배당 ETF 알려줘", index, policy=POLICY, today=TODAY)   # '배당' 단독=테마, 정상
+    assert plan.behavior_hint != "refuse"
+
+
+def test_brand_token_boundary():
+    """v3 M-04: 'HK'⊂'삼익THK' 같은 부분 문자열 오인 방지 — 영문·숫자 경계 검사."""
+    from engine.router import find_brand_token
+    assert find_brand_token("삼익THK을 편입한 ETF는 총 몇 개야?") is None
+    assert find_brand_token("KODEX 250 ETF 정보 알려줘") == "KODEX"
+    assert find_brand_token("TIGER 코스피300 순자산 얼마야?") == "TIGER"
+
+
+def test_mixed_script_constituent_not_refused(ctx):
+    out = answer_question("삼익THK을 편입한 ETF는 총 몇 개야?", ctx, today=TODAY)
+    assert not out["answer"].startswith("요청하신 내용은 보유 데이터 기준으로 확인할 수 없습니다"), out["answer"][:120]
+
+
+def test_rating_band_spaced():
+    """v3 P-09: 'AA 등급대'처럼 띄어 써도 등급대 묶음(서열 2~4)으로 해석."""
+    from engine.router import rating_condition
+    cond, _ = rating_condition("원화 채권에서 AA 등급대만 골라줘, 살 수 있는 걸로", POLICY)
+    assert cond == {"min_rating_rank": 2, "max_rating_rank": 4}
+    cond2, _ = rating_condition("신용등급 AA 이상인 채권 알려줘", POLICY)   # 기존 해석 유지
+    assert cond2 == {"max_rating_rank": 3}
+
+
+def test_fee_combination_rules(index):
+    """v3 C-03/C-13/H-04: 총보수 최저 결합 — 종목 편입×보수 · 운용사×보수 · 위험등급×보수."""
+    plan = route("SK하이닉스를 담은 ETF 중에서 총보수가 가장 낮은 상품은 뭐야?", index, policy=POLICY, today=TODAY)
+    p = next(c.params for c in plan.calls if c.op == "constituent_holders")
+    assert p.get("order") == "fee" and plan.behavior_hint == "partial"
+    plan2 = route("미래에셋자산운용 ETF 중에서 총보수가 가장 낮은 상품 알려줘", index, policy=POLICY, today=TODAY)
+    p2 = next(c.params for c in plan2.calls if c.op == "etp_by_mgmt")
+    assert p2.get("order") == "fee" and plan2.behavior_hint == "partial"
+    plan2b = route("KB자산운용에서 보수 제일 저렴한 ETF 뭐야?", index, policy=POLICY, today=TODAY)
+    assert any(c.op == "etp_by_mgmt" and c.params.get("order") == "fee" for c in plan2b.calls)
+    plan3 = route("위험등급이 3등급인 국내 ETF 중에서 총보수가 0.3% 미만인 것 알려줘", index, policy=POLICY, today=TODAY)
+    p3 = next(c.params for c in plan3.calls if c.op == "etp_low_fee")
+    assert p3.get("min_grade") == 3 and p3.get("max_grade") == 3
+
+
+def test_bond_coupon_order(index):
+    """v3 C-06: '표면금리 제일 높은/낮은' 정렬이 목록 조회에 걸린다."""
+    plan = route("AA급 원화채권 중에 표면금리가 제일 높은 종목이 뭐야?", index, policy=POLICY, today=TODAY)
+    p = next(c.params for c in plan.calls if c.op == "bond_filter")
+    assert p.get("order") == "coupon" and p.get("min_rating_rank") == 2 and p.get("max_rating_rank") == 4
+    plan2 = route("표면금리 가장 낮은 회사채 알려줘", index, policy=POLICY, today=TODAY)
+    p2 = next(c.params for c in plan2.calls if c.op == "bond_filter")
+    assert p2.get("order") == "coupon_asc"
+
+
+def test_theme_top_and_intersection_top(index):
+    """v3 C-08/C-09: 테마×순위×구성 연결 · 교집합×순자산."""
+    plan = route("2차전지 ETF 중에서 순자산이 제일 큰 상품의 구성종목 상위 3개 알려줘", index, policy=POLICY, today=TODAY)
+    assert plan.intent == "theme_top_constituents"
+    p = next(c.params for c in plan.calls if c.op == "etp_pattern_top_constituents")
+    assert p["top_etfs"] == 1 and p["per_etf"] == 3
+    plan1b = route("반도체 ETF 중 순자산 가장 큰 상품엔 어떤 종목이 담겨 있어?", index, policy=POLICY, today=TODAY)
+    assert plan1b.intent == "theme_top_constituents"
+    plan2 = route("삼성전자랑 SK하이닉스 둘 다 담은 ETF 중 순자산이 가장 큰 건 뭐야?", index, policy=POLICY, today=TODAY)
+    assert plan2.intent == "constituent_intersection_top_aum"
+    plan2b = route("현대차와 기아를 모두 편입한 ETF 중에 규모가 제일 큰 상품은 뭐야?", index, policy=POLICY, today=TODAY)
+    assert plan2b.intent == "constituent_intersection_top_aum"
+
+
+def test_top_rank_attribute_notes_pure():
+    """v3 C-05/C-10: 정렬 목록 1위 행의 요청 속성을 노트로 명시(3단 질문의 마지막 고리)."""
+    from types import SimpleNamespace
+    from engine.answer_service import top_rank_attribute_notes
+    o = SimpleNamespace(ok=True, channel="sql", op="constituent_holders",
+                        rows=[{"pd_abrv_nm": "KODEX 200", "drv_risk_grade": "2",
+                               "mgmt": "삼성", "pd_lstg_dt": "2002-10-14"}])
+    result = SimpleNamespace(outcomes=[o])
+    notes = top_rank_attribute_notes("현대차를 편입한 ETF 중 순자산 1위 상품의 위험등급은 몇 등급이야?", result)
+    assert any("2등급" in n and "KODEX 200" in n for n in notes)
+    notes2 = top_rank_attribute_notes("키움투자자산운용 ETF 중 순자산 1위 상품의 상장일 알려줘", result)
+    assert any("상장일" in n and "2002-10-14" in n for n in notes2)
+    notes3 = top_rank_attribute_notes("삼성전자를 담은 ETF 중에서 순자산이 제일 큰 상품의 운용사를 알려줘", result)
+    assert any("운용사" in n and "삼성" in n for n in notes3)
+    assert top_rank_attribute_notes("삼성전자 담은 ETF 알려줘", result) == []   # 순위 낱말 없으면 침묵
+
+
+def test_unknown_hangul_stock_holder_refused(index, ctx):
+    """v2 T-11 재발 방지: 'X 주식을 담은'에서 X 가 미등록 한글 토큰(부분 일치 0)이면 규칙이 거절 확정
+    — HCX 경로 변동에 노출되지 않는다. 실존 종목·별칭(구글·애플)은 그대로 답변."""
+    plan = route("애플파이 주식을 담은 ETF 있어?", index, policy=POLICY, today=TODAY)
+    assert plan.behavior_hint == "refuse" and plan.intent == "existence_check"
+    out = answer_question("애플파이 주식을 담은 ETF 있어?", ctx, today=TODAY)
+    assert out["answer"].startswith("요청하신 내용은 보유 데이터 기준으로 확인할 수 없습니다")
+    for q in ("구글 주식을 담은 국내 상장 ETF 알려주세요", "애플 주식을 담은 ETF 있어?",
+              "삼성전자 주식을 편입한 ETF 알려줘"):
+        plan2 = route(q, index, policy=POLICY, today=TODAY)
+        assert plan2.behavior_hint != "refuse", q
+
+
+def test_industry_sector_wording_uses_name_search(index):
+    """v3 P-21: 'X 산업/섹터/분야에 투자하는'도 관련/테마와 같은 이름+의미 검색 규칙."""
+    for q, term in (("게임 산업에 투자하는 국내 ETF 있어?", "게임"),
+                    ("금융 섹터에 투자하는 국내 ETF 알려줘", "금융")):
+        plan = route(q, index, policy=POLICY, today=TODAY)
+        assert plan.intent == "etp_name_search", (q, plan.intent)
+        params = next(c.params for c in plan.calls if c.op == "etp_name_search")
+        assert params["pattern_raw"] == term

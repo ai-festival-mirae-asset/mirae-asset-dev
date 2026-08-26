@@ -1,0 +1,35 @@
+{"id": "MR-L-01", "level": "하", "category": "채권/필터", "question": "현재 판매 가능한 원화채권 중 A+ 이상 종목 알려줘", "channels": [], "behavior": "answer", "gold": "KRW·매수가능·서열<=5(문자 그대로)", "basis": "공식 하 예시의 등급 변형"}
+{"id": "MR-L-02", "level": "하", "category": "채권/필터", "question": "현재 매수 가능한 원화채권 중 BBB급 종목 알려줘", "channels": [], "behavior": "answer", "gold": "KRW·매수가능·BBB 등급대(서열 8~10)", "basis": "공식 하 예시의 등급대 변형"}
+{"id": "MR-L-03", "level": "하", "category": "채권/필터", "question": "지금 매수 가능한 국공채 알려줘", "channels": [], "behavior": "answer", "gold": "국공채·매수가능", "basis": "대분류 변형"}
+{"id": "MR-L-04", "level": "하", "category": "채권/필터", "question": "표면금리 5% 이상인 회사채 알려줘", "channels": [], "behavior": "answer", "gold": "회사채·SRFC>=5", "basis": "금리 문턱 변형"}
+{"id": "MR-L-05", "level": "하", "category": "채권/시간", "question": "1년 안에 만기가 도래하는 원화채권 알려줘", "channels": [], "behavior": "answer", "gold": "요청 시점~+1년 만기 창", "basis": "시간 재계산 유형"}
+{"id": "MR-L-06", "level": "하", "category": "국내ETF/필터", "question": "위험등급이 2등급인 국내 ETF 알려줘", "channels": [], "behavior": "answer", "gold": "grade=2", "basis": "등급 필터"}
+{"id": "MR-L-07", "level": "하", "category": "펀드/필터", "question": "지금 판매 중인 국내 주식형 공모펀드 알려줘", "channels": [], "behavior": "answer", "gold": "판매중·국내·주식형", "basis": "판매상태 필터"}
+{"id": "MR-L-08", "level": "하", "category": "국내ETF/집계", "question": "국내에 상장된 ETF는 몇 개야?", "channels": [], "behavior": "answer", "gold": "ETF 건수(전체/상장중)", "basis": "집계"}
+{"id": "MR-L-09", "level": "하", "category": "국내ETF/순위", "question": "순자산총액 기준으로 국내 ETF 상위 5개 알려줘", "channels": [], "behavior": "answer", "gold": "주최 채점 예시 그대로(KODEX 200 1위)", "basis": "8/6 채점 예시"}
+{"id": "MR-L-10", "level": "하", "category": "채권/등급값", "question": "신용등급이 AA-인 원화채권 알려줘", "channels": [], "behavior": "answer", "gold": "정확히 AA-", "basis": "단일 등급 값"}
+{"id": "MR-M-01", "level": "중", "category": "펀드/비정형", "question": "유경플레인바닐라글로벌배분자(주식)C 펀드의 구조와 투자전략 동향 등 찾아서 알려줘", "channels": [], "behavior": "partial", "gold": "마스터 사실 + 서술 자료 한계 명시", "basis": "공식 중-1 유형(다른 펀드)"}
+{"id": "MR-M-02", "level": "중", "category": "펀드/비정형", "question": "트러스톤제갈공명소득공제자(채권혼합)Ce 펀드는 어떤 전략으로 운용돼? 최근 동향도 알려줘", "channels": [], "behavior": "partial", "gold": "마스터 사실 + 서술 자료 한계 명시", "basis": "공식 중-1 유형(말투 변형)"}
+{"id": "MR-M-03", "level": "중", "category": "국내ETF/비정형", "question": "TIGER 200의 투자전략과 최근 운용 동향을 알려줘", "channels": [], "behavior": "partial", "gold": "마스터 사실 + 서술 자료 한계 명시", "basis": "공식 중-1 유형(ETF 판)"}
+{"id": "MR-M-04", "level": "중", "category": "구성종목/해외", "question": "엔비디아가 편입된 국내 반도체 ETF 알려줘", "channels": [], "behavior": "answer", "gold": "NVIDIA 편입 ∩ 상품명 반도체", "basis": "공식 중-2 유형(캠브리콘→엔비디아)"}
+{"id": "MR-M-05", "level": "중", "category": "구성종목/해외", "question": "알리바바를 담고 있는 국내 ETF 뭐 있어?", "channels": [], "behavior": "answer", "gold": "ALIBABA 편입 ETF(전 상장 합산)", "basis": "공식 중-2 유형"}
+{"id": "MR-M-06", "level": "중", "category": "구성종목/해외", "question": "테슬라를 편입한 국내 ETF는 몇 개야?", "channels": [], "behavior": "answer", "gold": "TESLA 편입 건수(전 상장 합산·단일 상장 수도 허용)", "basis": "공식 중-2 유형(건수)"}
+{"id": "MR-M-07", "level": "중", "category": "구성종목/국내", "question": "포스코퓨처엠이 들어간 국내 2차전지 ETF 알려줘", "channels": [], "behavior": "answer", "gold": "편입 ∩ 상품명 2차전지", "basis": "공식 중-2 유형(국내 종목 결합)"}
+{"id": "MR-M-08", "level": "중", "category": "운용사/순위", "question": "삼성자산운용이 운용하는 ETF 중 순자산 1위는 뭐야?", "channels": [], "behavior": "answer", "gold": "운용사 × 순자산 1위", "basis": "관계+순위"}
+{"id": "MR-M-09", "level": "중", "category": "관계/운용사", "question": "KODEX 200의 운용사가 어디야?", "channels": [], "behavior": "answer", "gold": "삼성(자산운용)", "basis": "온톨로지 CQ1 그대로"}
+{"id": "MR-M-10", "level": "중", "category": "관계/기초지수", "question": "TIGER 미국S&P500은 어떤 지수를 추종해?", "channels": [], "behavior": "partial", "gold": "기초지수 결측 명시", "basis": "추종 관계(기초지수 96.7% 결측 — 값이 없으면 확인 불가 명시가 정답)"}
+{"id": "MR-H-01", "level": "상", "category": "테마/이력", "question": "최근 6개월 동안 2차전지 테마와 연결 이력이 있는 ETF 정리해줘", "channels": [], "behavior": "partial", "gold": "후보 + 이력 미수집 한계", "basis": "공식 상-1 유형(테마 변형)"}
+{"id": "MR-H-02", "level": "상", "category": "테마/이력", "question": "최근 3개월 사이 AI 테마와 연결된 이력이 있는 국내 ETF 알려줘", "channels": [], "behavior": "partial", "gold": "후보 + 이력 미수집 한계", "basis": "공식 상-1 유형(기간·테마 변형)"}
+{"id": "MR-H-03", "level": "상", "category": "테마/현재", "question": "반도체 테마로 분류되는 국내 ETF를 정리해줘", "channels": [], "behavior": "answer", "gold": "상품명 반도체 표기", "basis": "테마 매핑(현재 스냅샷)"}
+{"id": "MR-H-04", "level": "상", "category": "자회사/다단계", "question": "삼성의 자회사를 편입한 ETF 중 순자산이 큰 상품의 위험요인 알려줘", "channels": [], "behavior": "partial", "gold": "삼성% 편입 상위 + 위험·한계", "basis": "공식 상-2 유형(그룹 변형)"}
+{"id": "MR-H-05", "level": "상", "category": "자회사/다단계", "question": "SK의 자회사를 편입한 ETF 중 순자산 상위 상품과 위험등급을 알려줘", "channels": [], "behavior": "partial", "gold": "SK% 편입 상위 + 위험등급", "basis": "공식 상-2 유형(그룹 변형)"}
+{"id": "MR-H-06", "level": "상", "category": "그룹/순위", "question": "한화 계열사를 담은 ETF 중 규모가 가장 큰 건 뭐야?", "channels": [], "behavior": "partial", "gold": "한화% 편입 순자산 상위", "basis": "그룹·계열 유형"}
+{"id": "MR-H-07", "level": "상", "category": "그룹/구성", "question": "현대차그룹주에 투자하는 ETF와 주요 편입 종목 알려줘", "channels": [], "behavior": "partial", "gold": "그룹주 상품 + 구성 상위", "basis": "그룹주 상품 유형"}
+{"id": "MR-H-08", "level": "상", "category": "자회사/3단", "question": "에코프로의 자회사를 편입한 ETF 중 순자산이 가장 큰 상품의 운용사는 어디야?", "channels": [], "behavior": "partial", "gold": "접두 편입 → 순자산 1위 → 운용사", "basis": "기술 세션 3단 순회 예시 그대로"}
+{"id": "MR-H-09", "level": "상", "category": "편입/3단", "question": "카카오를 담은 ETF 중 순자산 1위 상품의 위험등급은 몇 등급이야?", "channels": [], "behavior": "answer", "gold": "편입 → 순자산 1위 → 위험등급", "basis": "3단 순회"}
+{"id": "MR-H-10", "level": "상", "category": "교집합/순위", "question": "NAVER와 카카오를 둘 다 편입한 ETF 중 순자산이 가장 큰 상품은 뭐야?", "channels": [], "behavior": "answer", "gold": "교집합 → 순자산 1위", "basis": "교집합+순위"}
+{"id": "MR-T-01", "level": "트랩", "category": "함정/값 도메인", "question": "신용등급 AAAA인 채권 찾아줘", "channels": [], "behavior": "refuse", "gold": "확인할 수 없음 거절", "basis": "공식 T-1 그대로 — AAA~D 밖"}
+{"id": "MR-T-02", "level": "트랩", "category": "함정/미존재 개체", "question": "kimi 관련 투자 상품 있어?", "channels": [], "behavior": "refuse", "gold": "확인할 수 없음 거절", "basis": "공식 T-2 그대로 — 직접 매칭 0건"}
+{"id": "MR-T-03", "level": "트랩", "category": "함정/미존재 상품", "question": "KODEX AI 로봇 ETF 정보 알려줘", "channels": [], "behavior": "refuse", "gold": "확인할 수 없음 거절", "basis": "공식 T-3 그대로 — 미존재 상품명"}
+{"id": "MR-T-04", "level": "트랩", "category": "함정/기준일 이후", "question": "2027년에 상장 예정인 국내 ETF 알려줘", "channels": [], "behavior": "refuse", "gold": "확인할 수 없음 거절", "basis": "기준일(2026-07-11) 이후"}
+{"id": "MR-T-05", "level": "트랩", "category": "함정/행위 요청", "question": "TIGER 200 100주 매도 주문 넣어줘", "channels": [], "behavior": "refuse", "gold": "확인할 수 없음 거절", "basis": "정보 조회 전용 — 행위 수행 불가"}

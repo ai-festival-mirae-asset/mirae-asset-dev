@@ -54,7 +54,8 @@ CURRENCY_MAP = [("원화", "KRW"), ("달러", "USD"), ("엔화", "JPY"), ("엔",
 # 행위 요청(주문·매매·환매·가입) — 정보 조회 전용 서비스의 범위 밖 (8/22 블라인드 v2 T-15)
 _ACTION_REQUEST_RE = re.compile(
     r"매수\s*주문|매도\s*주문|주문(을|도)?\s*(넣|해|걸|내|해\s*줘)|사\s*줘|사줘|팔아\s*줘|팔아줘|"
-    r"매수해\s*줘|매도해\s*줘|매수해줘|매도해줘|거래해\s*줘|환매해\s*줘|가입해\s*줘|신청해\s*줘|매수\s*해\s*주|매도\s*해\s*주")
+    r"매수해\s*줘|매도해\s*줘|매수해줘|매도해줘|거래해\s*줘|환매해\s*줘|가입해\s*줘|신청해\s*줘|매수\s*해\s*주|매도\s*해\s*주|"
+    r"계좌\s*개설|개설해\s*줘|개설해줘|해지해\s*줘|해지해줘|이체해|송금해|리밸런싱.{0,6}(실행|해\s*줘|해줘)")   # 8/26 v3 T-12
 
 # 데이터에 없는 자산 유형 — 직접 refuse 사유 (T-06)
 UNSUPPORTED_ASSETS = ("코인", "가상자산", "암호화폐", "비트코인", "크립토")
@@ -69,6 +70,30 @@ BRAND_TOKENS = tuple(dict.fromkeys(
 # 라틴 토큰 중 미등록 개체로 세지 않는 일반어
 LATIN_STOPWORDS = {"etf", "etn", "etp", "top", "vs", "ytd", "aum", "ai", "tdf",
                    "msci", "korea", "kospi", "kosdaq", "reit", "esg", "mmf", "csi"}
+
+
+def find_brand_token(text):
+    """문장 속 브랜드 접두 감지 — 영문·숫자 경계를 지킨다 (8/26 v3 M-04).
+
+    'HK'(별칭 사전 유래)가 종목명 '삼익THK' 안에 부분 문자열로 걸려 존재 검문이
+    문장 전체를 미존재 상품으로 오인·거절했던 실측 결함의 일반 수리: 브랜드 표기의
+    양옆이 영문·숫자면 다른 단어의 일부로 보고 세지 않는다(한글 조사는 경계로 인정).
+    """
+    for b in BRAND_TOKENS:
+        start = 0
+        while True:
+            i = text.find(b, start)
+            if i < 0:
+                break
+            start = i + 1
+            before = text[i - 1:i]
+            after = text[i + len(b):i + len(b) + 1]
+            if before and re.match(r"[A-Za-z0-9]", before):
+                continue
+            if after and re.match(r"[A-Za-z0-9]", after):
+                continue
+            return b
+    return None
 
 HOLDING_VERBS = ("편입", "담은", "담고", "담아", "포함", "들어간", "들어있", "들어 있")
 COUNT_WORDS = ("몇 개", "몇개", "몇 종", "몇이", "개수", "총 몇", "얼마나 되", "얼마나 돼")
@@ -143,7 +168,7 @@ def rating_condition(question, policy):
     if not valid:
         return {}, []
     token, rank, end = valid[0]
-    tail = question[end:end + 6]
+    tail = question[end:end + 8].lstrip()                 # 8/26 v3 P-09: 'AA 등급대'처럼 띄어 써도 같은 해석
     cond, notes = {}, []
     is_flat = not token.endswith(("+", "-"))
     band_low = RATING_RANK.get(token + "-", rank) if is_flat else rank
@@ -268,10 +293,11 @@ def detect_time_flags(question, as_of=AS_OF_MASTER):
     flags = {}
     if re.search(r"지금 주가|현재가|실시간|현재 주가|시세", question) or \
             re.search(r"(오늘|지금|현재)\s*(의)?\s*(코스피|코스닥|나스닥|다우|S&P|환율|기준금리)", question, re.I) or \
+            re.search(r"(오늘|지금|현재).{0,14}?(주가|종가)", question) or \
             re.search(r"(코스피|코스닥|나스닥|다우)\s*(지수)?\s*(몇|얼마|어때)", question):
-        flags["realtime"] = True                         # "오늘 코스피 지수 몇이야?"(v2 T-05) 포함
-    if re.search(r"다음\s*달|내년|앞으로|전망|예측|가능성을 반영", question):
-        flags["future"] = True
+        flags["realtime"] = True                         # "오늘 코스피 지수 몇이야?"(v2 T-05) · "지금 삼성전자 주가"(v3 T-10)
+    if re.search(r"다음\s*달|다음\s*주|내일|모레|내년|앞으로|전망|예측|가능성을 반영", question):
+        flags["future"] = True                           # "다음 주에 상장하는"(v3 T-09) 포함
     ay, am = int(as_of[:4]), int(as_of[5:7])
     for m in _YEAR_RE.finditer(question):
         y, mo = int(m.group(1)), int(m.group(2) or 0)
@@ -622,9 +648,10 @@ def route_stage_a(question, index, policy=None, today=None):
         plan.notes.append("매수·매도·주문·환매 같은 행위 수행은 제공 범위 밖(정보 조회 전용 서비스)")
         plan.hints["unsupported_request"] = "action"
         return done("action_request", "refuse")
-    if re.search(r"배당락|배당\s*기준일|배당\s*지급일|분배금\s*지급|분배락", q):
-        plan.notes.append("원천 데이터에 배당락일·배당(분배금) 지급일 항목이 없음")
-        plan.hints["unavailable_field"] = "dividend_dates"
+    if re.search(r"배당락|배당\s*기준일|배당\s*지급일|배당\s*수익률|배당금|분배금|분배락|공매도", q):
+        # 8/26 v3 T-04/06: 배당·분배·공매도 계열 항목은 원천에 없다 — '배당' 단독(고배당 테마명)은 제외
+        plan.notes.append("원천 데이터에 배당(배당락일·배당수익률·배당금·분배금)·공매도 관련 항목이 없음")
+        plan.hints["unavailable_field"] = "dividend_or_short_fields"
         return done("unsupported_field", "refuse")
     m_coupon = re.search(r"표면금리\s*(\d+(?:\.\d+)?)\s*%", q)
     if m_coupon and float(m_coupon.group(1)) > 100:
@@ -669,6 +696,9 @@ def route_stage_a(question, index, policy=None, today=None):
         return done("time_violation", "refuse")
     if time_flags.get("post_snapshot"):
         plan.notes.append(f"기준일({AS_OF_MASTER}) 이후({time_flags['post_snapshot']}) 정보는 보유하지 않음")
+        return done("time_violation", "refuse")
+    if time_flags.get("future") and re.search(r"상장|출시|설정되|나올|나온", q):
+        plan.notes.append(f"기준일({AS_OF_MASTER}) 이후 예정 정보(상장·출시)는 보유하지 않음")   # v3 T-09
         return done("time_violation", "refuse")
     if time_flags.get("future") and re.search(r"추천|골라|알려", q):
         plan.notes.append("미래 전망·시장 예측 반영은 제공 불가(단정 추천 금지) — 조건 기반 사실 조회로 전환 가능")
@@ -762,6 +792,23 @@ def route_stage_a(question, index, policy=None, today=None):
         plan.notes.append("총보수 0 표기 상품은 값의 의미가 미확정(미수집 추정 — KODEX 200 도 0 으로 표기)이라 결측과 함께 비교에서 제외")
         plan.hints["skip_generation"] = True
         return done("constituent_intersection_low_fee", "partial")
+
+    # ── 5.85 복수 구성종목 교집합 + 순자산 정렬 (v3 C-09) — '둘 다 담은 ETF 중 순자산 1위' ──
+    if len(constituent_refs) >= 2 and any(w in q for w in TOP_WORDS) \
+            and re.search(r"순자산|규모|AUM", q, re.IGNORECASE):
+        first, second = constituent_refs[:2]
+        for ref in (first, second):
+            plan.calls.append(ChannelCall("graph", "holding_etfs",
+                                          {"query": ref.key, "limit": 1000}))
+        plan.calls.append(ChannelCall("sql", "constituent_intersection_top_aum",
+                                      {"code_a": first.key, "code_b": second.key,
+                                       "limit": max(limit, 10)}))
+        plan.hints["order"] = "aum"
+        plan.hints["display_rows"] = 5
+        plan.hints["skip_generation"] = True
+        plan.notes.append("두 종목을 모두 편입한 상장중 ETF 를 순자산총액 내림차순으로 조회")
+        plan.notes.append("구성종목 기준일 2026-07-10(직전 거래일)")
+        return done("constituent_intersection_top_aum")
 
     # ── 5.9 TDF ETF 존재 + 구성 공시 확인 (H-19) ─────────────────────────
     if has_etf_word and "TDF" in q.upper() and re.search(r"담|구성", q):
@@ -876,6 +923,8 @@ def route_stage_a(question, index, policy=None, today=None):
         weight_th = next((v for v, k, d in percents
                           if k in ("weight", "unknown") and d in ("이상", "초과", "넘")), None)
         by_aum = bool(re.search(r"순자산|규모|AUM", q, re.IGNORECASE))
+        # 8/26 v3 C-03: '…담은 ETF 중 총보수가 가장 낮은' — 보수 오름차순(0 표기 제외) 정렬
+        by_fee = bool("보수" in q and re.search(r"낮|저렴|싼|최저|적은", q))
         # v2 H-08: '…담은 ETF 중에 ○○자산운용이 운용하는' — 운용사 조건을 SQL 필터로 함께 적용
         mgmt_filter = comp_ref if (comp_ref and "운용" in q) else None
         # v2 O-03: '에코프로비엠이 편입된 2차전지 ETF' — 테마 낱말이 함께 오면 상품명 필터로 교집합.
@@ -893,7 +942,9 @@ def route_stage_a(question, index, policy=None, today=None):
                     plan.calls.append(ChannelCall("graph", "holding_etfs",   # (O-03 실측: 생성기가 그래프 쪽을 골라 나열)
                                                   {"query": key, "limit": limit}))
                 holder_params = {"code": key, "limit": max(limit, 30)}
-                if by_aum:                                # M-02: 순자산 큰 순은 SQL 이 전체에서 정렬
+                if by_fee:                                # v3 C-03: 총보수 오름차순(값 보유분만)
+                    holder_params["order"] = "fee"
+                elif by_aum:                              # M-02: 순자산 큰 순은 SQL 이 전체에서 정렬
                     holder_params["order"] = "aum"
                 if mgmt_filter:
                     holder_params["mgmt"] = mgmt_filter.key
@@ -908,6 +959,10 @@ def route_stage_a(question, index, policy=None, today=None):
             plan.hints["holder_name_filter"] = theme_pat
             plan.notes.append(f"'{const_name}' 편입 ETF 중 상품명에 '{theme_pat}' 표기가 있는 상품으로 "
                               "좁혀 표시(질문의 테마 조건)")
+        if by_fee:
+            plan.calls.append(ChannelCall("sql", "coverage_check", {"field": "kr_etp.cu_charge_rt"}))
+            plan.notes.append("총보수는 값 보유 상품 기준(실질결측 87.5%) · 0 표기는 의미 미확정(미수집 추정)이라 "
+                              "순위에서 제외 — 커버리지 명시 필수")
         if by_aum:
             plan.hints["order"] = "aum"
         plan.hints["constituent"] = {"name": const_name, "key": const_ref.key, "keys": keys}
@@ -915,7 +970,7 @@ def route_stage_a(question, index, policy=None, today=None):
             plan.notes.append(f"'{const_name}'은(는) 복수 상장 종목 {len(keys)}건"
                               f"({' / '.join(r.display for r in const_groups[0][1][:3])})을 합쳐 조회")
         plan.notes.append("구성종목 기준일 2026-07-10(직전 거래일) · 수집분 ETF 기준")
-        return done("constituent_reverse")
+        return done("constituent_reverse", "partial" if by_fee else "answer")
 
     # ── 7. 상품 1종 상세·구성·페어 비교 (L-09/10/28, M-25, H-30) ─────────────
     if product_ref and product_ref.kind == "product_kr_etp":
@@ -1027,6 +1082,19 @@ def route_stage_a(question, index, policy=None, today=None):
             plan.notes.append(f"운용사 '{comp_ref.key}'(명칭은 오염 정정값 mgmt_resolved — 64건 복구 기준)의 "
                               "상품 수를 유형(ETF/ETN)·상장상태별로 집계")
             return done("company_product_count")
+        # 8/26 v3 C-13: 운용사 × 총보수 최저 — 그래프 폴백이 해외 계열 운용사 상품을 잘못 나열하던 오답 해소
+        if "보수" in q and re.search(r"낮|저렴|싼|최저|적은", q):
+            params = {"mgmt": comp_ref.key, "order": "fee", "active_only": "Y",
+                      "limit": top_n or 5}
+            if itype:
+                params["instrument_type"] = itype
+            plan.calls.append(ChannelCall("sql", "etp_by_mgmt", params))
+            plan.calls.append(ChannelCall("sql", "coverage_check", {"field": "kr_etp.cu_charge_rt"}))
+            plan.notes.append("총보수는 값 보유 상품 기준(실질결측 87.5%) · 0 표기는 의미 미확정(미수집 추정)이라 "
+                              "순위에서 제외 — 커버리지 명시 필수")
+            plan.notes.append("운용사 명칭은 오염 정정값(mgmt_resolved) 기준 · 총보수 오름차순 · 상장중 기준")
+            plan.hints["skip_generation"] = True
+            return done("company_products_ranked", "partial")
         # 8/22 v2 M-08/09·H-05: 순위·테마는 순자산 정렬 목록을 SQL 로(그래프 목록엔 순자산이 없어 AI 가 포기했음)
         theme = next((t for t in (non_region_themes or []) if t in q), None) \
             or next((t for t in (theme_hits or []) if t in q and t not in REGIONS), None)
@@ -1040,6 +1108,11 @@ def route_stage_a(question, index, policy=None, today=None):
             plan.calls.append(ChannelCall("sql", "etp_by_mgmt", params))
             plan.notes.append("운용사 명칭은 오염 정정값(mgmt_resolved — 64건 복구) 기준 · 순자산총액(pd_net_tamt) 내림차순 · 상장중 기준")
             return done("company_products_ranked")
+        # 8/26: 밋밋한 목록 질문도 SQL(국내 원천, 순자산 내림차순)을 먼저 — 그래프의 회사 별칭이
+        #       해외 계열 운용사(Global X 등)로 번져 엉뚱한 목록이 앞서는 것을 막는다
+        plan.calls.append(ChannelCall("sql", "etp_by_mgmt",
+                                      {"mgmt": comp_ref.key, "active_only": "Y",
+                                       "limit": max(limit, 10)}))
         plan.calls.append(ChannelCall("graph", "company_products",
                                       {"query": comp_ref.key, "limit": max(limit, 10)}))
         plan.calls.append(ChannelCall("sql", "mgmt_top_share", {"limit": 30}))
@@ -1113,9 +1186,18 @@ def route_stage_a(question, index, policy=None, today=None):
                 and not re.search(r"만기\s*(가\s*)?(지난|된|도래한|경과)|과거|전체|모든|이미|포함", q):
             wants_active = True                      # 목록 질문만 — 건수 질문(L-05 등)은 전체 통계 그대로
             plan.notes.append("만기가 지나지 않은(기준일 현재 유효한) 채권 기준 — 만기 경과분까지 보려면 '만기 지난 채권 포함'으로 질문")
+        coupon_order = None                              # 8/26 v3 C-06: '표면금리 제일 높은/낮은' 정렬
+        if re.search(r"표면\s*금리|금리|쿠폰", q) and any(w in q for w in TOP_WORDS):
+            if re.search(r"높|최고|최대|큰", q):
+                coupon_order = "coupon"
+            elif re.search(r"낮|최저|작은|적은", q):
+                coupon_order = "coupon_asc"
+            if coupon_order:
+                plan.notes.append("표면금리 " + ("내림" if coupon_order == "coupon" else "오름") + "차순 정렬")
         params = {"currency": currency if not ccy_exclude else None,
                   "bond_class": bond_class, "buyable_only": buyable,
                   "maturity_status": "active" if wants_active else None,
+                  "order": coupon_order,
                   "min_coupon": coupon_min if coupon_band is None else coupon_band,
                   "max_coupon": coupon_band + 1 if coupon_band is not None else None}
         params.update(cond)
@@ -1192,9 +1274,25 @@ def route_stage_a(question, index, policy=None, today=None):
             plan.notes.extend(aum_notes)
             plan.notes.append("전체/상장중(active) 건수를 구분해 답변")
             return done("etp_count")
-        if re.search(r"순자산|AUM|규모", q, re.IGNORECASE) and any(w in q for w in TOP_WORDS):  # L-11
-            plan.calls.append(ChannelCall("sql", "etp_top_aum",
-                                          {"instrument_type": itype, "limit": top_n or 5}))
+        if re.search(r"순자산|AUM|규모", q, re.IGNORECASE) and any(w in q for w in TOP_WORDS):  # L-11 · v3 C-08
+            theme_t = non_region_themes[0] if non_region_themes else None
+            if theme_t and re.search(r"구성|담|편입|종목", q):
+                # 'X 테마 ETF 중 순자산 1위 상품의 구성 상위 N' — 기존 패턴 상위 구성 템플릿 재사용
+                plan.calls.append(ChannelCall("sql", "etp_pattern_top_constituents",
+                                              {"pattern_raw": theme_t, "top_etfs": 1,
+                                               "per_etf": top_n or 10}))
+                plan.calls.append(ChannelCall("sql", "etp_name_search",
+                                              {"pattern_raw": theme_t, "instrument_type": itype,
+                                               "status": "active", "limit": 5}))
+                plan.hints["skip_generation"] = True
+                plan.notes.append(f"상품명에 '{theme_t}' 표기가 있는 상장중 ETP 중 순자산 1위 상품의 구성 상위 종목")
+                plan.notes.append("구성종목 기준일 2026-07-10(직전 거래일)")
+                return done("theme_top_constituents")
+            top_params = {"instrument_type": itype, "limit": top_n or 5}
+            if theme_t:
+                top_params["name_pattern_raw"] = theme_t
+                plan.notes.append(f"상품명에 '{theme_t}' 표기가 있는 상품 기준")
+            plan.calls.append(ChannelCall("sql", "etp_top_aum", top_params))
             plan.notes.append("상장중(active) 기준 · ETF/ETN 구분 적용")
             return done("etp_ranking")
         if "수익률" in q and any(w in q for w in TOP_WORDS) and not is_fund_domain:  # L-14/M-15
@@ -1215,11 +1313,14 @@ def route_stage_a(question, index, policy=None, today=None):
                                   "구성종목 기준일 2026-07-10 · 구성 공시가 빈 ETF 는 집계에서 빠짐")
                 return done("etp_ranking_common_holdings")
             return done("etp_ranking")
-        if "보수" in q and re.search(r"이하|미만|낮|싼|저렴", q):    # L-26
+        if "보수" in q and re.search(r"이하|미만|낮|싼|저렴", q):    # L-26 · v3 H-04(위험등급 결합)
             fee_th = next((v for v, k, _d in percents if k == "fee"), None)
-            plan.calls.append(ChannelCall("sql", "etp_low_fee",
-                                          {"max_fee": fee_th if fee_th is not None else 100.0,
-                                           "limit": max(limit, 20)}))
+            fee_params = {"max_fee": fee_th if fee_th is not None else 100.0,
+                          "limit": max(limit, 20)}
+            if risk and risk[0] != "invalid":
+                fee_params["min_grade"], fee_params["max_grade"] = risk[0], risk[1]
+                plan.notes.extend(risk[2])
+            plan.calls.append(ChannelCall("sql", "etp_low_fee", fee_params))
             plan.calls.append(ChannelCall("sql", "coverage_check", {"field": "kr_etp.cu_charge_rt"}))
             plan.notes.append("총보수는 값 보유 상품 기준(실질결측 87.5%) · 0 표기는 의미 미확정(미수집 추정)이라 순위에서 제외 — 커버리지 명시 필수")
             return done("etp_fee_filter", "partial")
@@ -1275,7 +1376,7 @@ def route_stage_a(question, index, policy=None, today=None):
         # v2 M-12: 'X 관련/테마 (국내) ETF' — 사전에 없는 테마어(원자력 등)도 '관련' 앞 낱말을
         #          그대로 이름 검색 + 의미 검색해 HCX 라우팅 변동에 기대지 않는다(규칙 우선).
         #          위 고정 키워드 검색이 먼저 — 기존 경로(v1 H-24 등)를 그대로 보존하기 위함.
-        m_rel = re.search(r"([가-힣A-Za-z0-9&+]{2,12}?)[은는이가]?\s*(?:관련|테마)", q)
+        m_rel = re.search(r"([가-힣A-Za-z0-9&+]{2,12}?)[은는이가]?\s*(?:관련|테마|산업|섹터|분야)", q)
         if m_rel and not const_ref and not product_ref and "이력" not in q:
             term = _strip_particle(m_rel.group(1))
             plan.calls.append(ChannelCall("sql", "etp_name_search",
@@ -1363,7 +1464,7 @@ def route_stage_a(question, index, policy=None, today=None):
     # ── 13. 미등록 개체·상품 존재 질의 (T-04~09) — 비대칭 원칙:
     #        이름 일부라도 실제 상품명 안에 등장하면(CSI300 등) 거절이 아니라
     #        이름 검색으로 답하고, 부분 일치조차 0건일 때만 거절 후보로 본다.
-    brand_hit = next((b for b in BRAND_TOKENS if b in q), None)
+    brand_hit = find_brand_token(q)                      # 8/26: 경계 검사(부분 문자열 오인 방지)
     asks_specific = bool(re.search(r"정보|알려|수익률|보수|어때|있어|찾아", q))
     unfindable = [t for t in unknown if not token_matches(index, t, limit=1)]
     findable = [t for t in unknown if t not in unfindable]
@@ -1382,6 +1483,20 @@ def route_stage_a(question, index, policy=None, today=None):
                                           {"pattern_raw": t, "limit": max(limit, 20)}))
             plan.calls.append(ChannelCall("keyword", "lookup", {"query": t, "limit": 5}))
         return done("name_token_search")
+    # 8/26 (v2 T-11 재발): "X 주식을 담은 ETF" 꼴에서 X 가 한글 미등록 토큰이고 부분 일치조차
+    # 0건이면 규칙이 거절을 확정한다 — HCX 경로에 넘기면 실행마다 답이 흔들리던 실측(애플파이).
+    m_hold_tok = re.search(r"([가-힣]{2,12})\s*주식[을를]?\s*(?:담|편입|포함)", q)
+    if m_hold_tok and not plan.calls:
+        tok = m_hold_tok.group(1)
+        grounded_cover = any(tok in str(n) or any(tok in str(r.display) for r in refs)
+                             for n, refs in entities)
+        if not grounded_cover and not index.exact(tok) and not token_matches(index, tok, limit=1):
+            plan.calls.append(ChannelCall("keyword", "lookup",
+                                          {"query": tok, "limit": policy["trap_similar_suggest_limit"]}))
+            plan.hints["existence_query"] = tok
+            plan.notes.append(f"'{tok}' 종목·상품은 기준일 데이터(상품명·구성종목명·별칭)에서 직접 매칭 0건 — "
+                              "부분 일치는 유사 명칭 안내까지만(존재 근거 아님)")
+            return done("existence_check", "refuse")
 
     # ── 14. 테마 검색 (M-11~13/24/26/28, H-04) — 벡터+키워드+상품명 결합 ─────
     if theme_hits and "최근" in q and "개월" in q and "이력" in q:

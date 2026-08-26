@@ -685,7 +685,7 @@ def test_new_templates_registered_with_like_conventions():
     assert resolve_raw_params({"prefix_raw": "SK_", "limit": 5}) == {"prefix": r"SK\_%", "limit": 5}
     assert resolve_raw_params({"pattern_raw": "50%", "top_etfs": 3}) == {"pattern": r"%50\%%", "top_etfs": 3}
     order_param = next(p for p in TEMPLATES["constituent_holders"].params if p.name == "order")
-    assert order_param.enum == ("aum", "weight")
+    assert order_param.enum == ("aum", "weight", "fee")   # fee 는 8/26 v3 C-03(총보수 오름차순)
     assert any(p.name == "mgmt" for p in TEMPLATES["constituent_holders"].params)   # 8/26 v2 H-08
 
 

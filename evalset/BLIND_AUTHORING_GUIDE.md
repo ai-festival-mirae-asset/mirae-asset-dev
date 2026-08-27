@@ -49,4 +49,4 @@
 중     | 엔비디아 들어간 국내 ETF 뭐가 있어? | 구성종목 수집분에 NVIDIA 편입 ETF 존재
 ```
 
-제출처: collaborator 브랜치에 `evalset/blind_kyungrae.txt` 로 올리거나 팀 채널로 전달. 받은 뒤 papuagigi 쪽에서 채점표로 변환해 측정하고 결과를 공유합니다.
+제출처: `main` 브랜치에 `evalset/blind_<본인이름>.txt` 로 올리거나 팀 채널로 전달. 이후의 채점·개선까지 직접 하려면 [TEAM_IMPROVEMENT_GUIDE.md](TEAM_IMPROVEMENT_GUIDE.md) 2~4단계를 이어서 진행합니다.

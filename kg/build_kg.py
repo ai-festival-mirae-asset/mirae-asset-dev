@@ -51,7 +51,7 @@ ROOT = os.path.dirname(HERE)                                 # repo 루트
 PROCESSED = os.path.join(ROOT, "preprocessing", "processed")
 OUT_DEFAULT = os.path.join(HERE, "output")
 
-AS_OF = "2026-07-11"  # 데이터 스냅샷 기준일 — preprocess.py 와 동일
+AS_OF = "2026-08-22"  # 데이터 스냅샷 기준일(국내 영업일) — preprocess.py 와 동일 (8/26 재배포본)
 
 # --- 네임스페이스 (ontology/common.ttl 과 일치해야 한다 — kg_store.py 와 같은 값) ----
 FP = "http://mafest.ai/product#"          # 스키마 — 공식 예시 접두어 fp: (8/19 채택)
@@ -640,11 +640,19 @@ def build_table(slug_name, df, out_dir):
     with io.open(path, "w", encoding="utf-8", newline="\n") as fh:
         em = TableEmitter(fh)
         if slug_name == "public_fund":
-            # 마스터 단위 적재 — 그룹 내 변동 컬럼은 prfd_attr_cd 뿐(8/5 검증)이라 첫 행이 대표
-            sizes = df.groupby("itm_no", sort=False).size().to_dict()
-            master = df.drop_duplicates(subset=["itm_no"], keep="first")
+            # 마스터(상품) 단위 적재 — 8/27 재배포본은 1행=1클래스(itm_no 고유)이고
+            # 상품 묶음 키는 fss_itm_no(결측이면 행 자체가 상품). 대표 클래스는
+            # 순자산(fd_nast_suma) 최대, 동률이면 itm_no 사전순 — fund_master(DuckDB)와
+            # 같은 규칙이라 두 채널의 상품 수·대표가 일치한다.
+            grp = df["fss_itm_no"].fillna(df["itm_no"]) if "fss_itm_no" in df.columns else df["itm_no"]
+            nast = pd.to_numeric(df.get("fd_nast_suma"), errors="coerce")
+            ordered = df.assign(_grp=grp, _nast=nast).sort_values(
+                ["_grp", "_nast", "itm_no"], ascending=[True, False, True],
+                na_position="last", kind="stable")
+            sizes = ordered.groupby("_grp", sort=False).size().to_dict()
+            master = ordered.drop_duplicates(subset=["_grp"], keep="first")
             for row in master.to_dict("records"):
-                extract_fund_master_row(em, row, stats, sizes.get(row.get("itm_no"), 1))
+                extract_fund_master_row(em, row, stats, sizes.get(row.get("_grp"), 1))
         else:
             extractor = {"kr_bond": extract_bond_row,
                          "kr_etf": extract_kr_etf_row,

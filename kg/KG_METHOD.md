@@ -2,6 +2,8 @@
 
 > 어휘 정의(클래스·관계·제약)는 `ontology/` 의 **공식 형식 5파일** — [common.ttl](../ontology/common.ttl)(공통 상위 `fp:Product`·기관·지수·공통 속성) + [bond_kr.ttl](../ontology/bond_kr.ttl) · [etf_kr.ttl](../ontology/etf_kr.ttl) · [etf_gl.ttl](../ontology/etf_gl.ttl) · [fund_pub.ttl](../ontology/fund_pub.ttl) — 와 데이터 규칙 [shapes.ttl](../ontology/shapes.ttl)(SHACL, 부속). 전략 배경은 [ROADMAP.md](../ROADMAP.md) §4·§7 참조.
 
+> **갱신 2026-08-27**: 주최 재배포본(국내 8/22·해외 8/23 기준) 전환 — 상품 노드 국내채권 20,497 · 국내 ETP 1,779 · 해외 6,037 · 공모펀드 23,622(상품 단위 키가 itm_no 그룹 → 금감원 펀드코드 fss_itm_no 그룹으로 변경, 대표 클래스 = 순자산 최대). 본문 수치 중 구본 기준 값은 이력 기록.
+
 ## 1. 무엇
 
 전처리 CSV 4종(`preprocessing/processed/`) + **구성종목 수집분**(`external_data/constituents/`)을 온톨로지 어휘 기반 **N-Triples 지식그래프**로 변환한다.

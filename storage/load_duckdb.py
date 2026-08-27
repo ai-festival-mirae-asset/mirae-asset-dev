@@ -7,13 +7,14 @@ RDB 적재 — 전처리 CSV 4종 + 구성종목 수집분 → DuckDB 파일 1�
       DB(RDB)이며 in-process(서버 데몬 0개·파일 1개·백업=복사)라 2vCPU/4GB
       단일 서버 무인 운영 제약에 맞는다 — S2_PLAN §1(8/13 승인).
 
-테이블 (원시 보존 원칙 — 전 컬럼 VARCHAR, 선행 0·원문 보존):
-  kr_bond         국내채권 42,394
-  kr_etp          국내 ETF+ETN 1,733 (혼재 주의 — 검색은 drv_instrument_type 필터 필수)
-  global_etf      해외ETF 5,646
-  fund_master     공모펀드 상품 단위 11,138 (itm_no 첫 행 + share_class_count)
-  fund_class      공모펀드 판매 클래스 95,618 — (itm_no, prfd_attr_cd) 2컬럼 키
-  etf_constituent 구성종목 75,081 (기준일 2026-07-10 — 마스터 7/11 과 다름)
+테이블 (원시 보존 원칙 — 전 컬럼 VARCHAR, 선행 0·원문 보존 / 8/27: 주최 재배포본 전환):
+  kr_bond         국내채권 20,497 (pd_no 유일 대표행 — R33 시장별 중복 대표화)
+  kr_bond_alt     국내채권 시장별 중복 행 1,385 (장내 타 시장 시세 보존 — 기본 검색 제외)
+  kr_etp          국내 ETF+ETN 1,779 (혼재 주의 — 검색은 drv_instrument_type 필터 필수)
+  global_etf      해외ETF 6,037
+  fund_master     공모펀드 상품 단위 23,622 (fss_itm_no 그룹 대표 + share_class_count)
+  fund_class      공모펀드 판매 클래스 23,676 — itm_no 단독 키 (재배포본은 1행=1클래스)
+  etf_constituent 구성종목 75,081 (기준일 2026-07-10 — 재수집 전까지 유지, 마스터 8/22 와 다름)
 
 수치 정렬·비교 규약: 적재는 무손실 VARCHAR 로 하고, SQL 템플릿에서
   TRY_CAST(col AS DOUBLE) 를 쓴다(콤마 포함 컬럼은 replace 후 캐스트).
@@ -37,15 +38,16 @@ DB_PATH = os.path.join(OUT_DIR, "products.duckdb")
 
 CONSTITUENTS_AS_OF = "2026-07-10"   # 구성종목 조회 기준일 — 근거 표시용 컬럼으로 적재
 
-# (테이블명, CSV 경로, 기대 행수) — 기대치는 8/13까지의 실측(어긋나면 적재 실패로 처리)
+# (테이블명, CSV 경로, 기대 행수) — 기대치는 8/27 재배포본 실측(어긋나면 적재 실패로 처리)
 TABLES = [
-    ("kr_bond",    os.path.join(PROCESSED, "PRBD01N001_kr_bond_processed.csv"),     42394),
-    ("kr_etp",     os.path.join(PROCESSED, "PREF01N001_kr_etf_processed.csv"),       1733),
-    ("global_etf", os.path.join(PROCESSED, "PREF02N001_global_etf_processed.csv"),   5646),
-    ("fund_class", os.path.join(PROCESSED, "PRFD01N001_public_fund_processed.csv"), 95618),
+    ("kr_bond",     os.path.join(PROCESSED, "PRBD01N001_kr_bond_processed.csv"),    20497),
+    ("kr_bond_alt", os.path.join(PROCESSED, "PRBD01N001_kr_bond_alt_rows.csv"),      1385),
+    ("kr_etp",      os.path.join(PROCESSED, "PREF01N001_kr_etf_processed.csv"),      1779),
+    ("global_etf",  os.path.join(PROCESSED, "PREF02N001_global_etf_processed.csv"),  6037),
+    ("fund_class",  os.path.join(PROCESSED, "PRFD01N001_public_fund_processed.csv"), 23676),
     ("etf_constituent", CONSTITUENTS_CSV,                                           75081),
 ]
-FUND_MASTER_EXPECTED = 11138
+FUND_MASTER_EXPECTED = 23622
 
 
 def load_table(con, name, csv_path):
@@ -78,16 +80,24 @@ def build_mgmt_resolved(con):
 
 
 def build_fund_master(con):
-    """fund_class → 상품(itm_no) 단위 마스터. 그룹 내 변동 컬럼은 prfd_attr_cd 뿐(8/5 검증)
-    이므로 첫 행이 대표다. share_class_count 로 클래스 수를 보존한다."""
+    """fund_class → 상품 단위 마스터 (8/27 재배포본 구조).
+
+    재배포본은 1행=1클래스(itm_no 고유)이고 상품 묶음 키는 금감원 펀드코드
+    fss_itm_no 다(전처리 R32에서 센티널 '000…0'→NULL). 코드가 없는 행은 행 자체가
+    상품이다. 클래스 2개 이상인 그룹은 45개뿐 — 대표는 순자산(fd_nast_suma) 최대
+    클래스, 동률이면 itm_no 사전순(결정적). share_class_count 로 클래스 수 보존."""
     con.execute("DROP TABLE IF EXISTS fund_master")
     con.execute("""
         CREATE TABLE fund_master AS
-        SELECT * EXCLUDE (rn)
+        SELECT * EXCLUDE (rn, grp_key)
         FROM (
             SELECT c.*,
-                   row_number() OVER (PARTITION BY itm_no ORDER BY prfd_attr_cd) AS rn,
-                   count(*)     OVER (PARTITION BY itm_no)                       AS share_class_count
+                   coalesce(fss_itm_no, itm_no) AS grp_key,
+                   row_number() OVER (
+                       PARTITION BY coalesce(fss_itm_no, itm_no)
+                       ORDER BY TRY_CAST(fd_nast_suma AS DOUBLE) DESC NULLS LAST, itm_no
+                   ) AS rn,
+                   count(*) OVER (PARTITION BY coalesce(fss_itm_no, itm_no)) AS share_class_count
             FROM fund_class c
         )
         WHERE rn = 1

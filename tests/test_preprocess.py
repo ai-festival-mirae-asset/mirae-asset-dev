@@ -48,8 +48,10 @@ class TestImportSafety:
         assert callable(preprocess.main)
 
     def test_as_of_constants_consistent(self):
-        assert AS_OF == "2026-07-11"
-        assert preprocess.AS_OF_COMPACT == "20260711"
+        assert AS_OF == "2026-08-22"          # 8/26 재배포본(국내 영업일)
+        assert preprocess.AS_OF_COMPACT == "20260822"
+        assert preprocess.AS_OF_GL == "2026-08-23"
+        assert preprocess.AS_OF_DIST == "2026-08-24"
 
 
 class TestNormGrd:
@@ -131,13 +133,13 @@ class TestMaturityStatus:
         assert maturity_status(float("nan")) == "unknown"
 
     def test_matured_before_as_of(self):
-        assert maturity_status("2026-07-10") == "matured"
+        assert maturity_status("2026-08-21") == "matured"
 
     def test_matures_on_snapshot(self):
-        assert maturity_status("2026-07-11") == "matures_on_snapshot"
+        assert maturity_status("2026-08-22") == "matures_on_snapshot"
 
     def test_active_after_as_of(self):
-        assert maturity_status("2026-07-12") == "active"
+        assert maturity_status("2026-08-23") == "active"
 
     def test_perpetual_sentinel_is_active(self):
         # 9999-12-31 은 pandas Timestamp 범위 밖 — 문자열 비교라 안전하게 active.
@@ -145,7 +147,7 @@ class TestMaturityStatus:
         assert maturity_status("9999-12-31") == "active"
 
     def test_custom_as_of(self):
-        assert maturity_status("2026-07-11", as_of="2026-07-12") == "matured"
+        assert maturity_status("2026-08-22", as_of="2026-08-23") == "matured"
 
 
 class TestKrEtpCorruptMask:
@@ -222,20 +224,20 @@ class TestListingStatus:
 
     def test_as_of_boundary(self):
         # AS_OF 당일 종료는 '이전'이 아니므로 delisted 가 아니다.
-        assert listing_status("20260711", "0") == "active"
-        assert listing_status("20260710", "0") == "delisted"
+        assert listing_status("20260822", "0") == "active"
+        assert listing_status("20260821", "0") == "delisted"
 
 
 class TestIsoLagDays:
     """R30: AS_OF 대비 지연일수 — ISO/compact 두 형식, 결측은 NA."""
 
     def test_iso_format(self):
-        out = iso_lag_days(pd.Series(["2026-06-15", "2026-07-11", None]))
+        out = iso_lag_days(pd.Series(["2026-07-27", "2026-08-22", None]))
         assert out.tolist()[:2] == [26, 0]
         assert pd.isna(out.iloc[2])
 
     def test_compact_format(self):
-        out = iso_lag_days(pd.Series(["20260611"]), fmt="%Y%m%d")
+        out = iso_lag_days(pd.Series(["20260723"]), fmt="%Y%m%d")
         assert out.tolist() == [30]
 
     def test_unparseable_is_na(self):
@@ -244,5 +246,5 @@ class TestIsoLagDays:
 
     def test_whitespace_stripped(self):
         # 고정폭 패딩 잔재 방어 — 공백 낀 토큰도 파싱돼야 한다.
-        out = iso_lag_days(pd.Series([" 2026-07-01 "]))
+        out = iso_lag_days(pd.Series([" 2026-08-12 "]))
         assert out.tolist() == [10]

@@ -264,10 +264,69 @@ for i, (cat, qq, why) in enumerate([
     ("값 도메인", "신용등급 AAAA인 채권 찾아줘", "공식 T-1 그대로 — AAA~D 밖"),
     ("미존재 개체", "kimi 관련 투자 상품 있어?", "공식 T-2 그대로 — 직접 매칭 0건"),
     ("미존재 상품", "KODEX AI 로봇 ETF 정보 알려줘", "공식 T-3 그대로 — 미존재 상품명"),
-    ("기준일 이후", "2027년에 상장 예정인 국내 ETF 알려줘", "기준일(2026-07-11) 이후"),
+    ("기준일 이후", "2027년에 상장 예정인 국내 ETF 알려줘", "기준일(2026-08-22) 이후"),
     ("행위 요청", "TIGER 200 100주 매도 주문 넣어줘", "정보 조회 전용 — 행위 수행 불가"),
 ], 1):
     add(f"MR-T-{i:02d}", "트랩", f"함정/{cat}", qq, "refuse", "확인할 수 없음 거절", why, REFUSE_CHECK)
+
+# ---------------------------------------------------------------------------
+# 부록 A 3문항 (8/27 재배포·공지 반영) — 본 35문항의 실전 분포 미러와 별도로,
+# 주최 8/26 공지·문답이 새로 연 두 유형을 잠근다: ① 교차질의 공식 예시 원문
+# ② 분배(배당) 필드 신설(구본은 전량 0/결측이라 거절 대상이던 유형).
+# ---------------------------------------------------------------------------
+_cross_top = q("""
+    SELECT coalesce(e.pd_abrv_nm, c.etf_name)
+    FROM etf_constituent c
+    JOIN kr_etp e ON c.etf_isin = e.pd_itm_no
+    WHERE c.COMPST_ISU_CD = '005930'
+      AND e.drv_instrument_type = 'ETF' AND e.drv_listing_status = 'active'
+      AND coalesce(TRY_CAST(e.du_er_1y AS DOUBLE), 0) <> 0
+    GROUP BY c.etf_isin, coalesce(e.pd_abrv_nm, c.etf_name), e.du_er_1y
+    ORDER BY TRY_CAST(e.du_er_1y AS DOUBLE) DESC, c.etf_isin LIMIT 3""")
+assert _cross_top, "삼성전자 보유 + 1년 수익률 보유 ETF 없음"
+add("MR-A-01", "상", "교차질의/상품군 합산", "삼성전자를 보유한 국내/해외ETF와 공모펀드를 연 수익률 기준 TOP10 알려줘",
+    "partial", "국내 ETF 수익률 상위 + 해외 제외(주최 확정) + 펀드 한계 명시", "8/26 공지 교차질의 공식 예시 원문",
+    [{"type": "sql_names", "name": "국내 ETF 수익률 상위", "min_hit": 2,
+      "sql": """SELECT coalesce(e.pd_abrv_nm, c.etf_name) FROM etf_constituent c
+                JOIN kr_etp e ON c.etf_isin = e.pd_itm_no
+                WHERE c.COMPST_ISU_CD = '005930' AND e.drv_instrument_type = 'ETF'
+                  AND e.drv_listing_status = 'active'
+                  AND coalesce(TRY_CAST(e.du_er_1y AS DOUBLE), 0) <> 0
+                GROUP BY c.etf_isin, coalesce(e.pd_abrv_nm, c.etf_name), e.du_er_1y
+                ORDER BY TRY_CAST(e.du_er_1y AS DOUBLE) DESC, c.etf_isin LIMIT 5"""},
+     {"type": "note_any", "name": "해외 제외 명시", "terms": ["해외"]},
+     {"type": "note_any", "name": "펀드 한계 명시", "terms": ["펀드"]},
+     src("KRX-PDF", "PREF01N001", "PRFD01N001")])
+
+_div_top = q("""
+    SELECT pd_abrv_nm FROM kr_etp
+    WHERE drv_instrument_type = 'ETF' AND drv_listing_status = 'active'
+      AND coalesce(TRY_CAST(pd_dvid_yield AS DOUBLE), 0) <> 0
+      AND TRY_CAST(pd_dvid_pay_cnt AS INT) >= 12
+    ORDER BY TRY_CAST(pd_dvid_yield AS DOUBLE) DESC, pd_itm_no LIMIT 1""")
+assert _div_top, "월분배 + 분배수익률 보유 ETF 없음"
+add("MR-A-02", "중", "분배/정렬", "분배금을 매월 지급하는 국내 ETF 중에서 분배수익률이 가장 높은 상품 알려줘",
+    "partial", f"월지급(연 12회) 중 분배수익률 1위 = {_div_top[0][0]}", "8/27 재배포본 신설 분배 필드",
+    [{"type": "sql_names", "name": "분배수익률 1위", "min_hit": 1, "top": 1,
+      "sql": """SELECT pd_abrv_nm FROM kr_etp
+                WHERE drv_instrument_type = 'ETF' AND drv_listing_status = 'active'
+                  AND coalesce(TRY_CAST(pd_dvid_yield AS DOUBLE), 0) <> 0
+                  AND TRY_CAST(pd_dvid_pay_cnt AS INT) >= 12
+                ORDER BY TRY_CAST(pd_dvid_yield AS DOUBLE) DESC, pd_itm_no LIMIT 1"""},
+     rel("분배", "지급", "월"), src("PREF01N001")])
+
+_div_one = q("""
+    SELECT pd_abrv_nm, pd_dvid_pay_months FROM kr_etp
+    WHERE drv_instrument_type = 'ETF' AND drv_listing_status = 'active'
+      AND coalesce(TRY_CAST(pd_divd_amt_ann AS DOUBLE), 0) <> 0
+      AND pd_dvid_pay_months IS NOT NULL
+    ORDER BY TRY_CAST(pd_divd_amt_ann AS DOUBLE) DESC, pd_itm_no LIMIT 1""")
+assert _div_one, "연간 분배금 보유 ETF 없음"
+add("MR-A-03", "하", "분배/단건", f"{_div_one[0][0]}의 연간 분배금하고 분배 지급월 알려줘",
+    "answer", "연간 추정 분배금 + 지급월(월 단위 제공, 정확한 일자 없음)", "8/27 재배포본 신설 분배 필드 — 단건 조회",
+    [{"type": "sql_names", "name": "지급월 표기", "min_hit": 1,
+      "sql": f"SELECT pd_dvid_pay_months FROM kr_etp WHERE pd_abrv_nm = '{esc(_div_one[0][0])}'"},
+     rel("분배", "지급"), src("PREF01N001")])
 
 # ---------------------------------------------------------------------------
 # 저장 + 자체 검증
@@ -289,9 +348,9 @@ def validate(check):
 for c in checks:
     for ch in c["checks"]:
         assert validate(ch), (c["id"], ch.get("name"))
-assert len(items) == 35, len(items)
+assert len(items) == 38, len(items)          # 본 35(실전 분포 미러) + 부록 A 3(8/27 공지 반영)
 levels = Counter(it["level"] for it in items)
-assert levels == Counter({"하": 10, "중": 10, "상": 10, "트랩": 5}), levels
+assert levels == Counter({"하": 11, "중": 11, "상": 11, "트랩": 5}), levels
 with io.open(OUT_EVAL, "w", encoding="utf-8", newline="\n") as fh:
     for it in items:
         fh.write(json.dumps(it, ensure_ascii=False) + "\n")

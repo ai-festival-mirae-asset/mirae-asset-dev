@@ -1,7 +1,7 @@
 {
  "as_of": "2026-07-11",
  "dim": 1024,
- "embedded": 7300,
+ "embedded": 7723,
  "mapping": {
   "0000991906b18546": [
    {
@@ -36,13 +36,6 @@
     "pd_itm_no": "KR70040Y0006",
     "pd_nm": "신한 SOL 팔란티어커버드콜OTM채권혼합증권상장지수투자신탁[채권혼합-파생형]",
     "table": "kr_etp"
-   }
-  ],
-  "0031f5520e83f01b": [
-   {
-    "pd_itm_no": "EBUF.K",
-    "pd_nm": "Innovator Emerging Mkts 10 Buffer ETF - Quarterly",
-    "table": "global_etf"
    }
   ],
   "00327b63d0a92843": [
@@ -143,6 +136,13 @@
     "table": "global_etf"
    }
   ],
+  "00fcc8ae4ecbb29b": [
+   {
+    "pd_itm_no": "KRG610001031",
+    "pd_nm": "메리츠증권 메리츠 솔랙티브 레버리지 금 선물 상장지수증권(H) 제103호",
+    "table": "kr_etp"
+   }
+  ],
   "0101b35d3917e7c4": [
    {
     "pd_itm_no": "PSP",
@@ -192,6 +192,13 @@
     "table": "global_etf"
    }
   ],
+  "012f7618b96d3f67": [
+   {
+    "pd_itm_no": "JLVP.O",
+    "pd_nm": "JPMorgan U.S. Large Cap Value Plus ETF",
+    "table": "global_etf"
+   }
+  ],
   "012fc932a27b6a02": [
    {
     "pd_itm_no": "FLGB.K",
@@ -230,7 +237,7 @@
   "017ae6ff7d718a48": [
    {
     "pd_itm_no": "MGV",
-    "pd_nm": "Vanguard Mega Cap Value Index Fund;ETF",
+    "pd_nm": "Vanguard Morningstar Mega Cap Value Index Fd;ETF",
     "table": "global_etf"
    }
   ],
@@ -246,6 +253,13 @@
     "pd_itm_no": "NBIL.O",
     "pd_nm": "GraniteShares 2x Long NBIS Daily ETF",
     "table": "global_etf"
+   }
+  ],
+  "01962f5f56415a86": [
+   {
+    "pd_itm_no": "KR70209Z0002",
+    "pd_nm": "한국투자 ACE 코리아AI전력TOP10증권상장지수투자신탁(주식)",
+    "table": "kr_etp"
    }
   ],
   "019de1869848e600": [
@@ -339,10 +353,24 @@
     "table": "global_etf"
    }
   ],
+  "020f216756645755": [
+   {
+    "pd_itm_no": "FTG.O",
+    "pd_nm": "FullerThaler Behavioral Growth ETF",
+    "table": "global_etf"
+   }
+  ],
   "0222722f1d46ca17": [
    {
     "pd_itm_no": "CRTC.K",
     "pd_nm": "Xtrackers US National Critical Technologies ETF",
+    "table": "global_etf"
+   }
+  ],
+  "022c2a8942ff7014": [
+   {
+    "pd_itm_no": "CRUC.K",
+    "pd_nm": "Corgi CRUS 2x Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -364,13 +392,6 @@
    {
     "pd_itm_no": "DUSG.O",
     "pd_nm": "DFA US Small Cap Growth Portfolio; ETF Class Share",
-    "table": "global_etf"
-   }
-  ],
-  "024a7453a3051f5f": [
-   {
-    "pd_itm_no": "SQMX.K",
-    "pd_nm": "FT Vest US Equity Quarterly Max Buffer ETF",
     "table": "global_etf"
    }
   ],
@@ -418,13 +439,8 @@
   ],
   "02804c754efef0d2": [
    {
-    "pd_itm_no": "UTSL.K",
-    "pd_nm": "Direxion Daily Utilities Bull 3X ETF",
-    "table": "global_etf"
-   },
-   {
-    "pd_itm_no": "MEXX.K",
-    "pd_nm": "Direxion Daily MSCI Mexico Bull 3X ETF",
+    "pd_itm_no": "DFEN.K",
+    "pd_nm": "Direxion Daily Aerospace & Defense Bull 3X ETF",
     "table": "global_etf"
    },
    {
@@ -433,8 +449,13 @@
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "DFEN.K",
-    "pd_nm": "Direxion Daily Aerospace & Defense Bull 3X ETF",
+    "pd_itm_no": "MEXX.K",
+    "pd_nm": "Direxion Daily MSCI Mexico Bull 3X ETF",
+    "table": "global_etf"
+   },
+   {
+    "pd_itm_no": "UTSL.K",
+    "pd_nm": "Direxion Daily Utilities Bull 3X ETF",
     "table": "global_etf"
    }
   ],
@@ -501,13 +522,6 @@
     "table": "global_etf"
    }
   ],
-  "02dff76227bbf2e1": [
-   {
-    "pd_itm_no": "FJUN.K",
-    "pd_nm": "FT Vest US Equity Buffer ETF - June",
-    "table": "global_etf"
-   }
-  ],
   "02e785a8868e0c12": [
    {
     "pd_itm_no": "CRWU.K",
@@ -527,6 +541,13 @@
     "pd_itm_no": "JHCP.K",
     "pd_nm": "John Hancock Core Plus Bond ETF",
     "table": "global_etf"
+   }
+  ],
+  "02f962993ade838a": [
+   {
+    "pd_itm_no": "KRG520000958",
+    "pd_nm": "미래에셋증권 미래에셋 레버리지 WTI원유 선물 상장지수증권 제110호",
+    "table": "kr_etp"
    }
   ],
   "030820334f54d7cd": [
@@ -569,6 +590,13 @@
     "pd_itm_no": "KR7409810009",
     "pd_nm": "삼성 KODEX 미국나스닥100선물인버스증권상장지수투자신탁[주식-파생형](H)",
     "table": "kr_etp"
+   }
+  ],
+  "0356de9e729e0f52": [
+   {
+    "pd_itm_no": "JTNY.K",
+    "pd_nm": "JPMorgan New York Tax Free Bond ETF",
+    "table": "global_etf"
    }
   ],
   "0376df8871636934": [
@@ -725,6 +753,13 @@
     "table": "global_etf"
    }
   ],
+  "0422bcbb14880b6e": [
+   {
+    "pd_itm_no": "BRSV.K",
+    "pd_nm": "EA Bridgeway Select Small-Cap Value ETF",
+    "table": "global_etf"
+   }
+  ],
   "042a01c98f6f5eba": [
    {
     "pd_itm_no": "SOEZ.K",
@@ -792,6 +827,20 @@
    {
     "pd_itm_no": "BCIM.K",
     "pd_nm": "abrdn Bloomberg Industrial Metals Strat K-1 Fr ETF",
+    "table": "global_etf"
+   }
+  ],
+  "0468a878fa689eba": [
+   {
+    "pd_itm_no": "CARX.K",
+    "pd_nm": "Corgi CART 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
+  "046c3ec191d0dff5": [
+   {
+    "pd_itm_no": "PQX",
+    "pd_nm": "PGIM S&P 500 Quarterly Buffer 10 ETF",
     "table": "global_etf"
    }
   ],
@@ -865,6 +914,13 @@
     "table": "global_etf"
    }
   ],
+  "04c40db7ae6eb280": [
+   {
+    "pd_itm_no": "QCJL.K",
+    "pd_nm": "FT Vest Nasdaq-100 Conservative Buffer ETF - July",
+    "table": "global_etf"
+   }
+  ],
   "04da65ebad49a867": [
    {
     "pd_itm_no": "KR7476850003",
@@ -874,13 +930,13 @@
   ],
   "04dff24637c73007": [
    {
-    "pd_itm_no": "WISD.K",
-    "pd_nm": "Wisdom Short Duration Income ETF",
+    "pd_itm_no": "SLWS.K",
+    "pd_nm": "SLW Short Duration Income ETF",
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "SLWS.K",
-    "pd_nm": "SLW Short Duration Income ETF",
+    "pd_itm_no": "WISD.K",
+    "pd_nm": "Wisdom Short Duration Income ETF",
     "table": "global_etf"
    }
   ],
@@ -993,6 +1049,13 @@
    {
     "pd_itm_no": "WDIG.K",
     "pd_nm": "WisdomTree Efficient Rare Earth Plus Strt Metal Fd",
+    "table": "global_etf"
+   }
+  ],
+  "05371ef99b39bd81": [
+   {
+    "pd_itm_no": "NFX",
+    "pd_nm": "Corgi NFLX 2x Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -1171,6 +1234,13 @@
     "table": "global_etf"
    }
   ],
+  "0647deaee0a0abcb": [
+   {
+    "pd_itm_no": "AKAL.K",
+    "pd_nm": "T-REX 2X Long AKAM Daily Target ETF",
+    "table": "global_etf"
+   }
+  ],
   "0650b4d4c3a37d85": [
    {
     "pd_itm_no": "KR7481180008",
@@ -1204,13 +1274,6 @@
     "pd_itm_no": "NMB",
     "pd_nm": "Simplify National Muni Bond ETF",
     "table": "global_etf"
-   }
-  ],
-  "067708dacf51da27": [
-   {
-    "pd_itm_no": "KR7486240005",
-    "pd_nm": "대신 DAISHIN343 AI반도체&인프라액티브증권상장지수투자신탁[주식]",
-    "table": "kr_etp"
    }
   ],
   "067b3875d88c0786": [
@@ -1416,6 +1479,13 @@
     "table": "global_etf"
    }
   ],
+  "075b55fa0da10747": [
+   {
+    "pd_itm_no": "KR70227K0007",
+    "pd_nm": "KB RISE 미국우주위성통신증권상장지수투자신탁(주식)",
+    "table": "kr_etp"
+   }
+  ],
   "076ec0688975a660": [
    {
     "pd_itm_no": "DGP",
@@ -1535,6 +1605,13 @@
     "table": "global_etf"
    }
   ],
+  "07ec385250726673": [
+   {
+    "pd_itm_no": "ORAC.K",
+    "pd_nm": "Corgi ORCL 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "07f7fca6befe65db": [
    {
     "pd_itm_no": "ODDZ.K",
@@ -1584,6 +1661,13 @@
     "table": "global_etf"
    }
   ],
+  "083ae54c8925393b": [
+   {
+    "pd_itm_no": "KWH",
+    "pd_nm": "GMO Power Infrastructure ETF",
+    "table": "global_etf"
+   }
+  ],
   "083e902ec2be1feb": [
    {
     "pd_itm_no": "CPSA.K",
@@ -1616,6 +1700,13 @@
    {
     "pd_itm_no": "YSPY.O",
     "pd_nm": "GraniteShares YieldBOOST SPY ETF",
+    "table": "global_etf"
+   }
+  ],
+  "0869ca9b49836647": [
+   {
+    "pd_itm_no": "EMAU.K",
+    "pd_nm": "Corgi EM Mkts Eqtys 15% Strctrd Bffr ETF - Aug S",
     "table": "global_etf"
    }
   ],
@@ -1666,6 +1757,13 @@
     "pd_itm_no": "KR7494670003",
     "pd_nm": "미래에셋 TIGER 조선TOP10증권상장지수투자신탁(주식)",
     "table": "kr_etp"
+   }
+  ],
+  "08b74e7473d8441d": [
+   {
+    "pd_itm_no": "PBSC.O",
+    "pd_nm": "Pacer Barings Secured Credit Flex ETF",
+    "table": "global_etf"
    }
   ],
   "08c54327b5675a5d": [
@@ -1735,6 +1833,13 @@
    {
     "pd_itm_no": "ZIG",
     "pd_nm": "Acquirers Fund",
+    "table": "global_etf"
+   }
+  ],
+  "08f5a10a7d49f472": [
+   {
+    "pd_itm_no": "SPCM.K",
+    "pd_nm": "Tradr 2X Long SpaceX Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -1831,18 +1936,13 @@
   ],
   "09c498fd9b27997c": [
    {
-    "pd_itm_no": "AUGM.K",
-    "pd_nm": "FT Vest US Equity Max Buffer ETF - Aug",
-    "table": "global_etf"
-   },
-   {
     "pd_itm_no": "NOVM.K",
     "pd_nm": "FT Vest US Equity Max Buffer ETF - November",
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "JULM.K",
-    "pd_nm": "FT Vest US Equity Max Buffer ETF - Jul",
+    "pd_itm_no": "AUGM.K",
+    "pd_nm": "FT Vest US Equity Max Buffer ETF - Aug",
     "table": "global_etf"
    }
   ],
@@ -1963,6 +2063,20 @@
     "pd_itm_no": "KR70174R0003",
     "pd_nm": "키움 KIWOOM 미국성장다우존스증권상장지수투자신탁[주식]",
     "table": "kr_etp"
+   }
+  ],
+  "0a7f7df9f8c6b2d1": [
+   {
+    "pd_itm_no": "TDCL.O",
+    "pd_nm": "GraniteShares 2x Long TDC Daily ETF",
+    "table": "global_etf"
+   }
+  ],
+  "0a807f580d471048": [
+   {
+    "pd_itm_no": "SPCU.K",
+    "pd_nm": "Defiance Daily Target 2X Long SPCX ETF",
+    "table": "global_etf"
    }
   ],
   "0a907f8bfdf31984": [
@@ -2098,13 +2212,13 @@
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "APXM.K",
-    "pd_nm": "FT Vest US Equity Max Buffer ETF - April",
+    "pd_itm_no": "MARM.K",
+    "pd_nm": "FT Vest US Equity Max Buffer ETF - Mar",
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "MARM.K",
-    "pd_nm": "FT Vest US Equity Max Buffer ETF - Mar",
+    "pd_itm_no": "APXM.K",
+    "pd_nm": "FT Vest US Equity Max Buffer ETF - April",
     "table": "global_etf"
    }
   ],
@@ -2171,6 +2285,13 @@
     "table": "kr_etp"
    }
   ],
+  "0b51f0cdfb3ff688": [
+   {
+    "pd_itm_no": "SQMX.K",
+    "pd_nm": "FT Vest US Equity Quarterly Max Buffer ETF",
+    "table": "global_etf"
+   }
+  ],
   "0b531f8521d43e9d": [
    {
     "pd_itm_no": "MFSI.K",
@@ -2234,6 +2355,13 @@
     "table": "global_etf"
    }
   ],
+  "0ba12da5442fb7ec": [
+   {
+    "pd_itm_no": "JULM.K",
+    "pd_nm": "FT Vest US Equity Max Buffer ETF - Jul",
+    "table": "global_etf"
+   }
+  ],
   "0bb2a3b6b9cc2745": [
    {
     "pd_itm_no": "JPY.O",
@@ -2252,13 +2380,6 @@
    {
     "pd_itm_no": "ISEP.K",
     "pd_nm": "Innovator Intl Developed Power Buffer ETF - Sept",
-    "table": "global_etf"
-   }
-  ],
-  "0bbe6145a94ea065": [
-   {
-    "pd_itm_no": "RBUF.K",
-    "pd_nm": "Innovator U.S. Small Cap 10 Buffer ETF - Quarterly",
     "table": "global_etf"
    }
   ],
@@ -2283,10 +2404,24 @@
     "table": "kr_etp"
    }
   ],
+  "0bc9d7a008a22160": [
+   {
+    "pd_itm_no": "CRD",
+    "pd_nm": "Corgi CRDO 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "0bd7ea3feea3ecea": [
    {
     "pd_itm_no": "PSCT.O",
     "pd_nm": "Invesco S&P SmallCap Information Tech ETF",
+    "table": "global_etf"
+   }
+  ],
+  "0bd9e707638c28cd": [
+   {
+    "pd_itm_no": "TRUU.O",
+    "pd_nm": "VanEck Utilities TruSector ETF",
     "table": "global_etf"
    }
   ],
@@ -2418,12 +2553,12 @@
   ],
   "0ca2d89b0a3e8f55": [
    {
-    "pd_itm_no": "WPAY.K",
+    "pd_itm_no": "TOPW.K",
     "pd_nm": "Roundhill Top WeeklyPay ETF",
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "TOPW.K",
+    "pd_itm_no": "WPAY.K",
     "pd_nm": "Roundhill Top WeeklyPay ETF",
     "table": "global_etf"
    }
@@ -2540,6 +2675,13 @@
     "table": "global_etf"
    }
   ],
+  "0d34d139640bd2cf": [
+   {
+    "pd_itm_no": "MPWC.K",
+    "pd_nm": "Corgi MPWR 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "0d36c63da6d03783": [
    {
     "pd_itm_no": "KR7251340006",
@@ -2624,13 +2766,6 @@
     "table": "global_etf"
    }
   ],
-  "0d9e250410fbcc61": [
-   {
-    "pd_itm_no": "KRMA.O",
-    "pd_nm": "Global X Conscious Companies ETF",
-    "table": "global_etf"
-   }
-  ],
   "0da853690cd80ccf": [
    {
     "pd_itm_no": "UBT",
@@ -2685,6 +2820,13 @@
     "pd_itm_no": "KRG570000478",
     "pd_nm": "한국투자증권 한투 FTSE100 상장지수증권 제47호",
     "table": "kr_etp"
+   }
+  ],
+  "0dedabbc073d56cc": [
+   {
+    "pd_itm_no": "PLTL.K",
+    "pd_nm": "Corgi PLTR 2x Daily ETF",
+    "table": "global_etf"
    }
   ],
   "0df73d0adc74e710": [
@@ -2760,7 +2902,7 @@
   "0e518f532cfd8b44": [
    {
     "pd_itm_no": "STCE.K",
-    "pd_nm": "Schwab Crypto Thematic ETF",
+    "pd_nm": "Schwab Crypto Thematic Natural Lang Prcssng ETF",
     "table": "global_etf"
    }
   ],
@@ -2851,7 +2993,7 @@
   "0ebb385b65e6fc3c": [
    {
     "pd_itm_no": "SKOR.O",
-    "pd_nm": "FlexShares Credit-Scored US Corp Bond Index Fund",
+    "pd_nm": "Northern Trust Credit-Scored US Corporate Bond ETF",
     "table": "global_etf"
    }
   ],
@@ -2925,6 +3067,13 @@
     "table": "kr_etp"
    }
   ],
+  "0f0669b7da10fdd6": [
+   {
+    "pd_itm_no": "KR70223R0004",
+    "pd_nm": "미래에셋 TIGER 미국테크NYSE100액티브증권상장지수투자신탁(주식)",
+    "table": "kr_etp"
+   }
+  ],
   "0f0c09a4ea144b4f": [
    {
     "pd_itm_no": "CGVV.K",
@@ -2960,6 +3109,13 @@
     "table": "global_etf"
    }
   ],
+  "0f548e393375665d": [
+   {
+    "pd_itm_no": "KR70224D0009",
+    "pd_nm": "키움 KIWOOM 미국CPU반도체TOP4+증권상장지수투자신탁[주식]",
+    "table": "kr_etp"
+   }
+  ],
   "0f578d53f3f429f4": [
    {
     "pd_itm_no": "KRG510000299",
@@ -2972,6 +3128,13 @@
     "pd_itm_no": "KR7474920006",
     "pd_nm": "에셋플러스 에셋플러스 차이나일등기업 포커스10액티브증권상장지수투자신탁(주식)",
     "table": "kr_etp"
+   }
+  ],
+  "0f64b6ff88f8d434": [
+   {
+    "pd_itm_no": "FNG",
+    "pd_nm": "Leverage Shares 2X Long FN Daily ETF",
+    "table": "global_etf"
    }
   ],
   "0f64ca9fdb34d2e6": [
@@ -3031,7 +3194,7 @@
   "0f89d3f204e5afe4": [
    {
     "pd_itm_no": "VUG",
-    "pd_nm": "Vanguard Growth Index Fund;ETF",
+    "pd_nm": "Vanguard Morningstar Growth Index Fund;ETF",
     "table": "global_etf"
    }
   ],
@@ -3047,6 +3210,18 @@
     "pd_itm_no": "KR7250730009",
     "pd_nm": "KB RISE 차이나HSCEI증권상장지수투자신탁(주식)(H)",
     "table": "kr_etp"
+   }
+  ],
+  "0f99a3d19082a232": [
+   {
+    "pd_itm_no": "XVTS.K",
+    "pd_nm": "FT Vest TSLA & Target Income ETF",
+    "table": "global_etf"
+   },
+   {
+    "pd_itm_no": "XVNV.K",
+    "pd_nm": "FT Vest NVDA & Target Income ETF",
+    "table": "global_etf"
    }
   ],
   "0f9e05ec7daca8f3": [
@@ -3116,6 +3291,13 @@
    {
     "pd_itm_no": "QXQ.O",
     "pd_nm": "SGI Enhanced Nasdaq-100 ETF",
+    "table": "global_etf"
+   }
+  ],
+  "0fdd31c36b616933": [
+   {
+    "pd_itm_no": "NVC",
+    "pd_nm": "Corgi NVDA 2x Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -3213,7 +3395,7 @@
   "103810c391906c5a": [
    {
     "pd_itm_no": "BNDC.K",
-    "pd_nm": "FlexShares Core Select Bond Fund",
+    "pd_nm": "Northern Trust Core Bond ETF",
     "table": "global_etf"
    }
   ],
@@ -3249,18 +3431,6 @@
    {
     "pd_itm_no": "CMBO.O",
     "pd_nm": "Wayfinder Dynamic US Interest Rate ETF",
-    "table": "global_etf"
-   }
-  ],
-  "108212e4b26796a1": [
-   {
-    "pd_itm_no": "EALT.K",
-    "pd_nm": "Innovator US Equity 5 to 15 Buffer ETF - Quarterly",
-    "table": "global_etf"
-   },
-   {
-    "pd_itm_no": "ZALT.K",
-    "pd_nm": "Innovator US Equity 10 Buffer ETF - Quarterly",
     "table": "global_etf"
    }
   ],
@@ -3432,6 +3602,13 @@
     "table": "global_etf"
    }
   ],
+  "117b642bfd4ad6df": [
+   {
+    "pd_itm_no": "GMEC.K",
+    "pd_nm": "Corgi GME 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "1181c8e58af43383": [
    {
     "pd_itm_no": "NFEB.K",
@@ -3568,13 +3745,6 @@
     "pd_itm_no": "GSC",
     "pd_nm": "Goldman Sachs Small Cap Equity ETF",
     "table": "global_etf"
-   }
-  ],
-  "125910ffd285a630": [
-   {
-    "pd_itm_no": "KR70193M0005",
-    "pd_nm": "BNK BNK 27-12 특수채(AAA이상)액티브증권상장지수투자신탁(채권)",
-    "table": "kr_etp"
    }
   ],
   "125dd66ccf582db3": [
@@ -3734,7 +3904,7 @@
   "13061ecc31878382": [
    {
     "pd_itm_no": "GUNR.K",
-    "pd_nm": "FlexShs Morningstar Glbl Upsteam Ntrl Res Idx Fd",
+    "pd_nm": "Northern Trust Morningstar Glbl Upstm Ntrl Res ETF",
     "table": "global_etf"
    }
   ],
@@ -3749,6 +3919,20 @@
    {
     "pd_itm_no": "GXIG.K",
     "pd_nm": "Global X Investment Grade Corporate Bond ETF",
+    "table": "global_etf"
+   }
+  ],
+  "131d31d43192077f": [
+   {
+    "pd_itm_no": "RDDC.K",
+    "pd_nm": "Corgi RDDT 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
+  "1325bfc3fe020c26": [
+   {
+    "pd_itm_no": "STLL.K",
+    "pd_nm": "Leverage Shares 2X Long STRL Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -3965,7 +4149,7 @@
   "14708651fb4a38ec": [
    {
     "pd_itm_no": "TDTF.K",
-    "pd_nm": "FlexShares iBoxx 5-Year Target Duration TIPS Index",
+    "pd_nm": "Northern Trust iBoxx 5-Year Trgt Duration TIPS ETF",
     "table": "global_etf"
    }
   ],
@@ -3983,6 +4167,13 @@
     "table": "global_etf"
    }
   ],
+  "148c95599a4296d8": [
+   {
+    "pd_itm_no": "IACL.K",
+    "pd_nm": "GraniteShares US 100 Autocallable Income ETF",
+    "table": "global_etf"
+   }
+  ],
   "149212395b449976": [
    {
     "pd_itm_no": "EFV",
@@ -3994,6 +4185,13 @@
    {
     "pd_itm_no": "AHYB.K",
     "pd_nm": "American Century Select High Yield ETF",
+    "table": "global_etf"
+   }
+  ],
+  "149c9efd40a46faf": [
+   {
+    "pd_itm_no": "UPSC.K",
+    "pd_nm": "Corgi UPST 2x Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -4036,6 +4234,13 @@
    {
     "pd_itm_no": "OVB",
     "pd_nm": "Overlay Shares Core Bond ETF",
+    "table": "global_etf"
+   }
+  ],
+  "14cdd5e0e5f2d6da": [
+   {
+    "pd_itm_no": "GALX.K",
+    "pd_nm": "VistaShares Space Supercycle ETF",
     "table": "global_etf"
    }
   ],
@@ -4104,13 +4309,20 @@
   ],
   "152365d1dfffa29c": [
    {
-    "pd_itm_no": "GDFN.O",
+    "pd_itm_no": "ARMY.O",
     "pd_nm": "Tema International Defense ETF",
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "ARMY.O",
+    "pd_itm_no": "GDFN.O",
     "pd_nm": "Tema International Defense ETF",
+    "table": "global_etf"
+   }
+  ],
+  "15273353fe5eb786": [
+   {
+    "pd_itm_no": "JULI.K",
+    "pd_nm": "AllianzIM Internatl Equity Buff15 Uncapped Jul ETF",
     "table": "global_etf"
    }
   ],
@@ -4184,6 +4396,20 @@
     "table": "global_etf"
    }
   ],
+  "1594b9c8ecba4d53": [
+   {
+    "pd_itm_no": "BTDL.O",
+    "pd_nm": "GraniteShares 2x Long BTDR Daily ETF",
+    "table": "global_etf"
+   }
+  ],
+  "1596210382d31e39": [
+   {
+    "pd_itm_no": "BITA.O",
+    "pd_nm": "iShares Bitcoin Premium Income ETF",
+    "table": "global_etf"
+   }
+  ],
   "159bae5b7492e9e9": [
    {
     "pd_itm_no": "USAI.K",
@@ -4226,6 +4452,13 @@
     "table": "global_etf"
    }
   ],
+  "15b9ae30f7e2b4e3": [
+   {
+    "pd_itm_no": "PSCX.K",
+    "pd_nm": "Pacer Swan SOS Conservative (January) ETF",
+    "table": "global_etf"
+   }
+  ],
   "15bf5f58952da115": [
    {
     "pd_itm_no": "GDXY.K",
@@ -4247,10 +4480,10 @@
     "table": "kr_etp"
    }
   ],
-  "15cf58c7886e53ed": [
+  "15ce456e8c48db43": [
    {
-    "pd_itm_no": "FJUL.K",
-    "pd_nm": "FT Vest US Equity Buffer ETF - July",
+    "pd_itm_no": "ACQQ.O",
+    "pd_nm": "ProShares Nasdaq-100 Autocallable Income ETF",
     "table": "global_etf"
    }
   ],
@@ -4352,13 +4585,6 @@
     "table": "global_etf"
    }
   ],
-  "16508ffcb9a1baab": [
-   {
-    "pd_itm_no": "DDNQ.K",
-    "pd_nm": "Innovator Growth-100 Dual Direc 5 Bfr ETF - Qtly",
-    "table": "global_etf"
-   }
-  ],
   "16569ba955c9b52c": [
    {
     "pd_itm_no": "SPGP.K",
@@ -4443,10 +4669,24 @@
     "table": "global_etf"
    }
   ],
+  "16abadb0cc1386c4": [
+   {
+    "pd_itm_no": "FREI.O",
+    "pd_nm": "Fidelity Real Estate Income Fund;ETF",
+    "table": "global_etf"
+   }
+  ],
   "16b0011e08b8a6e5": [
    {
     "pd_itm_no": "DLS",
     "pd_nm": "WisdomTree International SmallCap Dividend Fund",
+    "table": "global_etf"
+   }
+  ],
+  "16b5b7b3c03a6b57": [
+   {
+    "pd_itm_no": "APMI.K",
+    "pd_nm": "Corgi AMAT 2x Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -4681,6 +4921,13 @@
     "table": "kr_etp"
    }
   ],
+  "17b376241e9150c9": [
+   {
+    "pd_itm_no": "MSFC.K",
+    "pd_nm": "Corgi MSFT 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "17ca1b3fc57b9d7a": [
    {
     "pd_itm_no": "BFAP.K",
@@ -4720,6 +4967,13 @@
    {
     "pd_itm_no": "CORO.O",
     "pd_nm": "iShares International Country Rotation Active ETF",
+    "table": "global_etf"
+   }
+  ],
+  "181d9e185e8d1dbb": [
+   {
+    "pd_itm_no": "LSTB.K",
+    "pd_nm": "Natixis Loomis Sayles Total Return Bond ETF",
     "table": "global_etf"
    }
   ],
@@ -4852,14 +5106,7 @@
   "189e5d19afb269a1": [
    {
     "pd_itm_no": "QLC",
-    "pd_nm": "FlexShares US Quality Large Cap Index Fund",
-    "table": "global_etf"
-   }
-  ],
-  "18a6f5f1abd31873": [
-   {
-    "pd_itm_no": "BSJY.O",
-    "pd_nm": "Invesco BulletShares 2034 High Yield Corp Bond ETF",
+    "pd_nm": "Northern Trust US Quality Large Cap ETF",
     "table": "global_etf"
    }
   ],
@@ -5031,6 +5278,13 @@
     "table": "global_etf"
    }
   ],
+  "19953fbd4c7887a1": [
+   {
+    "pd_itm_no": "PTNT.K",
+    "pd_nm": "Corgi IP Licensing & Royalties ETF",
+    "table": "global_etf"
+   }
+  ],
   "199c2d40305d8d08": [
    {
     "pd_itm_no": "MYMF.O",
@@ -5080,11 +5334,11 @@
     "table": "global_etf"
    }
   ],
-  "19d524460d6ca998": [
+  "19d0526366301426": [
    {
-    "pd_itm_no": "KR70207Z0004",
-    "pd_nm": "키움 KIWOOM 미국우주데이터센터인프라증권상장지수투자신탁[주식]",
-    "table": "kr_etp"
+    "pd_itm_no": "NVPS.O",
+    "pd_nm": "PurePlay Nvidia Ecosystem Picks&Shovels Index ETF",
+    "table": "global_etf"
    }
   ],
   "19d725e24fbcea7f": [
@@ -5248,6 +5502,13 @@
     "table": "global_etf"
    }
   ],
+  "1a7f7d7154404f79": [
+   {
+    "pd_itm_no": "KR70228G0002",
+    "pd_nm": "한국투자 ACE 반도체Plus전략산업증권상장지수투자신탁(주식)",
+    "table": "kr_etp"
+   }
+  ],
   "1a877a34737b2829": [
    {
     "pd_itm_no": "FXC",
@@ -5316,6 +5577,13 @@
     "pd_itm_no": "IFLN.K",
     "pd_nm": "Invesco Bloomberg Enhanced Fallen Angels ETF",
     "table": "global_etf"
+   }
+  ],
+  "1ae298c336179e4f": [
+   {
+    "pd_itm_no": "KR70233A0001",
+    "pd_nm": "ACE 삼성전자SK하이닉스플러스채권혼합50",
+    "table": "kr_etp"
    }
   ],
   "1ae4bdf11233abb6": [
@@ -5409,6 +5677,13 @@
     "table": "kr_etp"
    }
   ],
+  "1b2eefeb88ab7e92": [
+   {
+    "pd_itm_no": "FECM.K",
+    "pd_nm": "First Eagle Core Municipal ETF",
+    "table": "global_etf"
+   }
+  ],
   "1b306ec1c1ae4a7e": [
    {
     "pd_itm_no": "KR7396520009",
@@ -5458,6 +5733,13 @@
     "table": "global_etf"
    }
   ],
+  "1b89f8435f6192fd": [
+   {
+    "pd_itm_no": "DGJL.K",
+    "pd_nm": "FT Vest U.S. Equity Buffer & Digital Rtrn ETF-July",
+    "table": "global_etf"
+   }
+  ],
   "1b90319602770b5b": [
    {
     "pd_itm_no": "FBND.K",
@@ -5470,6 +5752,13 @@
     "pd_itm_no": "BNGE.K",
     "pd_nm": "First Trust S-Network Streaming & Gaming ETF",
     "table": "global_etf"
+   }
+  ],
+  "1b954f4fce66b026": [
+   {
+    "pd_itm_no": "KR70216K0000",
+    "pd_nm": "키움 KIWOOM 미국우주테크TOP2채권혼합50증권상장지수투자신탁[채권혼합]",
+    "table": "kr_etp"
    }
   ],
   "1b9601407af11154": [
@@ -5525,6 +5814,13 @@
    {
     "pd_itm_no": "SPLB.K",
     "pd_nm": "State Street SPDR Portfolio Long Term Corp Bd ETF",
+    "table": "global_etf"
+   }
+  ],
+  "1bebdc47eeb5d6fa": [
+   {
+    "pd_itm_no": "GISC.K",
+    "pd_nm": "Guggenheim Securitized Income ETF",
     "table": "global_etf"
    }
   ],
@@ -5605,15 +5901,17 @@
     "table": "global_etf"
    }
   ],
+  "1c56aa8889cd4d87": [
+   {
+    "pd_itm_no": "ACRT.O",
+    "pd_nm": "ProShares Russell 2000 Autocallable Income ETF",
+    "table": "global_etf"
+   }
+  ],
   "1c5e94b6b1f3482a": [
    {
     "pd_itm_no": "FEBM.K",
     "pd_nm": "FT Vest US Equity Max Buffer ETF - February",
-    "table": "global_etf"
-   },
-   {
-    "pd_itm_no": "JUNM.K",
-    "pd_nm": "FT Vest US Equity Max Buffer ETF - Jun",
     "table": "global_etf"
    },
    {
@@ -5779,7 +6077,7 @@
   "1d49614ef029b8dc": [
    {
     "pd_itm_no": "IQDY.K",
-    "pd_nm": "FlexShares International Quality Div Dyn Idx",
+    "pd_nm": "Northern Trust International Qlty Div Dynamic ETF",
     "table": "global_etf"
    }
   ],
@@ -6007,6 +6305,13 @@
     "table": "global_etf"
    }
   ],
+  "1e0e3efd6d5cb9e5": [
+   {
+    "pd_itm_no": "UMCU.K",
+    "pd_nm": "Tradr 2X Long UMC Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "1e1a96b9c7e86bcc": [
    {
     "pd_itm_no": "DTCR.O",
@@ -6049,6 +6354,13 @@
     "table": "global_etf"
    }
   ],
+  "1e68bc0b8e5a274a": [
+   {
+    "pd_itm_no": "ACOM.K",
+    "pd_nm": "Harbor Active Commodity ETF",
+    "table": "global_etf"
+   }
+  ],
   "1e73210ae3762aee": [
    {
     "pd_itm_no": "OVLH.K",
@@ -6060,6 +6372,13 @@
    {
     "pd_itm_no": "CMGG.O",
     "pd_nm": "Leverage Shares 2X Long CMG Daily ETF",
+    "table": "global_etf"
+   }
+  ],
+  "1e7aa9fc7ca227e8": [
+   {
+    "pd_itm_no": "ASTG.K",
+    "pd_nm": "Leverage Shares 2X Long ASTS Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -6088,6 +6407,13 @@
    {
     "pd_itm_no": "FCOR.K",
     "pd_nm": "Fidelity Corporate Bond ETF",
+    "table": "global_etf"
+   }
+  ],
+  "1e8b7c5101bf54ea": [
+   {
+    "pd_itm_no": "SPCQ.K",
+    "pd_nm": "Defiance Daily Target 2X Short SPCX ETF",
     "table": "global_etf"
    }
   ],
@@ -6157,7 +6483,7 @@
   "1ec4cd5bee38c221": [
    {
     "pd_itm_no": "SATG.O",
-    "pd_nm": "Leverage Shares 2X Long SATS Daily ETF",
+    "pd_nm": "Leverage Shares 2X Long ECHO Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -6268,13 +6594,13 @@
   ],
   "1f54900b237abdf8": [
    {
-    "pd_itm_no": "CBTA.K",
-    "pd_nm": "Calamos Bitcoin 80 Series Struc Alt Pro ETF - Apr",
+    "pd_itm_no": "CBOA.K",
+    "pd_nm": "Calamos Bitcoin Structured Alt Protectn ETF - Apr",
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "CBOA.K",
-    "pd_nm": "Calamos Bitcoin Structured Alt Protectn ETF - Apr",
+    "pd_itm_no": "CBTA.K",
+    "pd_nm": "Calamos Bitcoin 80 Series Struc Alt Pro ETF - Apr",
     "table": "global_etf"
    }
   ],
@@ -6394,6 +6720,13 @@
    {
     "pd_itm_no": "DFSV.K",
     "pd_nm": "DFA Dimensional US Small Cap Value ETF",
+    "table": "global_etf"
+   }
+  ],
+  "1fcc2686664ac6a2": [
+   {
+    "pd_itm_no": "PSFO.K",
+    "pd_nm": "Pacer Swan SOS Flex (October) ETF",
     "table": "global_etf"
    }
   ],
@@ -6639,6 +6972,13 @@
    {
     "pd_itm_no": "AMZY.K",
     "pd_nm": "YieldMax AMZN Option Income Strategy ETF",
+    "table": "global_etf"
+   }
+  ],
+  "20ae045a04b88848": [
+   {
+    "pd_itm_no": "IONC.K",
+    "pd_nm": "Corgi IONQ 2x Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -7076,6 +7416,13 @@
     "table": "global_etf"
    }
   ],
+  "22ffb6fcfc52b6ef": [
+   {
+    "pd_itm_no": "UN",
+    "pd_nm": "Corgi UNH 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "2310fc1e010b74ed": [
    {
     "pd_itm_no": "DUBS.K",
@@ -7129,6 +7476,13 @@
    {
     "pd_itm_no": "QPFF.K",
     "pd_nm": "American Century Quality Preferred ETF",
+    "table": "global_etf"
+   }
+  ],
+  "2332d5df834cef0e": [
+   {
+    "pd_itm_no": "RAMZ.K",
+    "pd_nm": "T-REX 2X Inverse DRAM Daily Target ETF",
     "table": "global_etf"
    }
   ],
@@ -7378,7 +7732,7 @@
   "2424ffb34208af35": [
    {
     "pd_itm_no": "VO",
-    "pd_nm": "Vanguard Mid-Cap Index Fund;ETF",
+    "pd_nm": "Vanguard Morningstar Mid-Cap Index Fund;ETF",
     "table": "global_etf"
    }
   ],
@@ -7386,6 +7740,13 @@
    {
     "pd_itm_no": "AOHY.O",
     "pd_nm": "Angel Oak High Yield Opportunities ETF",
+    "table": "global_etf"
+   }
+  ],
+  "2427edfc8301b0ae": [
+   {
+    "pd_itm_no": "RAML.K",
+    "pd_nm": "Leverage Shares 2X Long Memory Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -7508,6 +7869,18 @@
     "table": "kr_etp"
    }
   ],
+  "24d27a542ddc8690": [
+   {
+    "pd_itm_no": "CDPI.K",
+    "pd_nm": "Columbia Research Enhanced Core Premium Income ETF",
+    "table": "global_etf"
+   },
+   {
+    "pd_itm_no": "RECI.K",
+    "pd_nm": "Columbia Research Enhanced Core Premium Income ETF",
+    "table": "global_etf"
+   }
+  ],
   "24d27ffad3312dfa": [
    {
     "pd_itm_no": "EFAS.O",
@@ -7536,6 +7909,13 @@
     "table": "global_etf"
    }
   ],
+  "24e0aa42b2925097": [
+   {
+    "pd_itm_no": "KR70221Z0006",
+    "pd_nm": "한국투자 ACE K바이오코스닥액티브증권상장지수투자신탁(주식)",
+    "table": "kr_etp"
+   }
+  ],
   "24e8ac1d54291b7c": [
    {
     "pd_itm_no": "KR7464920008",
@@ -7554,6 +7934,13 @@
    {
     "pd_itm_no": "MST.O",
     "pd_nm": "Defiance Leveraged Long + Income MSTR ETF",
+    "table": "global_etf"
+   }
+  ],
+  "250ff30bb793b055": [
+   {
+    "pd_itm_no": "GCSH.K",
+    "pd_nm": "Guggenheim Ultra Short Income ETF",
     "table": "global_etf"
    }
   ],
@@ -7599,6 +7986,13 @@
     "table": "global_etf"
    }
   ],
+  "254627cd40e6050d": [
+   {
+    "pd_itm_no": "KR7434960001",
+    "pd_nm": "대신 DAISHIN K200증권상장지수투자신탁[주식]",
+    "table": "kr_etp"
+   }
+  ],
   "2560fb0fa72617f3": [
    {
     "pd_itm_no": "CEW",
@@ -7638,6 +8032,13 @@
    {
     "pd_itm_no": "FTCB.K",
     "pd_nm": "First Trust Core Investment Grade ETF",
+    "table": "global_etf"
+   }
+  ],
+  "25adfefb0432290c": [
+   {
+    "pd_itm_no": "GOOL.K",
+    "pd_nm": "Leverage Shares 2X Long GOOGL Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -7697,6 +8098,13 @@
     "table": "global_etf"
    }
   ],
+  "25f557aca6ac0db7": [
+   {
+    "pd_itm_no": "SKHU.K",
+    "pd_nm": "ProShares Ultra SK hynix",
+    "table": "global_etf"
+   }
+  ],
   "25fbdf7ba7a5224b": [
    {
     "pd_itm_no": "EYLD.K",
@@ -7718,11 +8126,25 @@
     "table": "global_etf"
    }
   ],
+  "26071892d5bb8917": [
+   {
+    "pd_itm_no": "SNDC.K",
+    "pd_nm": "Corgi SNDK 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "26076950648aa8e9": [
    {
     "pd_itm_no": "KR70166T0001",
     "pd_nm": "한화 PLUS 글로벌저작권핵심기업액티브증권상장지수투자신탁(주식)",
     "table": "kr_etp"
+   }
+  ],
+  "260aecaed09261d1": [
+   {
+    "pd_itm_no": "SSPC.K",
+    "pd_nm": "Leverage Shares 2X Short SPCX Daily ETF",
+    "table": "global_etf"
    }
   ],
   "261023fd91d11080": [
@@ -7907,6 +8329,13 @@
     "table": "global_etf"
    }
   ],
+  "2723d741f1aca5a0": [
+   {
+    "pd_itm_no": "SPCG.K",
+    "pd_nm": "Tradr 2X Short SpaceX Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "27247348b32f4444": [
    {
     "pd_itm_no": "ESSC.K",
@@ -7974,13 +8403,6 @@
    {
     "pd_itm_no": "LIAP.K",
     "pd_nm": "LifeX 2057 Inflation-Protected Lngvty In ETF",
-    "table": "global_etf"
-   }
-  ],
-  "27a1c98b349d6b5f": [
-   {
-    "pd_itm_no": "BFJL.K",
-    "pd_nm": "FT Vest Bitcoin Strategy Floor15 ETF - July",
     "table": "global_etf"
    }
   ],
@@ -8257,6 +8679,13 @@
     "table": "global_etf"
    }
   ],
+  "28ee4da1d5219d55": [
+   {
+    "pd_itm_no": "KR70225V0006",
+    "pd_nm": "삼성 KODEX 미국CPU반도체TOP10증권상장지수투자신탁[주식]",
+    "table": "kr_etp"
+   }
+  ],
   "28f5fc081ceeefc5": [
    {
     "pd_itm_no": "FGSI.O",
@@ -8296,6 +8725,13 @@
    {
     "pd_itm_no": "PBEU.O",
     "pd_nm": "Portfolio Building Block European Banks Index ETF",
+    "table": "global_etf"
+   }
+  ],
+  "2926e6986d5e52d3": [
+   {
+    "pd_itm_no": "TRUN.O",
+    "pd_nm": "VanEck Energy TruSector ETF",
     "table": "global_etf"
    }
   ],
@@ -8579,6 +9015,13 @@
     "table": "kr_etp"
    }
   ],
+  "2a47679f69b323da": [
+   {
+    "pd_itm_no": "CSRA.K",
+    "pd_nm": "Cohen & Steers Real Assets Active ETF",
+    "table": "global_etf"
+   }
+  ],
   "2a48961b1cd69bca": [
    {
     "pd_itm_no": "LEGR.O",
@@ -8604,6 +9047,13 @@
    {
     "pd_itm_no": "FLQL.K",
     "pd_nm": "Franklin US Large Cap Multifactor Index ETF",
+    "table": "global_etf"
+   }
+  ],
+  "2a64016d87a2d47b": [
+   {
+    "pd_itm_no": "SKDD.O",
+    "pd_nm": "GraniteShares 2x Short SK Hynix Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -8656,6 +9106,13 @@
     "table": "kr_etp"
    }
   ],
+  "2ab79837aea07540": [
+   {
+    "pd_itm_no": "YSAG.O",
+    "pd_nm": "Texas Precious Metals Trust Y'all St Phys Slvr ETF",
+    "table": "global_etf"
+   }
+  ],
   "2ab817d871602fa1": [
    {
     "pd_itm_no": "IJH",
@@ -8670,10 +9127,22 @@
     "table": "global_etf"
    }
   ],
+  "2ac46d13c606dafc": [
+   {
+    "pd_itm_no": "BEC",
+    "pd_nm": "Corgi BE 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "2ac7559466470885": [
    {
     "pd_itm_no": "DDTF.K",
     "pd_nm": "Innovator Equity Dual Directional 10 Buf ETF - Feb",
+    "table": "global_etf"
+   },
+   {
+    "pd_itm_no": "DDTG.K",
+    "pd_nm": "Innovator Equity Dual Drctnl 10 Buffer ETF - Aug",
     "table": "global_etf"
    }
   ],
@@ -8710,6 +9179,13 @@
     "pd_itm_no": "KRG530001327",
     "pd_nm": "삼성증권 삼성 블룸버그 WTI원유 선물 상장지수증권 B 제132호",
     "table": "kr_etp"
+   }
+  ],
+  "2adb37cdc7d83fe1": [
+   {
+    "pd_itm_no": "FOMG.K",
+    "pd_nm": "Leverage Shares 2X Long FORM Daily ETF",
+    "table": "global_etf"
    }
   ],
   "2ae8465c6994d5e9": [
@@ -8801,6 +9277,13 @@
     "pd_itm_no": "PULS.K",
     "pd_nm": "PGIM Ultra Short Bond ETF",
     "table": "global_etf"
+   }
+  ],
+  "2b83a22907a7d0ed": [
+   {
+    "pd_itm_no": "KR7269540001",
+    "pd_nm": "한화 PLUS S&P500증권상장지수투자신탁(주식)(H)",
+    "table": "kr_etp"
    }
   ],
   "2b89ff814f16a855": [
@@ -9181,6 +9664,13 @@
     "table": "kr_etp"
    }
   ],
+  "2d1c66c862849285": [
+   {
+    "pd_itm_no": "PQV",
+    "pd_nm": "PGIM S&P 500 Quarterly Buffer 5 ETF",
+    "table": "global_etf"
+   }
+  ],
   "2d1cf0919477d9d6": [
    {
     "pd_itm_no": "TMV",
@@ -9300,6 +9790,13 @@
     "table": "kr_etp"
    }
   ],
+  "2dee51518789f640": [
+   {
+    "pd_itm_no": "XWNG.K",
+    "pd_nm": "Amplify Top 10 Space ETF",
+    "table": "global_etf"
+   }
+  ],
   "2df1ca0a488c4324": [
    {
     "pd_itm_no": "XSMO.K",
@@ -9400,12 +9897,12 @@
   ],
   "2e7adc8a647f5a88": [
    {
-    "pd_itm_no": "XFIX.O",
+    "pd_itm_no": "ZHOG.O",
     "pd_nm": "F/m Opportunistic Income ETF",
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "ZHOG.O",
+    "pd_itm_no": "XFIX.O",
     "pd_nm": "F/m Opportunistic Income ETF",
     "table": "global_etf"
    }
@@ -9491,6 +9988,13 @@
    {
     "pd_itm_no": "ICOW.K",
     "pd_nm": "Pacer Developed Markets International Cash Cws 100",
+    "table": "global_etf"
+   }
+  ],
+  "2ecea0ce4510dcd4": [
+   {
+    "pd_itm_no": "HYGU.K",
+    "pd_nm": "MicroSectors 3x Long High Yield Corporate Bond ETN",
     "table": "global_etf"
    }
   ],
@@ -9636,6 +10140,13 @@
    {
     "pd_itm_no": "KR7463690008",
     "pd_nm": "삼성 KODEX 미국S&P500커뮤니케이션증권상장지수투자신탁[주식]",
+    "table": "kr_etp"
+   }
+  ],
+  "2f783dfe605502b9": [
+   {
+    "pd_itm_no": "KRG610001023",
+    "pd_nm": "메리츠증권 메리츠 솔랙티브 금 선물 상장지수증권(H) 제102호",
     "table": "kr_etp"
    }
   ],
@@ -9793,6 +10304,13 @@
     "table": "global_etf"
    }
   ],
+  "30658b42892255a8": [
+   {
+    "pd_itm_no": "ARKE.K",
+    "pd_nm": "ARK DIET Q3 Buffer ETF",
+    "table": "global_etf"
+   }
+  ],
   "306e36d5759f5d60": [
    {
     "pd_itm_no": "KR7451000004",
@@ -9825,6 +10343,13 @@
    {
     "pd_itm_no": "VNQ",
     "pd_nm": "Vanguard Real Estate Index Fund;ETF",
+    "table": "global_etf"
+   }
+  ],
+  "30ab5ac4cfb69a45": [
+   {
+    "pd_itm_no": "HBIL.K",
+    "pd_nm": "Harbor Short Term Treasury ETF",
     "table": "global_etf"
    }
   ],
@@ -9891,6 +10416,13 @@
     "table": "global_etf"
    }
   ],
+  "31099da9c41c7bed": [
+   {
+    "pd_itm_no": "DRMY.K",
+    "pd_nm": "XFUNDS Memory Income ETF",
+    "table": "global_etf"
+   }
+  ],
   "310e838712136d79": [
    {
     "pd_itm_no": "ONEO.K",
@@ -9933,6 +10465,13 @@
     "table": "global_etf"
    }
   ],
+  "312e87e17f2f55c4": [
+   {
+    "pd_itm_no": "GJUL.K",
+    "pd_nm": "FT Vest US Equity Moderate Buffer ETF - Jul",
+    "table": "global_etf"
+   }
+  ],
   "313ecadf4d3cd210": [
    {
     "pd_itm_no": "KRG610000447",
@@ -9945,6 +10484,20 @@
     "pd_itm_no": "KR7475310009",
     "pd_nm": "신한 SOL 반도체후공정증권상장지수투자신탁[주식]",
     "table": "kr_etp"
+   }
+  ],
+  "315c7c641b3bf84c": [
+   {
+    "pd_itm_no": "LCTO.K",
+    "pd_nm": "Kurv TaxOptimized US Large Cap ETF",
+    "table": "global_etf"
+   }
+  ],
+  "31605ab54c5fc09f": [
+   {
+    "pd_itm_no": "TMGN.K",
+    "pd_nm": "TappAlpha Cboe Magnificent 10 Growth & Dly Inc ETF",
+    "table": "global_etf"
    }
   ],
   "316273debd4d3446": [
@@ -9970,12 +10523,12 @@
   ],
   "319def30a8c362c3": [
    {
-    "pd_itm_no": "XPM.O",
+    "pd_itm_no": "ZYN.O",
     "pd_nm": "Defiance Daily Target 2X Long PM ETF",
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "ZYN.O",
+    "pd_itm_no": "XPM.O",
     "pd_nm": "Defiance Daily Target 2X Long PM ETF",
     "table": "global_etf"
    }
@@ -10022,6 +10575,18 @@
     "table": "kr_etp"
    }
   ],
+  "31c638ccd6d7f5ac": [
+   {
+    "pd_itm_no": "EXPN.K",
+    "pd_nm": "Horizon High Income ETF",
+    "table": "global_etf"
+   },
+   {
+    "pd_itm_no": "YLDY.K",
+    "pd_nm": "Horizon High Income ETF",
+    "table": "global_etf"
+   }
+  ],
   "31cb6f298ee44dc4": [
    {
     "pd_itm_no": "SIXJ.K",
@@ -10066,13 +10631,13 @@
   ],
   "32132b3e8b9d9614": [
    {
-    "pd_itm_no": "FEBZ.K",
-    "pd_nm": "TrueShares Structured Outcome (February) ETF",
+    "pd_itm_no": "JANZ.K",
+    "pd_nm": "TrueShares Structured Outcome (January) ETF",
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "JANZ.K",
-    "pd_nm": "TrueShares Structured Outcome (January) ETF",
+    "pd_itm_no": "FEBZ.K",
+    "pd_nm": "TrueShares Structured Outcome (February) ETF",
     "table": "global_etf"
    }
   ],
@@ -10184,7 +10749,7 @@
   "32b0071bb3f6b442": [
    {
     "pd_itm_no": "TLTE.K",
-    "pd_nm": "FlexShares Morningstar Em Mkts Factors Tilt Idx",
+    "pd_nm": "Northern Trust Morningstar Emg Mkts Fctr Tilt ETF",
     "table": "global_etf"
    }
   ],
@@ -10283,6 +10848,13 @@
    {
     "pd_itm_no": "XKRE.K",
     "pd_nm": "Corgi U.S. Regional Banks 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
+  "33317a83d7289ca3": [
+   {
+    "pd_itm_no": "ARIA.K",
+    "pd_nm": "ARIA Opportunities ETF",
     "table": "global_etf"
    }
   ],
@@ -10462,7 +11034,7 @@
   "33e0137ac1103150": [
    {
     "pd_itm_no": "TLTD.K",
-    "pd_nm": "FlexShares MS Dev Mkts exUS Factors Tilt Idx",
+    "pd_nm": "Northern Trust Morningstar Dev Mkt exUS Fc Tlt ETF",
     "table": "global_etf"
    }
   ],
@@ -10522,6 +11094,13 @@
     "table": "kr_etp"
    }
   ],
+  "3424a7fb9e3afb98": [
+   {
+    "pd_itm_no": "BKLG.K",
+    "pd_nm": "BNY Mellon US Large Cap Equity Growth ETF",
+    "table": "global_etf"
+   }
+  ],
   "342e316aaddcec48": [
    {
     "pd_itm_no": "DSCO.K",
@@ -10561,13 +11140,6 @@
    {
     "pd_itm_no": "FVAL.K",
     "pd_nm": "Fidelity Value Factor ETF",
-    "table": "global_etf"
-   }
-  ],
-  "3476c04b435bf87c": [
-   {
-    "pd_itm_no": "EMB.O",
-    "pd_nm": "iShares JPMorgan USD Emerging Markets Bond ETF",
     "table": "global_etf"
    }
   ],
@@ -10711,6 +11283,13 @@
     "table": "global_etf"
    }
   ],
+  "3520ad34b2d24e4c": [
+   {
+    "pd_itm_no": "GAIQ.K",
+    "pd_nm": "Guinness Atkinson Global Innovators Fund;ETF",
+    "table": "global_etf"
+   }
+  ],
   "35277158f2f8afe1": [
    {
     "pd_itm_no": "KR7460960008",
@@ -10781,6 +11360,13 @@
     "table": "global_etf"
    }
   ],
+  "359250fdc18664d9": [
+   {
+    "pd_itm_no": "EALT.K",
+    "pd_nm": "Innovator US Equity 5 to 15 Buffer ETF - Quarterly",
+    "table": "global_etf"
+   }
+  ],
   "35a0c63d67f36c8d": [
    {
     "pd_itm_no": "MMAR.K",
@@ -10837,6 +11423,13 @@
     "table": "global_etf"
    }
   ],
+  "35e00c42fedf0a13": [
+   {
+    "pd_itm_no": "THOR.K",
+    "pd_nm": "Thornburg Premium Income Builder ETF",
+    "table": "global_etf"
+   }
+  ],
   "35e4be8725329e92": [
    {
     "pd_itm_no": "NELS.K",
@@ -10869,6 +11462,13 @@
    {
     "pd_itm_no": "FLAG.K",
     "pd_nm": "Global X S&P 500 US Market Leaders Top 50 ETF",
+    "table": "global_etf"
+   }
+  ],
+  "3615b8a85df2b223": [
+   {
+    "pd_itm_no": "MSSE.K",
+    "pd_nm": "Morgan Stanley Ethereum Trust",
     "table": "global_etf"
    }
   ],
@@ -11138,10 +11738,24 @@
     "table": "global_etf"
    }
   ],
+  "37761fed41b04c3b": [
+   {
+    "pd_itm_no": "AMZG.K",
+    "pd_nm": "Leverage Shares 2X Long AMZN Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "37801b2f52fffc34": [
    {
     "pd_itm_no": "ECLN.K",
     "pd_nm": "First Trust EIP Carbon Impact ETF",
+    "table": "global_etf"
+   }
+  ],
+  "3782b8b68a256947": [
+   {
+    "pd_itm_no": "SPAL.K",
+    "pd_nm": "GraniteShares 2x Long SpaceX Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -11320,6 +11934,13 @@
     "table": "global_etf"
    }
   ],
+  "385ef0c5eee72fe6": [
+   {
+    "pd_itm_no": "SMTG.K",
+    "pd_nm": "Leverage Shares 2X Long SMTC Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "38663c618b9378f2": [
    {
     "pd_itm_no": "MPWX.K",
@@ -11476,8 +12097,13 @@
   ],
   "392fd83fac018e4f": [
    {
+    "pd_itm_no": "WELD.K",
+    "pd_nm": "Tema U.S. Manufacturing & Reshoring ETF",
+    "table": "global_etf"
+   },
+   {
     "pd_itm_no": "RSHO.K",
-    "pd_nm": "Tema US Manufacturing & Reshoring ETF",
+    "pd_nm": "Tema U.S. Manufacturing & Reshoring ETF",
     "table": "global_etf"
    }
   ],
@@ -11499,6 +12125,13 @@
    {
     "pd_itm_no": "MXI",
     "pd_nm": "iShares Global Materials ETF",
+    "table": "global_etf"
+   }
+  ],
+  "396761278c6890bf": [
+   {
+    "pd_itm_no": "RMHY.K",
+    "pd_nm": "Global X Adaptive Risk Managed Yield ETF",
     "table": "global_etf"
    }
   ],
@@ -11597,6 +12230,13 @@
    {
     "pd_itm_no": "RIZE.K",
     "pd_nm": "Principal Inflation Protection ETF",
+    "table": "global_etf"
+   }
+  ],
+  "39f64e4db6f5871e": [
+   {
+    "pd_itm_no": "BGFI.K",
+    "pd_nm": "BNY Mellon Global Fixed Income ETF",
     "table": "global_etf"
    }
   ],
@@ -11782,6 +12422,13 @@
     "table": "global_etf"
    }
   ],
+  "3ad2033cf06b9a04": [
+   {
+    "pd_itm_no": "JOBC.K",
+    "pd_nm": "Corgi JOBY 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "3ad214a2de43c499": [
    {
     "pd_itm_no": "KR70195S0007",
@@ -11801,6 +12448,13 @@
     "pd_itm_no": "BGIA.O",
     "pd_nm": "Baillie Gifford International Alpha ETF",
     "table": "global_etf"
+   }
+  ],
+  "3ae8089545907ce4": [
+   {
+    "pd_itm_no": "KR70210A0008",
+    "pd_nm": "한국투자 ACE K반도체TOP2+증권상장지수투자신탁(주식)",
+    "table": "kr_etp"
    }
   ],
   "3af0a82beff003ea": [
@@ -11898,6 +12552,13 @@
    {
     "pd_itm_no": "GHMS.K",
     "pd_nm": "Goose Hollow Multi-Strategy Income ETF",
+    "table": "global_etf"
+   }
+  ],
+  "3b7948ec282a9fbd": [
+   {
+    "pd_itm_no": "OKLC.K",
+    "pd_nm": "Corgi OKLO 2x Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -12045,6 +12706,13 @@
    {
     "pd_itm_no": "SPFF.K",
     "pd_nm": "Global X SuperIncome Preferred ETF",
+    "table": "global_etf"
+   }
+  ],
+  "3c5117ed0f38d1de": [
+   {
+    "pd_itm_no": "XDSQ.K",
+    "pd_nm": "Innovator US Equity Accelerated ETF - Quarterly",
     "table": "global_etf"
    }
   ],
@@ -12209,6 +12877,13 @@
     "table": "kr_etp"
    }
   ],
+  "3d3639339d1a73af": [
+   {
+    "pd_itm_no": "OCNL.K",
+    "pd_nm": "T-REX 2X Long DOCN Daily Target ETF",
+    "table": "global_etf"
+   }
+  ],
   "3d3c546969b545a3": [
    {
     "pd_itm_no": "FTEC.K",
@@ -12255,6 +12930,13 @@
    {
     "pd_itm_no": "TURF.O",
     "pd_nm": "T Rowe Price Natural Resources ETF",
+    "table": "global_etf"
+   }
+  ],
+  "3d7950b95b2a5b78": [
+   {
+    "pd_itm_no": "OUSL.K",
+    "pd_nm": "Defiance Daily Target 2X Long OUST ETF",
     "table": "global_etf"
    }
   ],
@@ -12367,6 +13049,13 @@
    {
     "pd_itm_no": "MFSG.K",
     "pd_nm": "MFS Active Growth ETF",
+    "table": "global_etf"
+   }
+  ],
+  "3e38017b4602a589": [
+   {
+    "pd_itm_no": "BUSM.K",
+    "pd_nm": "EA Bridgeway Ultra-Small Company Market ETF",
     "table": "global_etf"
    }
   ],
@@ -12545,6 +13234,13 @@
     "table": "global_etf"
    }
   ],
+  "3f2f1e2ad090da88": [
+   {
+    "pd_itm_no": "XVAP.K",
+    "pd_nm": "FT Vest AAPL & Target Income ETF",
+    "table": "global_etf"
+   }
+  ],
   "3f3301d9a1b9e423": [
    {
     "pd_itm_no": "EMGF.K",
@@ -12591,13 +13287,6 @@
    {
     "pd_itm_no": "ETQ",
     "pd_nm": "T-Rex 2X Inverse Ether Daily Target ETF",
-    "table": "global_etf"
-   }
-  ],
-  "3f8287d6a61fc534": [
-   {
-    "pd_itm_no": "PSMR.K",
-    "pd_nm": "Pacer Swan SOS Moderate (April) ETF",
     "table": "global_etf"
    }
   ],
@@ -12678,6 +13367,13 @@
     "table": "global_etf"
    }
   ],
+  "4014e54325910994": [
+   {
+    "pd_itm_no": "QJUN.K",
+    "pd_nm": "FT Vest Nasdaq-100 Buffer ETF - June",
+    "table": "global_etf"
+   }
+  ],
   "40208d501efe65bc": [
    {
     "pd_itm_no": "DVXF.O",
@@ -12713,6 +13409,13 @@
     "table": "global_etf"
    }
   ],
+  "404329e5af8873db": [
+   {
+    "pd_itm_no": "NCLD.O",
+    "pd_nm": "Roundhill Neocloud ETF",
+    "table": "global_etf"
+   }
+  ],
   "4045298d69e1538d": [
    {
     "pd_itm_no": "VMAX.K",
@@ -12745,6 +13448,20 @@
    {
     "pd_itm_no": "CPST.K",
     "pd_nm": "Calamos S&P 500 Structured Alt Prtctn ETF - Sept",
+    "table": "global_etf"
+   }
+  ],
+  "406b27bdf04d9e10": [
+   {
+    "pd_itm_no": "ASMZ.K",
+    "pd_nm": "Corgi ASML 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
+  "406d991f1f9f13a4": [
+   {
+    "pd_itm_no": "CIEX.K",
+    "pd_nm": "Tradr 2X Long CIEN Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -12977,13 +13694,6 @@
     "table": "global_etf"
    }
   ],
-  "4164d553e2e183c8": [
-   {
-    "pd_itm_no": "XDSQ.K",
-    "pd_nm": "Innovator US Equity Accelerated ETF - Quarterly",
-    "table": "global_etf"
-   }
-  ],
   "4170fc8387d994f4": [
    {
     "pd_itm_no": "KR7447770009",
@@ -13117,6 +13827,13 @@
     "table": "global_etf"
    }
   ],
+  "42170229eb360e88": [
+   {
+    "pd_itm_no": "AXTQ.K",
+    "pd_nm": "Tradr 2X Short AXTI Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "4229b1aee485626b": [
    {
     "pd_itm_no": "HMAY.K",
@@ -13128,6 +13845,13 @@
    {
     "pd_itm_no": "DFAE.K",
     "pd_nm": "DFA Dimensional Emerging Core Equity Market ETF",
+    "table": "global_etf"
+   }
+  ],
+  "422cc3ba3ccd1a84": [
+   {
+    "pd_itm_no": "DLCU.O",
+    "pd_nm": "DFA US Large Company Portfolio;ETF Class Shares",
     "table": "global_etf"
    }
   ],
@@ -13147,13 +13871,13 @@
   ],
   "4243647aaa323549": [
    {
-    "pd_itm_no": "SPLG.K",
-    "pd_nm": "SPDR Portfolio S&P 500 ETF",
+    "pd_itm_no": "SPYM.K",
+    "pd_nm": "State Street SPDR Portfolio S&P 500 ETF",
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "SPYM.K",
-    "pd_nm": "State Street SPDR Portfolio S&P 500 ETF",
+    "pd_itm_no": "SPLG.K",
+    "pd_nm": "SPDR Portfolio S&P 500 ETF",
     "table": "global_etf"
    }
   ],
@@ -13246,6 +13970,13 @@
     "pd_itm_no": "KR7453650004",
     "pd_nm": "삼성 KODEX 미국S&P500금융증권상장지수투자신탁[주식]",
     "table": "kr_etp"
+   }
+  ],
+  "429de0e82c6dad64": [
+   {
+    "pd_itm_no": "SPUC.K",
+    "pd_nm": "Simplify US Equity Income ETF",
+    "table": "global_etf"
    }
   ],
   "429f69a8a14aab59": [
@@ -13724,6 +14455,13 @@
     "table": "global_etf"
    }
   ],
+  "44526538bfa1a8fa": [
+   {
+    "pd_itm_no": "PCOV.K",
+    "pd_nm": "Principal Equity Premium Income ETF",
+    "table": "global_etf"
+   }
+  ],
   "4452e0afd911a5d2": [
    {
     "pd_itm_no": "SHPD.O",
@@ -13752,6 +14490,13 @@
     "table": "global_etf"
    }
   ],
+  "448e272334e432a6": [
+   {
+    "pd_itm_no": "MXLL.K",
+    "pd_nm": "Leverage Shares 2X Long MXL Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "44b38e4f9dbd0fb3": [
    {
     "pd_itm_no": "JSTC.K",
@@ -13776,7 +14521,7 @@
   "44c9b0035ba007f2": [
    {
     "pd_itm_no": "QDF",
-    "pd_nm": "FlexShares Quality Dividend Index Fund",
+    "pd_nm": "Northern Trust Quality Dividend ETF",
     "table": "global_etf"
    }
   ],
@@ -13805,6 +14550,13 @@
    {
     "pd_itm_no": "PTH.O",
     "pd_nm": "Invesco Dorsey Wright Healthcare Momentum ETF",
+    "table": "global_etf"
+   }
+  ],
+  "44fe873b5280028f": [
+   {
+    "pd_itm_no": "PSMO.K",
+    "pd_nm": "Pacer Swan SOS Moderate (October) ETF",
     "table": "global_etf"
    }
   ],
@@ -13913,6 +14665,13 @@
     "table": "global_etf"
    }
   ],
+  "45892bf586bf80f1": [
+   {
+    "pd_itm_no": "CGPT.O",
+    "pd_nm": "VegaShares AI Inference ETF",
+    "table": "global_etf"
+   }
+  ],
   "45917e5b29badf4a": [
    {
     "pd_itm_no": "OCTB.K",
@@ -13941,6 +14700,13 @@
     "table": "global_etf"
    }
   ],
+  "45d6ff56390fd514": [
+   {
+    "pd_itm_no": "AIHY.K",
+    "pd_nm": "Defiance AI Hyperscale Leaders ETF",
+    "table": "global_etf"
+   }
+  ],
   "45e4aef571caf276": [
    {
     "pd_itm_no": "FINE.O",
@@ -13959,6 +14725,13 @@
    {
     "pd_itm_no": "DURA.K",
     "pd_nm": "VanEck Durable High Dividend ETF",
+    "table": "global_etf"
+   }
+  ],
+  "4601156bc94eeb39": [
+   {
+    "pd_itm_no": "AAAP.O",
+    "pd_nm": "Pacer Barings CLO Market Flex ETF",
     "table": "global_etf"
    }
   ],
@@ -14074,6 +14847,13 @@
     "table": "global_etf"
    }
   ],
+  "46a1733654563dc7": [
+   {
+    "pd_itm_no": "KR70233J0002",
+    "pd_nm": "TIGER 삼성전자SK하이닉스미국채혼합50",
+    "table": "kr_etp"
+   }
+  ],
   "46b52727fc462a43": [
    {
     "pd_itm_no": "INEQ.K",
@@ -14177,6 +14957,13 @@
     "table": "global_etf"
    }
   ],
+  "471aaba2cc619cea": [
+   {
+    "pd_itm_no": "JULC.K",
+    "pd_nm": "Corgi US Equities 10% Structured Bffr ETF - July S",
+    "table": "global_etf"
+   }
+  ],
   "47238e491473a183": [
    {
     "pd_itm_no": "KR7315960005",
@@ -14242,12 +15029,12 @@
   ],
   "474571836101fd1b": [
    {
-    "pd_itm_no": "IEQ",
+    "pd_itm_no": "IDEQ.K",
     "pd_nm": "Lazard International Dynamic Equity ETF",
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "IDEQ.K",
+    "pd_itm_no": "IEQ",
     "pd_nm": "Lazard International Dynamic Equity ETF",
     "table": "global_etf"
    }
@@ -14665,6 +15452,13 @@
     "table": "global_etf"
    }
   ],
+  "491021be2051ee9d": [
+   {
+    "pd_itm_no": "PSMD.K",
+    "pd_nm": "Pacer Swan SOS Moderate (January) ETF",
+    "table": "global_etf"
+   }
+  ],
   "491049691a55b7e0": [
    {
     "pd_itm_no": "BSMU.O",
@@ -14903,6 +15697,13 @@
     "table": "global_etf"
    }
   ],
+  "49f35ce3d7c998e3": [
+   {
+    "pd_itm_no": "ORCZ.K",
+    "pd_nm": "Tradr 2X Short ORCL Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "4a00ec3a6f435ec4": [
    {
     "pd_itm_no": "QCMU.O",
@@ -14990,7 +15791,7 @@
   "4a731347de0ab19e": [
    {
     "pd_itm_no": "TDTT.K",
-    "pd_nm": "FlexShares iBoxx 3-Year Target Duration TIPS Index",
+    "pd_nm": "Northern Trust iBoxx 3-Year Trgt Duration TIPS ETF",
     "table": "global_etf"
    }
   ],
@@ -15069,6 +15870,13 @@
     "pd_itm_no": "PZLV.K",
     "pd_nm": "Pzena U.S. Large Cap Value ETF",
     "table": "global_etf"
+   }
+  ],
+  "4b11055d42f9ae49": [
+   {
+    "pd_itm_no": "KR70220B0005",
+    "pd_nm": "디에스 DS 코스닥액티브증권상장지수투자신탁(주식)",
+    "table": "kr_etp"
    }
   ],
   "4b1551bf17bf858e": [
@@ -15180,6 +15988,13 @@
    {
     "pd_itm_no": "FEMR.K",
     "pd_nm": "Fidelity Enhanced Emerging Markets ETF",
+    "table": "global_etf"
+   }
+  ],
+  "4b920d1e55646766": [
+   {
+    "pd_itm_no": "QSU",
+    "pd_nm": "Defiance Daily Target 2X Long QS ETF",
     "table": "global_etf"
    }
   ],
@@ -15379,6 +16194,13 @@
     "table": "global_etf"
    }
   ],
+  "4c8f84062c3e9fe4": [
+   {
+    "pd_itm_no": "HAWG.K",
+    "pd_nm": "HCM Hedged Equity ETF",
+    "table": "global_etf"
+   }
+  ],
   "4c9214b92212db18": [
    {
     "pd_itm_no": "KR7448290007",
@@ -15424,7 +16246,7 @@
   "4cbc1d57485a1d9e": [
    {
     "pd_itm_no": "VB",
-    "pd_nm": "Vanguard Small-Cap Index Fund;ETF",
+    "pd_nm": "Vanguard Morningstar Small-Cap Index Fund;ETF",
     "table": "global_etf"
    }
   ],
@@ -15454,6 +16276,13 @@
     "pd_itm_no": "KR7476260005",
     "pd_nm": "NH-Amundi HANARO 반도체핵심공정주도주 증권상장지수투자신탁(주식)",
     "table": "kr_etp"
+   }
+  ],
+  "4ceaa93d049add89": [
+   {
+    "pd_itm_no": "CAUG.K",
+    "pd_nm": "Corgi U.S. Equities 15% Strctrd Bffr ETF - Aug S",
+    "table": "global_etf"
    }
   ],
   "4ceaee2788805a67": [
@@ -15540,6 +16369,13 @@
     "table": "global_etf"
    }
   ],
+  "4d520ea3199f4895": [
+   {
+    "pd_itm_no": "EMJL.K",
+    "pd_nm": "Corgi EM Equities 15% Structured Bffrd ETF-July S",
+    "table": "global_etf"
+   }
+  ],
   "4d77e6df73d6a57e": [
    {
     "pd_itm_no": "KR70005G0001",
@@ -15607,6 +16443,13 @@
    {
     "pd_itm_no": "EEM",
     "pd_nm": "iShares MSCI Emerging Markets ETF",
+    "table": "global_etf"
+   }
+  ],
+  "4de68d3ab6a61822": [
+   {
+    "pd_itm_no": "JAJL.K",
+    "pd_nm": "Innovator Equity Defined Protctn ETF 6 Mo Jan/Jul",
     "table": "global_etf"
    }
   ],
@@ -15897,6 +16740,13 @@
     "table": "kr_etp"
    }
   ],
+  "4f89965aecb6b3fc": [
+   {
+    "pd_itm_no": "TWSC.K",
+    "pd_nm": "Corgi TSM 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "4f89f0ed59aefc3c": [
    {
     "pd_itm_no": "KRG500000911",
@@ -15918,13 +16768,13 @@
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "CBTY.K",
-    "pd_nm": "Calamos Bitcoin 80 Series Struc Alt Pro ETF - Jul",
+    "pd_itm_no": "CBXY.K",
+    "pd_nm": "Calamos Bitcoin 90 Series Struc Alt Pro ETF - July",
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "CBXY.K",
-    "pd_nm": "Calamos Bitcoin 90 Series Struc Alt Pro ETF - July",
+    "pd_itm_no": "CBTY.K",
+    "pd_nm": "Calamos Bitcoin 80 Series Struc Alt Pro ETF - Jul",
     "table": "global_etf"
    }
   ],
@@ -15961,13 +16811,6 @@
     "pd_itm_no": "KR7139230007",
     "pd_nm": "미래에셋TIGER200중공업증권상장지수투자신탁(주식)",
     "table": "kr_etp"
-   }
-  ],
-  "4fcfee3b398ba1d4": [
-   {
-    "pd_itm_no": "PSFJ.K",
-    "pd_nm": "Pacer Swan SOS Flex (July) ETF",
-    "table": "global_etf"
    }
   ],
   "4fea02c1761508fe": [
@@ -16096,6 +16939,13 @@
     "table": "global_etf"
    }
   ],
+  "5074bc1e48063a9e": [
+   {
+    "pd_itm_no": "AMHI.K",
+    "pd_nm": "American Beacon Aberdeen Municipal High Income ETF",
+    "table": "global_etf"
+   }
+  ],
   "507c087b5b78f531": [
    {
     "pd_itm_no": "ESMV.O",
@@ -16145,6 +16995,13 @@
     "table": "kr_etp"
    }
   ],
+  "50a99233db2b2185": [
+   {
+    "pd_itm_no": "TSEG.K",
+    "pd_nm": "Leverage Shares 2X Long TSEM Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "50ca7538389b5c40": [
    {
     "pd_itm_no": "KR7304780000",
@@ -16185,6 +17042,13 @@
     "pd_itm_no": "KR7329650006",
     "pd_nm": "삼성 KODEX TRF3070증권상장지수투자신탁[채권혼합]",
     "table": "kr_etp"
+   }
+  ],
+  "51000ae95eee1f85": [
+   {
+    "pd_itm_no": "TSIB.K",
+    "pd_nm": "Direxion TSLA Defined Income Boost ETF",
+    "table": "global_etf"
    }
   ],
   "510ffec439a85a32": [
@@ -16231,13 +17095,13 @@
   ],
   "515702d709fd8f99": [
    {
-    "pd_itm_no": "PMJL.K",
-    "pd_nm": "PGIM S&P 500 Max Buffer ETF - July",
+    "pd_itm_no": "PMAU.K",
+    "pd_nm": "PGIM S&P 500 Max Buffer ETF - August",
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "PMAU.K",
-    "pd_nm": "PGIM S&P 500 Max Buffer ETF - August",
+    "pd_itm_no": "PMJL.K",
+    "pd_nm": "PGIM S&P 500 Max Buffer ETF - July",
     "table": "global_etf"
    }
   ],
@@ -16346,6 +17210,13 @@
     "table": "global_etf"
    }
   ],
+  "522902c557da7f50": [
+   {
+    "pd_itm_no": "HYNX.K",
+    "pd_nm": "T-REX 2X Long SKHY Daily Target ETF",
+    "table": "global_etf"
+   }
+  ],
   "522d5e217e8d0f87": [
    {
     "pd_itm_no": "HYDR.O",
@@ -16399,6 +17270,13 @@
    {
     "pd_itm_no": "VTC.O",
     "pd_nm": "Vanguard Total Corporate Bond ETF",
+    "table": "global_etf"
+   }
+  ],
+  "52670b0e7cda8030": [
+   {
+    "pd_itm_no": "RIVC.K",
+    "pd_nm": "Corgi RIVN 2x Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -16458,6 +17336,13 @@
     "table": "global_etf"
    }
   ],
+  "5290189b9804fbb4": [
+   {
+    "pd_itm_no": "ADIU.K",
+    "pd_nm": "Leverage Shares 2X Long ADI Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "52941cb42c6e3fbf": [
    {
     "pd_itm_no": "GDMA.K",
@@ -16504,6 +17389,13 @@
    {
     "pd_itm_no": "DDWM.K",
     "pd_nm": "WisdomTree Dynamic International Equity Fund",
+    "table": "global_etf"
+   }
+  ],
+  "52b21de6341992a1": [
+   {
+    "pd_itm_no": "SOFC.K",
+    "pd_nm": "Corgi SOFI 2x Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -16591,6 +17483,13 @@
     "table": "global_etf"
    }
   ],
+  "530d2ab9b1a9c462": [
+   {
+    "pd_itm_no": "LRCC.K",
+    "pd_nm": "Corgi LRCX 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "530d70099418c2df": [
    {
     "pd_itm_no": "XAR",
@@ -16647,6 +17546,13 @@
     "table": "global_etf"
    }
   ],
+  "5362397c2e03f66d": [
+   {
+    "pd_itm_no": "INT",
+    "pd_nm": "Corgi INTC 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "5365874e21655f0c": [
    {
     "pd_itm_no": "NRGD.K",
@@ -16659,6 +17565,13 @@
     "pd_itm_no": "KRG610000363",
     "pd_nm": "메리츠증권 메리츠 인버스 2X 대표 농산물 선물 상장지수증권(H) 제36호",
     "table": "kr_etp"
+   }
+  ],
+  "53767039c9d50074": [
+   {
+    "pd_itm_no": "OSCX.O",
+    "pd_nm": "Defiance Daily Target 2X Long OSCR ETF",
+    "table": "global_etf"
    }
   ],
   "537e5faccdb0ad30": [
@@ -16687,6 +17600,13 @@
     "pd_itm_no": "KR7132030008",
     "pd_nm": "삼성 KODEX 골드선물특별자산상장지수투자신탁(금-파생형)(H)",
     "table": "kr_etp"
+   }
+  ],
+  "5397b60a2262a4b8": [
+   {
+    "pd_itm_no": "MPL",
+    "pd_nm": "Defiance Daily Target 2X Long MP ETF",
+    "table": "global_etf"
    }
   ],
   "53a1cad87f727760": [
@@ -16728,6 +17648,13 @@
    {
     "pd_itm_no": "ITDJ.K",
     "pd_nm": "iShares LifePath Target Date 2070 ETF",
+    "table": "global_etf"
+   }
+  ],
+  "53d704a86bb26798": [
+   {
+    "pd_itm_no": "IREC.K",
+    "pd_nm": "Corgi IREN 2x Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -16903,6 +17830,13 @@
    {
     "pd_itm_no": "IFLR.K",
     "pd_nm": "Innovator International Developed Managed Flr ETF",
+    "table": "global_etf"
+   }
+  ],
+  "5496d53b3ff4ad7e": [
+   {
+    "pd_itm_no": "DRVR.K",
+    "pd_nm": "Amplify S&P 500 Dividend Drivers ETF",
     "table": "global_etf"
    }
   ],
@@ -17347,6 +18281,20 @@
     "table": "global_etf"
    }
   ],
+  "56b0368fdde497ec": [
+   {
+    "pd_itm_no": "TPLX.K",
+    "pd_nm": "Corgi TPL 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
+  "56b90ada6428fdd6": [
+   {
+    "pd_itm_no": "ACSP.O",
+    "pd_nm": "ProShares S&P 500 Autocallable Income ETF",
+    "table": "global_etf"
+   }
+  ],
   "56c20482a7153ca6": [
    {
     "pd_itm_no": "PANG.O",
@@ -17375,6 +18323,13 @@
     "table": "global_etf"
    }
   ],
+  "56dc3ad48bd6e3a5": [
+   {
+    "pd_itm_no": "LITG.K",
+    "pd_nm": "Leverage Shares 2X Long LITE Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "56e2bfd059bb72df": [
    {
     "pd_itm_no": "SPIB.K",
@@ -17394,6 +18349,18 @@
     "pd_itm_no": "KR7414780007",
     "pd_nm": "미래에셋 TIGER 차이나과창판STAR50증권상장지수투자신탁(주식-파생형)(합성)",
     "table": "kr_etp"
+   }
+  ],
+  "56eac82ef1375b87": [
+   {
+    "pd_itm_no": "PWRZ.K",
+    "pd_nm": "TrueShares Eagle Global Next Gen Power Infra ETF",
+    "table": "global_etf"
+   },
+   {
+    "pd_itm_no": "RNWZ.K",
+    "pd_nm": "TrueShares Eagle Global Next Gen Power Infra ETF",
+    "table": "global_etf"
    }
   ],
   "5701a607a76318ae": [
@@ -17510,6 +18477,13 @@
    {
     "pd_itm_no": "ZTRE.O",
     "pd_nm": "F/m 3-Year Investment Grade Corporate Bond ETF",
+    "table": "global_etf"
+   }
+  ],
+  "57838e3800beb380": [
+   {
+    "pd_itm_no": "CRIB.K",
+    "pd_nm": "Russell Investments Global Real Estate ETF",
     "table": "global_etf"
    }
   ],
@@ -17681,6 +18655,13 @@
     "table": "global_etf"
    }
   ],
+  "58250e23794abb23": [
+   {
+    "pd_itm_no": "PSMR.K",
+    "pd_nm": "Pacer Swan SOS Moderate (April) ETF",
+    "table": "global_etf"
+   }
+  ],
   "5825a0494cbd9a79": [
    {
     "pd_itm_no": "PFFD.K",
@@ -17821,17 +18802,17 @@
     "table": "global_etf"
    }
   ],
+  "58c8762a7ee36b16": [
+   {
+    "pd_itm_no": "AUGC.K",
+    "pd_nm": "Corgi US Equities 10% Strctrd Bffr ETF - Aug S",
+    "table": "global_etf"
+   }
+  ],
   "58d1c55826328d2b": [
    {
     "pd_itm_no": "TEXN.O",
     "pd_nm": "iShares Texas Equity ETF",
-    "table": "global_etf"
-   }
-  ],
-  "58d8469fb4eead83": [
-   {
-    "pd_itm_no": "TJUN.K",
-    "pd_nm": "FT Vest Emerging Markets Buffer ETF - June",
     "table": "global_etf"
    }
   ],
@@ -17853,6 +18834,13 @@
    {
     "pd_itm_no": "KR7306950007",
     "pd_nm": "삼성 KODEX KRX300레버리지증권상장지수투자신탁[주식-파생형]",
+    "table": "kr_etp"
+   }
+  ],
+  "590891c227d23280": [
+   {
+    "pd_itm_no": "KRG610001049",
+    "pd_nm": "메리츠증권 메리츠 솔랙티브 인버스 2X 금 선물 상장지수증권(H) 제104호",
     "table": "kr_etp"
    }
   ],
@@ -18024,6 +19012,13 @@
     "table": "global_etf"
    }
   ],
+  "599d63e5d8b66c5e": [
+   {
+    "pd_itm_no": "LWLX.K",
+    "pd_nm": "Tradr 2X Long LWLG Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "59a62d99eea2b466": [
    {
     "pd_itm_no": "IYY",
@@ -18150,10 +19145,10 @@
     "table": "global_etf"
    }
   ],
-  "5a494fb1072c4b11": [
+  "5a3f5c3140a87af8": [
    {
-    "pd_itm_no": "VBNB.O",
-    "pd_nm": "VanEck BNB ETF",
+    "pd_itm_no": "DDNQ.K",
+    "pd_nm": "Innovator Growth-100 Dual Direc 5 Bfr ETF - Qtly",
     "table": "global_etf"
    }
   ],
@@ -18196,6 +19191,13 @@
    {
     "pd_itm_no": "MGMT.K",
     "pd_nm": "Ballast Small/Mid Cap ETF",
+    "table": "global_etf"
+   }
+  ],
+  "5a87767155ea9736": [
+   {
+    "pd_itm_no": "AAPE.K",
+    "pd_nm": "Leverage Shares 2X Long AAPL Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -18258,7 +19260,7 @@
   "5ad5a95c52ed16e1": [
    {
     "pd_itm_no": "FFOG.K",
-    "pd_nm": "Franklin Focused Growth ETF",
+    "pd_nm": "Franklin Focused Dynamic Growth ETF",
     "table": "global_etf"
    }
   ],
@@ -18313,13 +19315,13 @@
   ],
   "5b08999f3f2ddffa": [
    {
-    "pd_itm_no": "BFRZ.K",
-    "pd_nm": "Innovator Equity Managed 100 Buffer ETF",
+    "pd_itm_no": "XBFR.K",
+    "pd_nm": "Innovator Equity Managed 10 Buffer ETF",
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "XBFR.K",
-    "pd_nm": "Innovator Equity Managed 10 Buffer ETF",
+    "pd_itm_no": "BFRZ.K",
+    "pd_nm": "Innovator Equity Managed 100 Buffer ETF",
     "table": "global_etf"
    }
   ],
@@ -18330,17 +19332,17 @@
     "table": "global_etf"
    }
   ],
-  "5b1b959e4285785c": [
-   {
-    "pd_itm_no": "UXJL.K",
-    "pd_nm": "FT Vest US Equity Uncapped Accelerator ETF - July",
-    "table": "global_etf"
-   }
-  ],
   "5b45c843bc4efc1d": [
    {
     "pd_itm_no": "UFO.O",
     "pd_nm": "Procure Space ETF",
+    "table": "global_etf"
+   }
+  ],
+  "5b49586f27cb994f": [
+   {
+    "pd_itm_no": "ZDIS.K",
+    "pd_nm": "Virtus Zevenbergen Discovery Growth ETF",
     "table": "global_etf"
    }
   ],
@@ -18377,6 +19379,13 @@
     "pd_itm_no": "XDEC.K",
     "pd_nm": "FT Vest US Equity Enh & Mod Buffer ETF - Dec",
     "table": "global_etf"
+   }
+  ],
+  "5b9a9143b01f1397": [
+   {
+    "pd_itm_no": "KR70189Z0006",
+    "pd_nm": "대신 DAISHIN 금융&지주고배당증권상장지수투자신탁[주식]",
+    "table": "kr_etp"
    }
   ],
   "5b9bce1aa36385f9": [
@@ -18529,7 +19538,7 @@
   "5c30ba113482d32c": [
    {
     "pd_itm_no": "FEDM.K",
-    "pd_nm": "FlexShares ESG & Climate Dev Mkts ex-US Core Ix Fd",
+    "pd_nm": "Northern Trust ESG & Climate Dev Mkt exUS Core ETF",
     "table": "global_etf"
    }
   ],
@@ -18603,6 +19612,13 @@
     "table": "global_etf"
    }
   ],
+  "5c8eb1e820e76713": [
+   {
+    "pd_itm_no": "KR70223A0003",
+    "pd_nm": "KB RISE 코스닥커버드콜액티브증권상장지수투자신탁(주식-파생형)",
+    "table": "kr_etp"
+   }
+  ],
   "5c8f07bd8370a7dc": [
    {
     "pd_itm_no": "CPRJ.K",
@@ -18624,10 +19640,24 @@
     "table": "global_etf"
    }
   ],
+  "5c9ce9059d523fce": [
+   {
+    "pd_itm_no": "KEYG.K",
+    "pd_nm": "Leverage Shares 2X Long KEYS Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "5c9d846f8ecd1596": [
    {
     "pd_itm_no": "FMAG.K",
     "pd_nm": "Fidelity Magellan ETF",
+    "table": "global_etf"
+   }
+  ],
+  "5c9f862688d16812": [
+   {
+    "pd_itm_no": "NVOC.K",
+    "pd_nm": "Corgi NVO 2x Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -18897,13 +19927,13 @@
   ],
   "5dcc8a32aad01151": [
    {
-    "pd_itm_no": "JPO",
-    "pd_nm": "YieldMax JP Option Income Strategy ETF",
+    "pd_itm_no": "JPMO.K",
+    "pd_nm": "YieldMax JPM Option Income Strategy ETF",
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "JPMO.K",
-    "pd_nm": "YieldMax JPM Option Income Strategy ETF",
+    "pd_itm_no": "JPO",
+    "pd_nm": "YieldMax JP Option Income Strategy ETF",
     "table": "global_etf"
    }
   ],
@@ -19005,10 +20035,31 @@
     "table": "global_etf"
    }
   ],
+  "5e7c2158649fd0db": [
+   {
+    "pd_itm_no": "CRWX.K",
+    "pd_nm": "Corgi CRWV 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "5e7d8087d0308219": [
    {
     "pd_itm_no": "COHX.K",
     "pd_nm": "Tradr 2X Long COHR Daily ETF",
+    "table": "global_etf"
+   }
+  ],
+  "5e815f0e428c07f5": [
+   {
+    "pd_itm_no": "XSHP.K",
+    "pd_nm": "Kurv SpaceX Enhanced Income ETF",
+    "table": "global_etf"
+   }
+  ],
+  "5e86849ad4ee075e": [
+   {
+    "pd_itm_no": "BESO.O",
+    "pd_nm": "GSR Crypto Core3 ETF",
     "table": "global_etf"
    }
   ],
@@ -19047,6 +20098,13 @@
     "table": "global_etf"
    }
   ],
+  "5eb89cb0f86b5cc7": [
+   {
+    "pd_itm_no": "ARMA.K",
+    "pd_nm": "Corgi ARM 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "5ec9f6804ebfb9cc": [
    {
     "pd_itm_no": "YGLD.K",
@@ -19068,10 +20126,24 @@
     "table": "kr_etp"
    }
   ],
+  "5edd1d8724019eba": [
+   {
+    "pd_itm_no": "LRNX.K",
+    "pd_nm": "Corgi LRN 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "5edd29c1fcc09019": [
    {
     "pd_itm_no": "BKIE.K",
     "pd_nm": "BNY Mellon International Equity ETF",
+    "table": "global_etf"
+   }
+  ],
+  "5edf008b82adc706": [
+   {
+    "pd_itm_no": "SKHZ.K",
+    "pd_nm": "Leverage Shares 1X Short SK Hynix Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -19215,6 +20287,13 @@
     "table": "global_etf"
    }
   ],
+  "5f8b61049ba46778": [
+   {
+    "pd_itm_no": "DJUN.K",
+    "pd_nm": "FT Vest US Equity Deep Buffer ETF - June",
+    "table": "global_etf"
+   }
+  ],
   "5f8d1a39d88d5a5a": [
    {
     "pd_itm_no": "SIOO.K",
@@ -19327,6 +20406,13 @@
     "table": "global_etf"
    }
   ],
+  "5ff0b650ee8ce783": [
+   {
+    "pd_itm_no": "MRAX.K",
+    "pd_nm": "Tradr 2X Long MRAM Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "5ff195e65558f000": [
    {
     "pd_itm_no": "ARKG.K",
@@ -19383,6 +20469,13 @@
     "table": "global_etf"
    }
   ],
+  "60402bd5577489f8": [
+   {
+    "pd_itm_no": "VPFF.K",
+    "pd_nm": "Virtus InfraCap Preferred and Income Sec ETF",
+    "table": "global_etf"
+   }
+  ],
   "60415cd3df367448": [
    {
     "pd_itm_no": "KR70137W0002",
@@ -19408,6 +20501,13 @@
    {
     "pd_itm_no": "FDN",
     "pd_nm": "First Trust Dow Jones Internet Index Fund",
+    "table": "global_etf"
+   }
+  ],
+  "606a24f61f3d3f75": [
+   {
+    "pd_itm_no": "KAIT.K",
+    "pd_nm": "KraneShares Asia AI Technology ETF",
     "table": "global_etf"
    }
   ],
@@ -19509,13 +20609,6 @@
     "table": "global_etf"
    }
   ],
-  "61243e9b50b562e6": [
-   {
-    "pd_itm_no": "JIDE.K",
-    "pd_nm": "JPMorgan International Dynamic ETF",
-    "table": "global_etf"
-   }
-  ],
   "613a1237724e18cc": [
    {
     "pd_itm_no": "CWS",
@@ -19541,13 +20634,6 @@
    {
     "pd_itm_no": "DRAY.K",
     "pd_nm": "YieldMax DKNG Option Income Strategy ETF",
-    "table": "global_etf"
-   }
-  ],
-  "6157b800003f284b": [
-   {
-    "pd_itm_no": "SPUC.K",
-    "pd_nm": "Simplify US Equity PLUS Upside Convexity ETF",
     "table": "global_etf"
    }
   ],
@@ -19705,6 +20791,13 @@
     "table": "kr_etp"
    }
   ],
+  "622f7f6c8408e426": [
+   {
+    "pd_itm_no": "AXTL.K",
+    "pd_nm": "Leverage Shares 2X Long AXTI Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "623af7684d9d434e": [
    {
     "pd_itm_no": "KRG610000777",
@@ -19838,6 +20931,13 @@
     "table": "global_etf"
    }
   ],
+  "62ddfe36af741f70": [
+   {
+    "pd_itm_no": "KEYX.K",
+    "pd_nm": "Corgi KEYS 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "62de4e5d8c143698": [
    {
     "pd_itm_no": "GMOM.K",
@@ -19891,6 +20991,13 @@
    {
     "pd_itm_no": "IQQQ.O",
     "pd_nm": "ProShares Nasdaq-100 High Income ETF",
+    "table": "global_etf"
+   }
+  ],
+  "630c898798aec0b6": [
+   {
+    "pd_itm_no": "EMB.O",
+    "pd_nm": "iShares JPMorgan USD Emerging Markets Bond ETF",
     "table": "global_etf"
    }
   ],
@@ -19960,7 +21067,7 @@
   "63518f684d92a493": [
    {
     "pd_itm_no": "VOE",
-    "pd_nm": "Vanguard Mid-Cap Value Index Fund;ETF",
+    "pd_nm": "Vanguard Morningstar Mid-Cap Value Index Fund;ETF",
     "table": "global_etf"
    }
   ],
@@ -20045,6 +21152,13 @@
    {
     "pd_itm_no": "QCMD.O",
     "pd_nm": "Direxion Daily QCOM Bear 1X ETF",
+    "table": "global_etf"
+   }
+  ],
+  "63bdf32d0467242a": [
+   {
+    "pd_itm_no": "HOOC.K",
+    "pd_nm": "Corgi HOOD 2x Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -20293,17 +21407,17 @@
     "table": "global_etf"
    }
   ],
-  "64ffc4850656b582": [
-   {
-    "pd_itm_no": "SMCP.K",
-    "pd_nm": "SMART Mid Cap ETF",
-    "table": "global_etf"
-   }
-  ],
   "6506f57df1747b87": [
    {
     "pd_itm_no": "HONG.K",
     "pd_nm": "Leverage Shares 2X Long HON Daily ETF",
+    "table": "global_etf"
+   }
+  ],
+  "6509b6859515a443": [
+   {
+    "pd_itm_no": "AMDC.K",
+    "pd_nm": "Corgi AMD 2x Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -20373,7 +21487,7 @@
   "65701e5e09feed75": [
    {
     "pd_itm_no": "IQDF.K",
-    "pd_nm": "FlexShares International Quality Dividend Index Fd",
+    "pd_nm": "Northern Trust International Quality Dividend ETF",
     "table": "global_etf"
    }
   ],
@@ -20381,6 +21495,13 @@
    {
     "pd_itm_no": "SDMF.K",
     "pd_nm": "Simplify DBi CTA Managed Futures Index ETF",
+    "table": "global_etf"
+   }
+  ],
+  "658b0812ce90e091": [
+   {
+    "pd_itm_no": "MSTC.K",
+    "pd_nm": "Corgi MSTR 2x Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -20545,6 +21666,13 @@
     "table": "global_etf"
    }
   ],
+  "66276fbd51575ccd": [
+   {
+    "pd_itm_no": "ELOL.O",
+    "pd_nm": "Leverage Shares 100% TSLA and 100% SPCX Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "663e931f75a3cb24": [
    {
     "pd_itm_no": "EWN",
@@ -20571,6 +21699,13 @@
     "pd_itm_no": "KR7367770005",
     "pd_nm": "KB RISE Fn수소경제테마증권상장지수투자신탁(주식)",
     "table": "kr_etp"
+   }
+  ],
+  "66658b2e49c7e47f": [
+   {
+    "pd_itm_no": "TILC.O",
+    "pd_nm": "Thrivent International Large Cap ETF",
+    "table": "global_etf"
    }
   ],
   "66685fa29ddb1de3": [
@@ -20636,6 +21771,13 @@
     "table": "global_etf"
    }
   ],
+  "66da90762444b01e": [
+   {
+    "pd_itm_no": "VIAG.K",
+    "pd_nm": "Leverage Shares 2X Long VIAV Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "66edafc1e707ea72": [
    {
     "pd_itm_no": "DIM",
@@ -20657,6 +21799,18 @@
     "table": "global_etf"
    }
   ],
+  "6703dd6ddc822264": [
+   {
+    "pd_itm_no": "QAU",
+    "pd_nm": "Corgi Growth & Tech 10% Srtctud Bffr ETF-Aug S",
+    "table": "global_etf"
+   },
+   {
+    "pd_itm_no": "IDAU.K",
+    "pd_nm": "Corgi Growth & Tech 10% Srtctud Bffr ETF-Aug S",
+    "table": "global_etf"
+   }
+  ],
   "6715ee549536ca76": [
    {
     "pd_itm_no": "GOOX.K",
@@ -20675,6 +21829,13 @@
    {
     "pd_itm_no": "QTOP.O",
     "pd_nm": "iShares Nasdaq Top 30 Stocks ETF",
+    "table": "global_etf"
+   }
+  ],
+  "67286addeb485fa2": [
+   {
+    "pd_itm_no": "IINC.K",
+    "pd_nm": "Alki Consolidated Income ETF",
     "table": "global_etf"
    }
   ],
@@ -20727,13 +21888,6 @@
     "table": "kr_etp"
    }
   ],
-  "67862214b7665829": [
-   {
-    "pd_itm_no": "KOID.O",
-    "pd_nm": "KraneShares Global Hmnd Rbtcs & Physcl AI Idx ETF",
-    "table": "global_etf"
-   }
-  ],
   "67916674e465e856": [
    {
     "pd_itm_no": "INQQ.K",
@@ -20748,6 +21902,13 @@
     "table": "global_etf"
    }
   ],
+  "67a6644e074bf5a2": [
+   {
+    "pd_itm_no": "MNSX.K",
+    "pd_nm": "Corgi MNST 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "67ae5f01e90d683d": [
    {
     "pd_itm_no": "KRG550000639",
@@ -20757,20 +21918,13 @@
   ],
   "67b04487f9193ca8": [
    {
-    "pd_itm_no": "CGSD.K",
-    "pd_nm": "Capital Group Short Duration Inc. ETF",
-    "table": "global_etf"
-   },
-   {
     "pd_itm_no": "CGCP.K",
     "pd_nm": "Capital Group Core Plus Income ETF",
     "table": "global_etf"
-   }
-  ],
-  "67b4f63825b62b60": [
+   },
    {
-    "pd_itm_no": "SPCZ.K",
-    "pd_nm": "RiverNorth Enhanced Pre-Merger SPAC ETF",
+    "pd_itm_no": "CGSD.K",
+    "pd_nm": "Capital Group Short Duration Inc. ETF",
     "table": "global_etf"
    }
   ],
@@ -20823,6 +21977,13 @@
     "table": "kr_etp"
    }
   ],
+  "67dece085569d5d9": [
+   {
+    "pd_itm_no": "GLX",
+    "pd_nm": "Corgi GLXY 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "67e069f0a51a8124": [
    {
     "pd_itm_no": "AIVC.K",
@@ -20855,6 +22016,13 @@
    {
     "pd_itm_no": "TDSB.O",
     "pd_nm": "ETC Cabana Target Beta ETF",
+    "table": "global_etf"
+   }
+  ],
+  "6807572082101808": [
+   {
+    "pd_itm_no": "SIMX.K",
+    "pd_nm": "Corgi SIMO 2x Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -20900,13 +22068,6 @@
     "table": "global_etf"
    }
   ],
-  "6879271dbf36b4a1": [
-   {
-    "pd_itm_no": "PSFD.K",
-    "pd_nm": "Pacer Swan SOS Flex (January) ETF",
-    "table": "global_etf"
-   }
-  ],
   "68794bb223cb4e55": [
    {
     "pd_itm_no": "RAUS.O",
@@ -20946,6 +22107,27 @@
    {
     "pd_itm_no": "SRHR.K",
     "pd_nm": "SRH REIT Covered Call ETF",
+    "table": "global_etf"
+   }
+  ],
+  "68a9cc6dd1b6f214": [
+   {
+    "pd_itm_no": "SPCH.K",
+    "pd_nm": "Leverage Shares 2X Long SPCX Daily ETF",
+    "table": "global_etf"
+   }
+  ],
+  "68ac0d636829dbac": [
+   {
+    "pd_itm_no": "FFLX.K",
+    "pd_nm": "First Trust Flexible Income ETF",
+    "table": "global_etf"
+   }
+  ],
+  "68b2fe732e97591f": [
+   {
+    "pd_itm_no": "DQJN.K",
+    "pd_nm": "FT Vest Nasdaq-100 Dual Directional Buff ETF -June",
     "table": "global_etf"
    }
   ],
@@ -21082,6 +22264,13 @@
     "table": "global_etf"
    }
   ],
+  "699206e611d2fca2": [
+   {
+    "pd_itm_no": "CSHP.K",
+    "pd_nm": "iShares Dynamic Short-Term Active ETF",
+    "table": "global_etf"
+   }
+  ],
   "69a3031fb022d7eb": [
    {
     "pd_itm_no": "ARKZ.K",
@@ -21099,7 +22288,7 @@
   "69af5e7881ad5571": [
    {
     "pd_itm_no": "RAVI.K",
-    "pd_nm": "FlexShares Ultra-Short Income Fund",
+    "pd_nm": "Northern Trust Ultra-Short Fixed Income ETF",
     "table": "global_etf"
    }
   ],
@@ -21124,10 +22313,24 @@
     "table": "global_etf"
    }
   ],
+  "69d7cbf84b458727": [
+   {
+    "pd_itm_no": "XW",
+    "pd_nm": "Corgi Ex-U.S. Equities 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "69d8c4050e89813f": [
    {
     "pd_itm_no": "PIPE.K",
     "pd_nm": "Invesco SteelPath MLP & Energy Infrastructure ETF",
+    "table": "global_etf"
+   }
+  ],
+  "69db573bbe842332": [
+   {
+    "pd_itm_no": "YJUN.K",
+    "pd_nm": "FT Vest International Equity Mod Buffer ETF - June",
     "table": "global_etf"
    }
   ],
@@ -21198,6 +22401,20 @@
    {
     "pd_itm_no": "TOTR.K",
     "pd_nm": "T Rowe Price Total Return ETF",
+    "table": "global_etf"
+   }
+  ],
+  "6a3dcd64f676cc51": [
+   {
+    "pd_itm_no": "APPC.K",
+    "pd_nm": "Corgi APP 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
+  "6a59ca607e6f5e67": [
+   {
+    "pd_itm_no": "BD",
+    "pd_nm": "Russell Investments Core Plus Bond ETF",
     "table": "global_etf"
    }
   ],
@@ -21393,7 +22610,7 @@
   "6b7d82113f8c72aa": [
    {
     "pd_itm_no": "VTI",
-    "pd_nm": "Vanguard Total Stock Market Index Fund;ETF",
+    "pd_nm": "Vanguard Morningstar Total Stock Mkt Ix Fd;ETF",
     "table": "global_etf"
    }
   ],
@@ -21530,6 +22747,13 @@
     "table": "kr_etp"
    }
   ],
+  "6bfb799b8c8b7430": [
+   {
+    "pd_itm_no": "PLIB.K",
+    "pd_nm": "Direxion PLTR Defined Income Boost ETF",
+    "table": "global_etf"
+   }
+  ],
   "6c02a9eceadea1c0": [
    {
     "pd_itm_no": "KRG610000298",
@@ -21588,6 +22812,13 @@
    {
     "pd_itm_no": "WCPB.K",
     "pd_nm": "Weitz Core Plus Bond ETF",
+    "table": "global_etf"
+   }
+  ],
+  "6c6bb05d1e5d6400": [
+   {
+    "pd_itm_no": "TRUM.O",
+    "pd_nm": "VanEck Materials TruSector ETF",
     "table": "global_etf"
    }
   ],
@@ -21712,13 +22943,13 @@
   ],
   "6d2051a76286c6df": [
    {
-    "pd_itm_no": "CARU.K",
-    "pd_nm": "MAX Auto Industry 3X Leveraged ETN",
+    "pd_itm_no": "CARD.K",
+    "pd_nm": "MAX Auto Industry -3X Inverse Leveraged ETN",
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "CARD.K",
-    "pd_nm": "MAX Auto Industry -3X Inverse Leveraged ETN",
+    "pd_itm_no": "CARU.K",
+    "pd_nm": "MAX Auto Industry 3X Leveraged ETN",
     "table": "global_etf"
    }
   ],
@@ -21726,13 +22957,6 @@
    {
     "pd_itm_no": "SPHD.K",
     "pd_nm": "Invesco S&P 500 High Div Low Volatility ETF",
-    "table": "global_etf"
-   }
-  ],
-  "6d2447d748fe7462": [
-   {
-    "pd_itm_no": "FLDZ.K",
-    "pd_nm": "RiverNorth Patriot ETF",
     "table": "global_etf"
    }
   ],
@@ -21785,6 +23009,20 @@
     "table": "global_etf"
    }
   ],
+  "6d811c17b2926dd9": [
+   {
+    "pd_itm_no": "COHQ.K",
+    "pd_nm": "Tradr 2X Short COHR Daily ETF",
+    "table": "global_etf"
+   }
+  ],
+  "6d91951c153202b2": [
+   {
+    "pd_itm_no": "QJL",
+    "pd_nm": "Corgi Growth&Technology10% Strctrd Bffr ETF-July S",
+    "table": "global_etf"
+   }
+  ],
   "6d954d01f0b4a201": [
    {
     "pd_itm_no": "UXJA.K",
@@ -21810,6 +23048,13 @@
    {
     "pd_itm_no": "LCDS.O",
     "pd_nm": "JPMorgan Fundamental Data Science Large Core ETF",
+    "table": "global_etf"
+   }
+  ],
+  "6db6b2ee9f799108": [
+   {
+    "pd_itm_no": "AMEI.O",
+    "pd_nm": "Amana Equity Income ETF",
     "table": "global_etf"
    }
   ],
@@ -21890,6 +23135,20 @@
     "table": "global_etf"
    }
   ],
+  "6e3b08c853c21db9": [
+   {
+    "pd_itm_no": "TOAO.K",
+    "pd_nm": "Twin Oak Active Opportunities III ETF",
+    "table": "global_etf"
+   }
+  ],
+  "6e426700d67ae9e5": [
+   {
+    "pd_itm_no": "STMX.K",
+    "pd_nm": "Leverage Shares 2X Long STM Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "6e457eba18e709d7": [
    {
     "pd_itm_no": "BILZ.K",
@@ -21901,6 +23160,13 @@
    {
     "pd_itm_no": "TSXU.K",
     "pd_nm": "Direxion Daily Semiconductors Top 5 Bull 2X ETF",
+    "table": "global_etf"
+   }
+  ],
+  "6e4d8e367e656c11": [
+   {
+    "pd_itm_no": "LADM.K",
+    "pd_nm": "Pacer Swan SOS Laddered Moderate ETF",
     "table": "global_etf"
    }
   ],
@@ -22137,13 +23403,13 @@
   ],
   "6fcabfef38836b3a": [
    {
-    "pd_itm_no": "IHYF.O",
-    "pd_nm": "Invesco High Yield Bond Factor ETF",
+    "pd_itm_no": "GTOQ.O",
+    "pd_nm": "Invesco High Yield Systematic Bond ETF",
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "GTOQ.O",
-    "pd_nm": "Invesco High Yield Systematic Bond ETF",
+    "pd_itm_no": "IHYF.O",
+    "pd_nm": "Invesco High Yield Bond Factor ETF",
     "table": "global_etf"
    }
   ],
@@ -22165,6 +23431,13 @@
    {
     "pd_itm_no": "DINE.O",
     "pd_nm": "Simplify Tax Aware Diversified Income Strategy ETF",
+    "table": "global_etf"
+   }
+  ],
+  "6feb6ba13d999247": [
+   {
+    "pd_itm_no": "IDJL.K",
+    "pd_nm": "Corgi International Dev Eqtys 15% SB ETF-July S",
     "table": "global_etf"
    }
   ],
@@ -22207,6 +23480,13 @@
    {
     "pd_itm_no": "PCS",
     "pd_nm": "PGIM Corporate Bond 0-5 Year ETF",
+    "table": "global_etf"
+   }
+  ],
+  "703090b11100deff": [
+   {
+    "pd_itm_no": "FSTB.O",
+    "pd_nm": "Fidelity Short-Term Bond Fund;ETF",
     "table": "global_etf"
    }
   ],
@@ -22343,6 +23623,20 @@
     "table": "kr_etp"
    }
   ],
+  "70beed104ee1e0b1": [
+   {
+    "pd_itm_no": "EQQQ.O",
+    "pd_nm": "ProShares Ultra QQQ Equal Weight",
+    "table": "global_etf"
+   }
+  ],
+  "70ca546c052a8b5b": [
+   {
+    "pd_itm_no": "METG.K",
+    "pd_nm": "Leverage Shares 2X Long META Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "70d7dfa98617f79a": [
    {
     "pd_itm_no": "KR7489250001",
@@ -22369,6 +23663,13 @@
     "pd_itm_no": "KR7371460007",
     "pd_nm": "미래에셋 TIGER 차이나전기차SOLACTIVE증권상장지수투자신탁(주식-파생형)",
     "table": "kr_etp"
+   }
+  ],
+  "70fb893d12f59e4c": [
+   {
+    "pd_itm_no": "AMGR.O",
+    "pd_nm": "Amana Growth ETF",
+    "table": "global_etf"
    }
   ],
   "71073fa22083e8d7": [
@@ -22427,6 +23728,13 @@
     "table": "global_etf"
    }
   ],
+  "7148e1e1cbe96bb4": [
+   {
+    "pd_itm_no": "KR70222F0009",
+    "pd_nm": "DB 마이티 AI데이터센터밸류체인증권상장지수투자신탁[주식]",
+    "table": "kr_etp"
+   }
+  ],
   "714b2b8e85ec046a": [
    {
     "pd_itm_no": "SHUS.K",
@@ -22452,6 +23760,13 @@
    {
     "pd_itm_no": "NUBD.K",
     "pd_nm": "Nuveen ESG US Aggregate Bond ETF",
+    "table": "global_etf"
+   }
+  ],
+  "71642640de73e7d2": [
+   {
+    "pd_itm_no": "TJUN.K",
+    "pd_nm": "FT Vest Emerging Markets Buffer ETF - June",
     "table": "global_etf"
    }
   ],
@@ -22733,6 +24048,13 @@
     "table": "global_etf"
    }
   ],
+  "72f2248c6c409a42": [
+   {
+    "pd_itm_no": "WSPC.O",
+    "pd_nm": "WisdomTree Space Economy Fund",
+    "table": "global_etf"
+   }
+  ],
   "72f590ba0d3589a7": [
    {
     "pd_itm_no": "KR7379810005",
@@ -22772,6 +24094,13 @@
    {
     "pd_itm_no": "IWFG.K",
     "pd_nm": "NYLI Winslow Focused Large Cap Growth ETF",
+    "table": "global_etf"
+   }
+  ],
+  "731e91f97c430f93": [
+   {
+    "pd_itm_no": "ENTL.K",
+    "pd_nm": "Leverage Shares 2X Long ENTG Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -22815,13 +24144,6 @@
     "pd_itm_no": "KRG500000838",
     "pd_nm": "신한투자증권 신한 KOFR금리 상장지수증권 제83호",
     "table": "kr_etp"
-   }
-  ],
-  "7360c162490d32e8": [
-   {
-    "pd_itm_no": "AJUL.K",
-    "pd_nm": "Innovator Eqty Dfined Protctn ETF 2 Y to July 2026",
-    "table": "global_etf"
    }
   ],
   "736c87a424887cb5": [
@@ -22887,6 +24209,13 @@
     "table": "global_etf"
    }
   ],
+  "73b6c5ab03e92b9e": [
+   {
+    "pd_itm_no": "GFSG.K",
+    "pd_nm": "Leverage Shares 2X Long GFS Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "73b8a2f89ab5e770": [
    {
     "pd_itm_no": "XLFX.K",
@@ -22906,6 +24235,13 @@
     "pd_itm_no": "VCIT.O",
     "pd_nm": "Vanguard Intermediate-Term Corp Bond Idx Fund;ETF",
     "table": "global_etf"
+   }
+  ],
+  "73c4934f4ea92300": [
+   {
+    "pd_itm_no": "KR70221V0000",
+    "pd_nm": "IBK IBK 초단기채권액티브 증권상장지수투자신탁[채권]",
+    "table": "kr_etp"
    }
   ],
   "73c71f84846093e0": [
@@ -23006,6 +24342,13 @@
     "table": "kr_etp"
    }
   ],
+  "74318701b17a3b96": [
+   {
+    "pd_itm_no": "RBUF.K",
+    "pd_nm": "Innovator U.S. Small Cap 10 Buffer ETF - Quarterly",
+    "table": "global_etf"
+   }
+  ],
   "743656c5a8739298": [
    {
     "pd_itm_no": "ACKY.K",
@@ -23016,7 +24359,7 @@
   "743938b0d520edc0": [
    {
     "pd_itm_no": "VOT",
-    "pd_nm": "Vanguard Mid-Cap Growth Index Fund;ETF",
+    "pd_nm": "Vanguard Morningstar Mid-Cap Growth Index Fd;ETF",
     "table": "global_etf"
    }
   ],
@@ -23034,6 +24377,13 @@
     "table": "global_etf"
    }
   ],
+  "744384edc3d3c98b": [
+   {
+    "pd_itm_no": "OAIW.K",
+    "pd_nm": "OpenAI Lab Ecosystem ETF",
+    "table": "global_etf"
+   }
+  ],
   "7447adb209a61dbb": [
    {
     "pd_itm_no": "TINT.K",
@@ -23045,6 +24395,13 @@
    {
     "pd_itm_no": "BSMT.O",
     "pd_nm": "Invesco BulletShares 2029 Municipal Bond ETF",
+    "table": "global_etf"
+   }
+  ],
+  "744c46d0a34fc86a": [
+   {
+    "pd_itm_no": "LQDD.K",
+    "pd_nm": "MicroSectors -3x Short Investment G CB ETN",
     "table": "global_etf"
    }
   ],
@@ -23216,6 +24573,13 @@
     "table": "global_etf"
    }
   ],
+  "7524ec20d0f36a68": [
+   {
+    "pd_itm_no": "CSEN.O",
+    "pd_nm": "Cohen & Steers Future of Energy Active ETF",
+    "table": "global_etf"
+   }
+  ],
   "752848524684121e": [
    {
     "pd_itm_no": "RJVI.K",
@@ -23363,6 +24727,13 @@
     "table": "kr_etp"
    }
   ],
+  "75bf0cbd45f3c181": [
+   {
+    "pd_itm_no": "KR70226A0000",
+    "pd_nm": "한화 PLUS SK하이닉스샌디스크채권혼합50증권상장지수투자신탁(채권혼합)",
+    "table": "kr_etp"
+   }
+  ],
   "75d8bfddc1d1feaa": [
    {
     "pd_itm_no": "QTPI.K",
@@ -23475,6 +24846,13 @@
     "table": "global_etf"
    }
   ],
+  "7675dfd73fd7fcd7": [
+   {
+    "pd_itm_no": "XQBT.K",
+    "pd_nm": "Amplify Top 10 Quantum ETF",
+    "table": "global_etf"
+   }
+  ],
   "76790de3a4648851": [
    {
     "pd_itm_no": "KR7445150006",
@@ -23486,6 +24864,18 @@
    {
     "pd_itm_no": "ISTM.O",
     "pd_nm": "iShares Strategic Metals ETF",
+    "table": "global_etf"
+   }
+  ],
+  "7689796836e4108f": [
+   {
+    "pd_itm_no": "KRMA.O",
+    "pd_nm": "Global X Morningstar Capital Alloc Leaders ETF",
+    "table": "global_etf"
+   },
+   {
+    "pd_itm_no": "CPTL.O",
+    "pd_nm": "Global X Morningstar Capital Alloc Leaders ETF",
     "table": "global_etf"
    }
   ],
@@ -23507,6 +24897,13 @@
    {
     "pd_itm_no": "BIB.O",
     "pd_nm": "ProShares Ultra Nasdaq Biotechnology",
+    "table": "global_etf"
+   }
+  ],
+  "769757b20aded8e2": [
+   {
+    "pd_itm_no": "SKHN.K",
+    "pd_nm": "Tradr 2X Short SK Hynix Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -23557,6 +24954,13 @@
     "pd_itm_no": "KR7261110001",
     "pd_nm": "미래에셋 TIGER 미국달러선물레버리지특별자산상장지수투자신탁(달러-파생형)",
     "table": "kr_etp"
+   }
+  ],
+  "76dd6e5ab845ddec": [
+   {
+    "pd_itm_no": "BZZ",
+    "pd_nm": "Corgi Drones & Urban Air Mobility ETF",
+    "table": "global_etf"
    }
   ],
   "76ecb42cc9683fe2": [
@@ -23613,13 +25017,6 @@
     "pd_itm_no": "KRG550000993",
     "pd_nm": "NH투자증권 N2 레버리지 천연가스 선물 상장지수증권 제99호",
     "table": "kr_etp"
-   }
-  ],
-  "770eafdad50ae992": [
-   {
-    "pd_itm_no": "QCJL.K",
-    "pd_nm": "FT Vest Nasdaq-100 Conservative Buffer ETF - July",
-    "table": "global_etf"
    }
   ],
   "7712243a12ca1de2": [
@@ -23839,6 +25236,13 @@
     "table": "global_etf"
    }
   ],
+  "77d8e01747e5f5aa": [
+   {
+    "pd_itm_no": "XJUN.K",
+    "pd_nm": "FT Vest US Equity Enh & Mod Buffer ETF - June",
+    "table": "global_etf"
+   }
+  ],
   "77daa6efb5b089d5": [
    {
     "pd_itm_no": "KRG610000025",
@@ -24042,17 +25446,17 @@
     "table": "global_etf"
    }
   ],
+  "78ab15facf2db941": [
+   {
+    "pd_itm_no": "UMCX.K",
+    "pd_nm": "Corgi UMC 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "78ac4b40fd8b4373": [
    {
     "pd_itm_no": "KRG580000757",
     "pd_nm": "KB증권 KB 레버리지 BYD 밸류체인 상장지수증권 제75호",
-    "table": "kr_etp"
-   }
-  ],
-  "78b41d3e6d9b3b77": [
-   {
-    "pd_itm_no": "KR7269540001",
-    "pd_nm": "한화 PLUS S&P500증권상장지수투자신탁(주식-파생)(H)",
     "table": "kr_etp"
    }
   ],
@@ -24081,6 +25485,13 @@
    {
     "pd_itm_no": "WCBR.O",
     "pd_nm": "WisdomTree Cybersecurity Fund",
+    "table": "global_etf"
+   }
+  ],
+  "78d9976762caf3c9": [
+   {
+    "pd_itm_no": "XSPC.O",
+    "pd_nm": "VegaShares SpaceX & Beyond Earth ETF",
     "table": "global_etf"
    }
   ],
@@ -24123,6 +25534,13 @@
    {
     "pd_itm_no": "ADME.K",
     "pd_nm": "Aptus Drawdown Managed Equity ETF",
+    "table": "global_etf"
+   }
+  ],
+  "7919fcc939fe02b4": [
+   {
+    "pd_itm_no": "TKNZ.K",
+    "pd_nm": "T Rowe Price Active Crypto ETF",
     "table": "global_etf"
    }
   ],
@@ -24203,6 +25621,13 @@
     "table": "kr_etp"
    }
   ],
+  "79ac447d920cfd21": [
+   {
+    "pd_itm_no": "RKX",
+    "pd_nm": "Corgi RKLB 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "79b728f538dd6cf4": [
    {
     "pd_itm_no": "TSEC.K",
@@ -24280,10 +25705,24 @@
     "table": "global_etf"
    }
   ],
+  "7a130d72f57a258f": [
+   {
+    "pd_itm_no": "FPSX.K",
+    "pd_nm": "Leverage Shares 2X Long FPS Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "7a2772cfd060507c": [
    {
     "pd_itm_no": "CMBS.K",
     "pd_nm": "iShares CMBS ETF",
+    "table": "global_etf"
+   }
+  ],
+  "7a3bb00b5929faff": [
+   {
+    "pd_itm_no": "JPRF.K",
+    "pd_nm": "JPMorgan Preferred and Income Securities ETF",
     "table": "global_etf"
    }
   ],
@@ -24476,6 +25915,13 @@
     "table": "global_etf"
    }
   ],
+  "7b238f685ae0b97f": [
+   {
+    "pd_itm_no": "NSIV.K",
+    "pd_nm": "North Square Disciplined Value ETF",
+    "table": "global_etf"
+   }
+  ],
   "7b2408b7cf3dc88f": [
    {
     "pd_itm_no": "SDCI.K",
@@ -24651,6 +26097,13 @@
     "table": "global_etf"
    }
   ],
+  "7bf0379c28f383a0": [
+   {
+    "pd_itm_no": "FBX",
+    "pd_nm": "Corgi META 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "7bf68a59708d4e4e": [
    {
     "pd_itm_no": "KR7455030007",
@@ -24669,6 +26122,20 @@
    {
     "pd_itm_no": "BCLO.O",
     "pd_nm": "iShares BBB-B CLO Active ETF",
+    "table": "global_etf"
+   }
+  ],
+  "7c26d1f9e29f616c": [
+   {
+    "pd_itm_no": "SKUU.O",
+    "pd_nm": "GraniteShares 2x Long SK Hynix Daily ETF",
+    "table": "global_etf"
+   }
+  ],
+  "7c27835655918f49": [
+   {
+    "pd_itm_no": "CAMC.K",
+    "pd_nm": "Corgi CAMT 2x Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -24945,6 +26412,13 @@
     "table": "global_etf"
    }
   ],
+  "7de0a0a5518b7987": [
+   {
+    "pd_itm_no": "KR70219E0005",
+    "pd_nm": "삼성 KODEX 200커버드콜액티브증권상장지수투자신탁[주식-파생형]",
+    "table": "kr_etp"
+   }
+  ],
   "7de70898752d90dd": [
    {
     "pd_itm_no": "ALLW.O",
@@ -25022,6 +26496,13 @@
     "table": "kr_etp"
    }
   ],
+  "7e30a5542abc48ce": [
+   {
+    "pd_itm_no": "BFJL.K",
+    "pd_nm": "FT Vest Bitcoin Strategy Floor15 ETF - July",
+    "table": "global_etf"
+   }
+  ],
   "7e4577ec470af1f7": [
    {
     "pd_itm_no": "KR70166N0007",
@@ -25054,6 +26535,13 @@
    {
     "pd_itm_no": "IZRL.K",
     "pd_nm": "ARK Israel Innovative Technology ETF",
+    "table": "global_etf"
+   }
+  ],
+  "7e6ba8620033e913": [
+   {
+    "pd_itm_no": "SDUR.K",
+    "pd_nm": "Aristotle Short Term Income ETF",
     "table": "global_etf"
    }
   ],
@@ -25176,6 +26664,13 @@
     "table": "global_etf"
    }
   ],
+  "7eec392771ee9010": [
+   {
+    "pd_itm_no": "AHBM.K",
+    "pd_nm": "Amplify Top 10 Asia Memory ETF",
+    "table": "global_etf"
+   }
+  ],
   "7eee9212dcb57a2d": [
    {
     "pd_itm_no": "BINV.K",
@@ -25194,6 +26689,13 @@
    {
     "pd_itm_no": "SWP.O",
     "pd_nm": "SWP Growth & Income ETF",
+    "table": "global_etf"
+   }
+  ],
+  "7efcd6ff1c61b5d1": [
+   {
+    "pd_itm_no": "GEVC.K",
+    "pd_nm": "Corgi GEV 2x Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -25302,6 +26804,13 @@
     "table": "global_etf"
    }
   ],
+  "7f85d5bf949e71c6": [
+   {
+    "pd_itm_no": "FISR.K",
+    "pd_nm": "State Street SPDR SSGA Fixed Income Sctr Rtn ETF",
+    "table": "global_etf"
+   }
+  ],
   "7f954d8ddb4c0cb0": [
    {
     "pd_itm_no": "KRG502400234",
@@ -25358,6 +26867,13 @@
     "table": "kr_etp"
    }
   ],
+  "7fcce7fe420d826c": [
+   {
+    "pd_itm_no": "KRG760000320",
+    "pd_nm": "키움증권 키움 모험자본창업투자 상장지수증권 제32호",
+    "table": "kr_etp"
+   }
+  ],
   "7fd20e7b3eb854ed": [
    {
     "pd_itm_no": "WEEI.O",
@@ -25372,6 +26888,13 @@
     "table": "global_etf"
    }
   ],
+  "7ff08e760f791aa9": [
+   {
+    "pd_itm_no": "TSEU.K",
+    "pd_nm": "Tradr 2X Long TSEM Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "7ff171f1c6a37b23": [
    {
     "pd_itm_no": "RINC.K",
@@ -25383,6 +26906,13 @@
    {
     "pd_itm_no": "CPLS.O",
     "pd_nm": "AB Core Plus Bond ETF",
+    "table": "global_etf"
+   }
+  ],
+  "7ff2f4d4d6cd1296": [
+   {
+    "pd_itm_no": "LQDU.K",
+    "pd_nm": "MicroSectors 3x Long Investment G Corp Bond ETN",
     "table": "global_etf"
    }
   ],
@@ -25404,6 +26934,13 @@
    {
     "pd_itm_no": "BOXA.K",
     "pd_nm": "Alpha Architect Aggregate Bond ETF",
+    "table": "global_etf"
+   }
+  ],
+  "80160a4aa1702a99": [
+   {
+    "pd_itm_no": "AV",
+    "pd_nm": "Corgi Aerospace & Commercial Aviation ETF",
     "table": "global_etf"
    }
   ],
@@ -25439,6 +26976,13 @@
    {
     "pd_itm_no": "ESGU.O",
     "pd_nm": "iShares ESG Aware MSCI USA ETF",
+    "table": "global_etf"
+   }
+  ],
+  "803faf84ab723684": [
+   {
+    "pd_itm_no": "SMHU.K",
+    "pd_nm": "MicroSectors 3x Long Semiconductor ETN",
     "table": "global_etf"
    }
   ],
@@ -25543,7 +27087,7 @@
   "80af5910dfe1e73a": [
    {
     "pd_itm_no": "FEIG.K",
-    "pd_nm": "FlexShares ESG & Climate Inv Gr Corp C Ix Fund",
+    "pd_nm": "Northern Trust ESG & Climate Inv Gr Corp Core ETF",
     "table": "global_etf"
    }
   ],
@@ -25638,6 +27182,13 @@
     "table": "kr_etp"
    }
   ],
+  "811f3f8525721311": [
+   {
+    "pd_itm_no": "KSTR.K",
+    "pd_nm": "KraneShares China T&S STR 50 Indx ETF",
+    "table": "global_etf"
+   }
+  ],
   "812aa61ebdefbfa4": [
    {
     "pd_itm_no": "PJBF.K",
@@ -25645,10 +27196,10 @@
     "table": "global_etf"
    }
   ],
-  "812d962fc0048e21": [
+  "812b2af3d6b5e3e8": [
    {
-    "pd_itm_no": "PSCX.K",
-    "pd_nm": "Pacer Swan SOS Conservative (January) ETF",
+    "pd_itm_no": "LYTE.K",
+    "pd_nm": "Roundhill Photonics & Optics ETF",
     "table": "global_etf"
    }
   ],
@@ -25691,6 +27242,13 @@
    {
     "pd_itm_no": "IJK",
     "pd_nm": "iShares S&P Mid-Cap 400 Growth ETF",
+    "table": "global_etf"
+   }
+  ],
+  "814b5be47724310e": [
+   {
+    "pd_itm_no": "IOSX.K",
+    "pd_nm": "Corgi AAPL 2x Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -25753,7 +27311,7 @@
   "81a86252681cc76a": [
    {
     "pd_itm_no": "GOP",
-    "pd_nm": "Unusual Whales Subversive Republican Trading ETF",
+    "pd_nm": "Subversive Congressional Republicans Trading ETF",
     "table": "global_etf"
    }
   ],
@@ -25792,6 +27350,13 @@
     "table": "global_etf"
    }
   ],
+  "81d0d6ea1447187d": [
+   {
+    "pd_itm_no": "AMMO.K",
+    "pd_nm": "VistaShares Defense Supercycle ETF",
+    "table": "global_etf"
+   }
+  ],
   "81dda4c509069e14": [
    {
     "pd_itm_no": "JETU.K",
@@ -25815,6 +27380,13 @@
    {
     "pd_itm_no": "PNOV.K",
     "pd_nm": "Innovator US Equity Power Buffer ETF - November",
+    "table": "global_etf"
+   }
+  ],
+  "81e355afbcd1b121": [
+   {
+    "pd_itm_no": "AINF.O",
+    "pd_nm": "Defiance Inference AI Chip ETF",
     "table": "global_etf"
    }
   ],
@@ -25867,6 +27439,13 @@
     "table": "kr_etp"
    }
   ],
+  "820106673d03c3ff": [
+   {
+    "pd_itm_no": "JUNM.K",
+    "pd_nm": "FT Vest US Equity Max Buffer ETF - Jun",
+    "table": "global_etf"
+   }
+  ],
   "82017adab00460e1": [
    {
     "pd_itm_no": "CPSL.K",
@@ -25898,7 +27477,14 @@
   "821fb70e1d82b024": [
    {
     "pd_itm_no": "RSP",
-    "pd_nm": "Invesco S&P 500 Eql Wght ETF",
+    "pd_nm": "Invesco S&P 500 Equal Weight ETF",
+    "table": "global_etf"
+   }
+  ],
+  "8224b78d2bcc22d5": [
+   {
+    "pd_itm_no": "RJCA.K",
+    "pd_nm": "RJ ClariVest Capital Appreciation ETF",
     "table": "global_etf"
    }
   ],
@@ -25955,13 +27541,6 @@
    {
     "pd_itm_no": "SEPI.K",
     "pd_nm": "Shelton Equity Premium Income ETF",
-    "table": "global_etf"
-   }
-  ],
-  "827b38d0eac172ba": [
-   {
-    "pd_itm_no": "XJUN.K",
-    "pd_nm": "FT Vest US Equity Enh & Mod Buffer ETF - June",
     "table": "global_etf"
    }
   ],
@@ -26053,6 +27632,13 @@
    {
     "pd_itm_no": "MKTN.K",
     "pd_nm": "Federated Hermes MDT Market Neutral ETF",
+    "table": "global_etf"
+   }
+  ],
+  "82f54559b7337855": [
+   {
+    "pd_itm_no": "XCSH.O",
+    "pd_nm": "XFUNDS 1-3 Month BOX ETF",
     "table": "global_etf"
    }
   ],
@@ -26203,6 +27789,13 @@
     "table": "global_etf"
    }
   ],
+  "8379737d67ed5073": [
+   {
+    "pd_itm_no": "SIC",
+    "pd_nm": "Tema Power Semiconductor ETF",
+    "table": "global_etf"
+   }
+  ],
   "83885ea6c479a121": [
    {
     "pd_itm_no": "KRG580000682",
@@ -26273,6 +27866,13 @@
     "table": "global_etf"
    }
   ],
+  "83c2d5cc3071b92c": [
+   {
+    "pd_itm_no": "KR70209D0008",
+    "pd_nm": "삼성 KODEX 전고체배터리ESS TOP2플러스증권상장지수투자신탁[주식]",
+    "table": "kr_etp"
+   }
+  ],
   "83dd5c2fb2ed49ed": [
    {
     "pd_itm_no": "NUMG.K",
@@ -26326,6 +27926,13 @@
    {
     "pd_itm_no": "WLDU.K",
     "pd_nm": "Leverage Shares 2X Long World Stock Daily ETF",
+    "table": "global_etf"
+   }
+  ],
+  "84022a85c4c4c90b": [
+   {
+    "pd_itm_no": "GCPB.K",
+    "pd_nm": "Goldman Sachs Core Plus Bond ETF",
     "table": "global_etf"
    }
   ],
@@ -26651,6 +28258,13 @@
     "table": "global_etf"
    }
   ],
+  "85cf4cab07cc2f4e": [
+   {
+    "pd_itm_no": "COOL.O",
+    "pd_nm": "VegaShares AI Thermal, Cooling & Power Mngment ETF",
+    "table": "global_etf"
+   }
+  ],
   "85d011ab429ab436": [
    {
     "pd_itm_no": "VFH",
@@ -26730,13 +28344,13 @@
   ],
   "862b0cc6eeef77d0": [
    {
-    "pd_itm_no": "UFOX.O",
-    "pd_nm": "Defiance Connective Technologies ETF",
+    "pd_itm_no": "SIXG.O",
+    "pd_nm": "Defiance AI & Connective Tech ETF",
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "SIXG.O",
-    "pd_nm": "Defiance AI & Connective Tech ETF",
+    "pd_itm_no": "UFOX.O",
+    "pd_nm": "Defiance Space and Connective Tech ETF",
     "table": "global_etf"
    }
   ],
@@ -26772,13 +28386,6 @@
    {
     "pd_itm_no": "CMAG.K",
     "pd_nm": "Corgi Mag 7 ETF",
-    "table": "global_etf"
-   }
-  ],
-  "86529d079c9865f0": [
-   {
-    "pd_itm_no": "PTNT.K",
-    "pd_nm": "Corgi IP Licensing & Royalties ETF",
     "table": "global_etf"
    }
   ],
@@ -26954,6 +28561,13 @@
    {
     "pd_itm_no": "CAGE.K",
     "pd_nm": "Calamos Autocallable Growth ETF",
+    "table": "global_etf"
+   }
+  ],
+  "8775c96555981d44": [
+   {
+    "pd_itm_no": "JBLG.K",
+    "pd_nm": "Leverage Shares 2X Long JBL Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -27186,6 +28800,13 @@
     "table": "global_etf"
    }
   ],
+  "892c8616909b8c31": [
+   {
+    "pd_itm_no": "LAZR.K",
+    "pd_nm": "Tema Photonics & Optical ETF",
+    "table": "global_etf"
+   }
+  ],
   "892e1a32ba8c6a85": [
    {
     "pd_itm_no": "IBGL.O",
@@ -27347,6 +28968,13 @@
     "table": "global_etf"
    }
   ],
+  "89cf1d656c3d28f1": [
+   {
+    "pd_itm_no": "ZALT.K",
+    "pd_nm": "Innovator US Equity 10 Buffer ETF - Quarterly",
+    "table": "global_etf"
+   }
+  ],
   "89d6a12ae015cfaf": [
    {
     "pd_itm_no": "FLN.O",
@@ -27382,10 +29010,24 @@
     "table": "kr_etp"
    }
   ],
+  "89f98435d64092b3": [
+   {
+    "pd_itm_no": "MTSG.K",
+    "pd_nm": "Leverage Shares 2X Long MTSI Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "8a19f08f20dd8766": [
    {
     "pd_itm_no": "OILK.K",
     "pd_nm": "ProShares K-1 Free Crude Oil ETF",
+    "table": "global_etf"
+   }
+  ],
+  "8a1e3f2c1f0d00e4": [
+   {
+    "pd_itm_no": "PRXI.K",
+    "pd_nm": "Praxis Impact International ETF",
     "table": "global_etf"
    }
   ],
@@ -27560,7 +29202,7 @@
   "8abf0407317bf14a": [
    {
     "pd_itm_no": "QLV",
-    "pd_nm": "FlexShares US Quality Low Volatility Index Fund",
+    "pd_nm": "Northern Trust US Quality Low Volatility ETF",
     "table": "global_etf"
    }
   ],
@@ -27582,6 +29224,13 @@
    {
     "pd_itm_no": "QID",
     "pd_nm": "ProShares UltraShort QQQ",
+    "table": "global_etf"
+   }
+  ],
+  "8aedd703407f6d2b": [
+   {
+    "pd_itm_no": "AMEM.O",
+    "pd_nm": "Amana Developing World ETF",
     "table": "global_etf"
    }
   ],
@@ -27760,6 +29409,13 @@
     "table": "global_etf"
    }
   ],
+  "8babe4d799d7c87d": [
+   {
+    "pd_itm_no": "SITX.K",
+    "pd_nm": "Tradr 2X Long SITM Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "8bb3d02e550f681a": [
    {
     "pd_itm_no": "KR7442320008",
@@ -27837,13 +29493,6 @@
     "table": "kr_etp"
    }
   ],
-  "8bdd7649d5030aae": [
-   {
-    "pd_itm_no": "GJUN.K",
-    "pd_nm": "FT Vest US Equity Moderate Buffer ETF - Jun",
-    "table": "global_etf"
-   }
-  ],
   "8be79fc6e83557da": [
    {
     "pd_itm_no": "FAI",
@@ -27870,13 +29519,6 @@
     "pd_itm_no": "ZIPP.O",
     "pd_nm": "STKd 100% UBER & 100% TSLA ETF",
     "table": "global_etf"
-   }
-  ],
-  "8c1e7a1232fc1102": [
-   {
-    "pd_itm_no": "KR70174J0003",
-    "pd_nm": "대신 DAISHIN343 오피스리츠플러스부동산상장지수투자신탁[재간접형]",
-    "table": "kr_etp"
    }
   ],
   "8c20a32494334ca2": [
@@ -28054,6 +29696,13 @@
     "table": "kr_etp"
    }
   ],
+  "8d0e8a6bb3339d92": [
+   {
+    "pd_itm_no": "KR7284430006",
+    "pd_nm": "삼성 KODEX 200미국채혼합50증권상장지수투자신탁[채권혼합-파생형]",
+    "table": "kr_etp"
+   }
+  ],
   "8d118529b4f58a93": [
    {
     "pd_itm_no": "ACEP.O",
@@ -28087,6 +29736,13 @@
     "pd_itm_no": "KR7228810008",
     "pd_nm": "미래에셋 TIGER 미디어컨텐츠 증권상장지수투자신탁(주식)",
     "table": "kr_etp"
+   }
+  ],
+  "8d2e41ff5adc3089": [
+   {
+    "pd_itm_no": "SPAX.K",
+    "pd_nm": "T-REX 2X Long SPCX Daily Target ETF",
+    "table": "global_etf"
    }
   ],
   "8d31ab4b6adefb0b": [
@@ -28348,6 +30004,13 @@
     "table": "global_etf"
    }
   ],
+  "8e665651a7ea18f2": [
+   {
+    "pd_itm_no": "CIFC.K",
+    "pd_nm": "Corgi CIFR 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "8e8afa47c9054418": [
    {
     "pd_itm_no": "KR7269530002",
@@ -28366,6 +30029,13 @@
    {
     "pd_itm_no": "HEJD.O",
     "pd_nm": "VictoryShares Hedged Equity Income ETF",
+    "table": "global_etf"
+   }
+  ],
+  "8ea5c31c18248115": [
+   {
+    "pd_itm_no": "BNMC.K",
+    "pd_nm": "Corgi BMNR 2x Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -28446,6 +30116,27 @@
     "table": "global_etf"
    }
   ],
+  "8ef6f188bb3f4b42": [
+   {
+    "pd_itm_no": "LOFD.K",
+    "pd_nm": "Direxion Daily SpaceX Bear 2X ETF",
+    "table": "global_etf"
+   }
+  ],
+  "8effae6ec7e7ca2c": [
+   {
+    "pd_itm_no": "ONDC.K",
+    "pd_nm": "Corgi ONDS 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
+  "8f09c6defab59908": [
+   {
+    "pd_itm_no": "FHIL.K",
+    "pd_nm": "Federated Hermes International Leaders ETF",
+    "table": "global_etf"
+   }
+  ],
   "8f0ac35587eb4fea": [
    {
     "pd_itm_no": "QTUM.O",
@@ -28469,13 +30160,13 @@
   ],
   "8f2b02bedf7f6892": [
    {
-    "pd_itm_no": "ULE",
-    "pd_nm": "ProShares Ultra Euro",
+    "pd_itm_no": "YCL",
+    "pd_nm": "ProShares Ultra Yen",
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "YCL",
-    "pd_nm": "ProShares Ultra Yen",
+    "pd_itm_no": "ULE",
+    "pd_nm": "ProShares Ultra Euro",
     "table": "global_etf"
    }
   ],
@@ -28526,6 +30217,13 @@
     "pd_itm_no": "KR70153K0005",
     "pd_nm": "삼성 KODEX 주주환원고배당주증권상장지수투자신탁[주식]",
     "table": "kr_etp"
+   }
+  ],
+  "8f726086326c0bb8": [
+   {
+    "pd_itm_no": "PHOX.K",
+    "pd_nm": "Aura AI Photonics ETF",
+    "table": "global_etf"
    }
   ],
   "8f7be658d482f14d": [
@@ -28591,6 +30289,13 @@
     "table": "global_etf"
    }
   ],
+  "8fcb1253fe27ac2f": [
+   {
+    "pd_itm_no": "HYGD.K",
+    "pd_nm": "MicroSectors -3x Short High Yield Corp Bond ETN",
+    "table": "global_etf"
+   }
+  ],
   "8fcfd61a649c6ff8": [
    {
     "pd_itm_no": "DGIN.K",
@@ -28602,6 +30307,13 @@
    {
     "pd_itm_no": "SIFI.K",
     "pd_nm": "Harbor Ares Systematic Multi-Sector Income ETF",
+    "table": "global_etf"
+   }
+  ],
+  "8fd6495cf170990a": [
+   {
+    "pd_itm_no": "SCAU.K",
+    "pd_nm": "Corgi Intl Dev Eqtys 15% SB ETF - Aug S",
     "table": "global_etf"
    }
   ],
@@ -28668,13 +30380,6 @@
     "table": "global_etf"
    }
   ],
-  "9021e44d73c3fca4": [
-   {
-    "pd_itm_no": "DDSQ.K",
-    "pd_nm": "Innovator Equity Dual Directional 5 Bfr ETF - Qtly",
-    "table": "global_etf"
-   }
-  ],
   "9024e408c006b105": [
    {
     "pd_itm_no": "TYLG.K",
@@ -28717,6 +30422,13 @@
     "table": "global_etf"
    }
   ],
+  "904632d8c80a8ca6": [
+   {
+    "pd_itm_no": "CROB.O",
+    "pd_nm": "Defiance China Robotics ETF",
+    "table": "global_etf"
+   }
+  ],
   "90561b6971a3ff98": [
    {
     "pd_itm_no": "CRCA.K",
@@ -28727,7 +30439,7 @@
   "905e5d226cda40d9": [
    {
     "pd_itm_no": "VBR",
-    "pd_nm": "Vanguard Small-Cap Value Index Fund;ETF",
+    "pd_nm": "Vanguard Morningstar Small-Cap Value Index Fd;ETF",
     "table": "global_etf"
    }
   ],
@@ -28736,6 +30448,13 @@
     "pd_itm_no": "KR70007G0009",
     "pd_nm": "한화 PLUS 글로벌원자력밸류체인증권상장지수투자신탁(주식)",
     "table": "kr_etp"
+   }
+  ],
+  "907563735952c3cf": [
+   {
+    "pd_itm_no": "TEMC.K",
+    "pd_nm": "Corgi TEM 2x Daily ETF",
+    "table": "global_etf"
    }
   ],
   "907a55f87b251669": [
@@ -28749,6 +30468,13 @@
    {
     "pd_itm_no": "VSHY.K",
     "pd_nm": "Virtus Newfleet Short Duration High Yield Bond ETF",
+    "table": "global_etf"
+   }
+  ],
+  "9084f8936d0ec610": [
+   {
+    "pd_itm_no": "MPDB.K",
+    "pd_nm": "m+ DynaBuffer ETF",
     "table": "global_etf"
    }
   ],
@@ -28981,6 +30707,13 @@
     "table": "kr_etp"
    }
   ],
+  "91d1ae270b151559": [
+   {
+    "pd_itm_no": "EBUF.K",
+    "pd_nm": "Innovator Emerging Mkts 10 Buffer ETF - Quarterly",
+    "table": "global_etf"
+   }
+  ],
   "91d4a7b99336d2ad": [
    {
     "pd_itm_no": "KRG500000614",
@@ -29020,6 +30753,13 @@
    {
     "pd_itm_no": "QUBX.K",
     "pd_nm": "Tradr 2X Long QUBT Daily ETF",
+    "table": "global_etf"
+   }
+  ],
+  "91fb5a881b1acf1d": [
+   {
+    "pd_itm_no": "ANTW.K",
+    "pd_nm": "Anthropic AI Lab Ecosystem ETF",
     "table": "global_etf"
    }
   ],
@@ -29075,7 +30815,7 @@
   "9221dbcfbdf86d6e": [
    {
     "pd_itm_no": "GQRE.K",
-    "pd_nm": "FlexShares Global Quality Real Estate Index Fund",
+    "pd_nm": "Northern Trust Global Quality Real Estate ETF",
     "table": "global_etf"
    }
   ],
@@ -29131,7 +30871,7 @@
   "9265b49fed44d9a7": [
    {
     "pd_itm_no": "ESGG.K",
-    "pd_nm": "FlexShares STOXX Global ESG Select Index Fund",
+    "pd_nm": "Northern Trust STOXX Global ESG Select ETF",
     "table": "global_etf"
    }
   ],
@@ -29310,17 +31050,17 @@
     "table": "global_etf"
    }
   ],
-  "93775ed586d20ac6": [
-   {
-    "pd_itm_no": "IBUF.K",
-    "pd_nm": "Innovator Intl Developed 10 Buffer ETF - Quarterly",
-    "table": "global_etf"
-   }
-  ],
   "93776706c6442f7a": [
    {
     "pd_itm_no": "PJAN.K",
     "pd_nm": "Innovator US Equity Power Buffer ETF - January",
+    "table": "global_etf"
+   }
+  ],
+  "93776a70ed803ad1": [
+   {
+    "pd_itm_no": "CHDG.K",
+    "pd_nm": "Calamos Active Hedged Equity ETF",
     "table": "global_etf"
    }
   ],
@@ -29461,6 +31201,13 @@
    {
     "pd_itm_no": "MARS.K",
     "pd_nm": "Roundhill Space & Technology ETF",
+    "table": "global_etf"
+   }
+  ],
+  "94494d89c1862eb3": [
+   {
+    "pd_itm_no": "TTMX.K",
+    "pd_nm": "Tradr 2X Long TTMI Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -30363,6 +32110,13 @@
     "table": "global_etf"
    }
   ],
+  "98de01d4a633e873": [
+   {
+    "pd_itm_no": "QFF.O",
+    "pd_nm": "Qualivian Focus Fund ETF",
+    "table": "global_etf"
+   }
+  ],
   "98e76d3edd281702": [
    {
     "pd_itm_no": "LAPR.K",
@@ -30403,6 +32157,13 @@
     "pd_itm_no": "KRG610000082",
     "pd_nm": "메리츠증권 메리츠 레버리지 국채30년 상장지수증권 제8호",
     "table": "kr_etp"
+   }
+  ],
+  "9924fe29eba72a09": [
+   {
+    "pd_itm_no": "GOIB.K",
+    "pd_nm": "Direxion GOOGL Defined Income Boost ETF",
+    "table": "global_etf"
    }
   ],
   "9926a765534cbc62": [
@@ -30559,6 +32320,13 @@
     "table": "global_etf"
    }
   ],
+  "99e7d5ec69645d98": [
+   {
+    "pd_itm_no": "NTRL.K",
+    "pd_nm": "First Trust Equity Market Neutral ETF",
+    "table": "global_etf"
+   }
+  ],
   "99eac91a9fa837a8": [
    {
     "pd_itm_no": "XNOV.K",
@@ -30618,6 +32386,13 @@
     "pd_itm_no": "ITDB.K",
     "pd_nm": "iShares LifePath Target Date 2030 ETF",
     "table": "global_etf"
+   }
+  ],
+  "9a5234af334c9905": [
+   {
+    "pd_itm_no": "KRG610001064",
+    "pd_nm": "메리츠증권 메리츠 인버스 국채30년 상장지수증권 B 제106호",
+    "table": "kr_etp"
    }
   ],
   "9a5bbf7e93c05182": [
@@ -30683,6 +32458,13 @@
     "table": "global_etf"
    }
   ],
+  "9aa4032bfc427339": [
+   {
+    "pd_itm_no": "NTAL.O",
+    "pd_nm": "GraniteShares 2x Long NTAP Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "9ab22f533eb155f6": [
    {
     "pd_itm_no": "PICK.K",
@@ -30694,6 +32476,13 @@
    {
     "pd_itm_no": "PVEX.K",
     "pd_nm": "TrueShares ConVequity ETF",
+    "table": "global_etf"
+   }
+  ],
+  "9ac8e22266c2dd78": [
+   {
+    "pd_itm_no": "ROBX.K",
+    "pd_nm": "Amplify Top 10 Robotics ETF",
     "table": "global_etf"
    }
   ],
@@ -30825,28 +32614,23 @@
   ],
   "9b2d5b4678781e53": [
    {
-    "pd_itm_no": "XW",
-    "pd_nm": "XW",
+    "pd_itm_no": "TAWN.K",
+    "pd_nm": "TAWN",
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "BTCK.K",
-    "pd_nm": "BTCK",
+    "pd_itm_no": "BBLS.K",
+    "pd_nm": "BBLS",
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "BAY",
-    "pd_nm": "BAY",
+    "pd_itm_no": "JPNU.K",
+    "pd_nm": "JPNU",
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "BZZ",
-    "pd_nm": "BZZ",
-    "table": "global_etf"
-   },
-   {
-    "pd_itm_no": "AV",
-    "pd_nm": "AV",
+    "pd_itm_no": "HWO.O",
+    "pd_nm": "HWO",
     "table": "global_etf"
    },
    {
@@ -30855,13 +32639,33 @@
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "PINC.K",
-    "pd_nm": "PINC",
+    "pd_itm_no": "JPND.K",
+    "pd_nm": "JPND",
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "OWN",
-    "pd_nm": "OWN",
+    "pd_itm_no": "BRZL.K",
+    "pd_nm": "BRZL",
+    "table": "global_etf"
+   },
+   {
+    "pd_itm_no": "TPEI.K",
+    "pd_nm": "TPEI",
+    "table": "global_etf"
+   },
+   {
+    "pd_itm_no": "BRZD.K",
+    "pd_nm": "BRZD",
+    "table": "global_etf"
+   },
+   {
+    "pd_itm_no": "GCLO.K",
+    "pd_nm": "GCLO",
+    "table": "global_etf"
+   },
+   {
+    "pd_itm_no": "GEEQ.K",
+    "pd_nm": "GEEQ",
     "table": "global_etf"
    }
   ],
@@ -30886,15 +32690,22 @@
     "table": "kr_etp"
    }
   ],
-  "9b7602a5bcacac2c": [
+  "9b6d424dcc40c2c7": [
    {
-    "pd_itm_no": "NHYM.K",
-    "pd_nm": "Nuveen High Yield Municipal Income ETF",
+    "pd_itm_no": "UCTX.K",
+    "pd_nm": "Corgi UCTT 2x Daily ETF",
     "table": "global_etf"
-   },
+   }
+  ],
+  "9b7602a5bcacac2c": [
    {
     "pd_itm_no": "NUMI.K",
     "pd_nm": "Nuveen Municipal Income ETF",
+    "table": "global_etf"
+   },
+   {
+    "pd_itm_no": "NHYM.K",
+    "pd_nm": "Nuveen High Yield Municipal Income ETF",
     "table": "global_etf"
    }
   ],
@@ -30916,6 +32727,20 @@
    {
     "pd_itm_no": "MADE.K",
     "pd_nm": "iShares US Manufacturing ETF",
+    "table": "global_etf"
+   }
+  ],
+  "9bb3b5140794b623": [
+   {
+    "pd_itm_no": "BTCU.K",
+    "pd_nm": "Direxion Daily Bitcoin Bull 2X ETF",
+    "table": "global_etf"
+   }
+  ],
+  "9bb4fa11af9b12ce": [
+   {
+    "pd_itm_no": "AAUB.O",
+    "pd_nm": "Alpha Architect US Equity 4 ETF",
     "table": "global_etf"
    }
   ],
@@ -31031,13 +32856,6 @@
     "table": "global_etf"
    }
   ],
-  "9c44bbf0c15e7a9e": [
-   {
-    "pd_itm_no": "KR7284430006",
-    "pd_nm": "삼성 KODEX200미국채혼합증권상장지수투자신탁[채권혼합-파생형]",
-    "table": "kr_etp"
-   }
-  ],
   "9c4616068c28e0b1": [
    {
     "pd_itm_no": "DDTA.K",
@@ -31115,6 +32933,13 @@
     "table": "global_etf"
    }
   ],
+  "9cb3bf9f513ba394": [
+   {
+    "pd_itm_no": "QQJL.K",
+    "pd_nm": "Corgi Growth & Technology 15% Structured Bffr ETF",
+    "table": "global_etf"
+   }
+  ],
   "9cb91b751ffeb270": [
    {
     "pd_itm_no": "HEAT.K",
@@ -31129,6 +32954,13 @@
     "table": "global_etf"
    }
   ],
+  "9cd6c9d1bbdf0505": [
+   {
+    "pd_itm_no": "TIH.O",
+    "pd_nm": "The Investment House ETF",
+    "table": "global_etf"
+   }
+  ],
   "9cd74a3e2ebfbeea": [
    {
     "pd_itm_no": "PFUT.K",
@@ -31140,6 +32972,13 @@
    {
     "pd_itm_no": "BIGY.K",
     "pd_nm": "YieldMax Target 12 Big 50 Option Income ETF",
+    "table": "global_etf"
+   }
+  ],
+  "9ce19f5d7c21a7fc": [
+   {
+    "pd_itm_no": "MEIB.K",
+    "pd_nm": "Direxion META Defined Income Boost ETF",
     "table": "global_etf"
    }
   ],
@@ -31223,7 +33062,7 @@
   "9d32e6e7ce9d59ea": [
    {
     "pd_itm_no": "KEMQ.K",
-    "pd_nm": "KraneShares Emerging Markets Consumer Tech Idx ETF",
+    "pd_nm": "KraneShares Public-Private EM Internet & Tech ETF",
     "table": "global_etf"
    }
   ],
@@ -31259,6 +33098,13 @@
    {
     "pd_itm_no": "XTR",
     "pd_nm": "Global X S&P 500 Tail Risk ETF",
+    "table": "global_etf"
+   }
+  ],
+  "9d65af5c770c7036": [
+   {
+    "pd_itm_no": "BSJY.O",
+    "pd_nm": "Invesco BulletShares 2034 High Yield Corp Bond ETF",
     "table": "global_etf"
    }
   ],
@@ -31301,6 +33147,20 @@
    {
     "pd_itm_no": "BNOV.K",
     "pd_nm": "Innovator US Equity Buffer ETF - November",
+    "table": "global_etf"
+   }
+  ],
+  "9d92523817e457c7": [
+   {
+    "pd_itm_no": "IBUF.K",
+    "pd_nm": "Innovator Intl Developed 10 Buffer ETF - Quarterly",
+    "table": "global_etf"
+   }
+  ],
+  "9da35b8d71827df9": [
+   {
+    "pd_itm_no": "OWN",
+    "pd_nm": "Inside Ownership 100 ETF",
     "table": "global_etf"
    }
   ],
@@ -31351,6 +33211,11 @@
     "pd_itm_no": "DDFF.K",
     "pd_nm": "Innovator Equity Dual Directional 15 Buf ETF - Feb",
     "table": "global_etf"
+   },
+   {
+    "pd_itm_no": "DDFG.K",
+    "pd_nm": "Innovator Equity Dual Drctnl 15 Buffer ETF - Aug",
+    "table": "global_etf"
    }
   ],
   "9dfa2f36012732d1": [
@@ -31385,6 +33250,13 @@
    {
     "pd_itm_no": "NACP.K",
     "pd_nm": "Impact Shares NAACP Minority Empowerment ETF",
+    "table": "global_etf"
+   }
+  ],
+  "9e491a2a35aadea7": [
+   {
+    "pd_itm_no": "ONTX.K",
+    "pd_nm": "Corgi ONTO 2x Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -31664,6 +33536,13 @@
     "table": "global_etf"
    }
   ],
+  "9f9b6ea1c1a97ad4": [
+   {
+    "pd_itm_no": "KR70226G0004",
+    "pd_nm": "우리 WON 피지컬AI TOP2플러스액티브증권상장지수투자신탁(주식)",
+    "table": "kr_etp"
+   }
+  ],
   "9f9f0fc107700f8c": [
    {
     "pd_itm_no": "JHMB.K",
@@ -31696,6 +33575,13 @@
    {
     "pd_itm_no": "EDGE.K",
     "pd_nm": "MRBL Enhanced Equity ETF",
+    "table": "global_etf"
+   }
+  ],
+  "9fe2b93af2323a3f": [
+   {
+    "pd_itm_no": "TESC.K",
+    "pd_nm": "Corgi TSLA 2x Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -31752,6 +33638,13 @@
    {
     "pd_itm_no": "MDLV.K",
     "pd_nm": "Morgan Dempsey Large Cap Value ETF",
+    "table": "global_etf"
+   }
+  ],
+  "a01cc6044269ee64": [
+   {
+    "pd_itm_no": "VRC",
+    "pd_nm": "Corgi VRT 2x Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -31834,13 +33727,8 @@
   ],
   "a0a9a15d78d1ec64": [
    {
-    "pd_itm_no": "PQJA.O",
-    "pd_nm": "PGIM Nasdaq-100 Buffer 12 ETF - January",
-    "table": "global_etf"
-   },
-   {
-    "pd_itm_no": "PQAP.O",
-    "pd_nm": "PGIM Nasdaq-100 Buffer 12 ETF - April",
+    "pd_itm_no": "PQJL.O",
+    "pd_nm": "PGIM Nasdaq-100 Buffer 12 ETF - July",
     "table": "global_etf"
    },
    {
@@ -31849,8 +33737,13 @@
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "PQJL.O",
-    "pd_nm": "PGIM Nasdaq-100 Buffer 12 ETF - July",
+    "pd_itm_no": "PQAP.O",
+    "pd_nm": "PGIM Nasdaq-100 Buffer 12 ETF - April",
+    "table": "global_etf"
+   },
+   {
+    "pd_itm_no": "PQJA.O",
+    "pd_nm": "PGIM Nasdaq-100 Buffer 12 ETF - January",
     "table": "global_etf"
    }
   ],
@@ -31858,6 +33751,13 @@
    {
     "pd_itm_no": "BUXX.K",
     "pd_nm": "Strive Enhanced Income Short Maturity ETF",
+    "table": "global_etf"
+   }
+  ],
+  "a0b510c55ef31fca": [
+   {
+    "pd_itm_no": "SPCF.K",
+    "pd_nm": "ProShares Ultra SpaceX",
     "table": "global_etf"
    }
   ],
@@ -32141,6 +34041,13 @@
     "table": "global_etf"
    }
   ],
+  "a22d8b9cc7cc6340": [
+   {
+    "pd_itm_no": "RSJN.K",
+    "pd_nm": "FT Vest US Eqty Equal Weight Buff - Jun",
+    "table": "global_etf"
+   }
+  ],
   "a234b2a10462b6c9": [
    {
     "pd_itm_no": "KRG502400416",
@@ -32323,6 +34230,13 @@
     "table": "global_etf"
    }
   ],
+  "a2f5f51610dfbec2": [
+   {
+    "pd_itm_no": "FLEL.K",
+    "pd_nm": "Leverage Shares 2X Long FLEX Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "a2f62cbe3047693e": [
    {
     "pd_itm_no": "HYFI.K",
@@ -32363,6 +34277,13 @@
     "pd_itm_no": "NULV.K",
     "pd_nm": "Nuveen ESG Large-Cap Value ETF",
     "table": "global_etf"
+   }
+  ],
+  "a332a38a348f5680": [
+   {
+    "pd_itm_no": "KRG580000898",
+    "pd_nm": "KB증권 KB 솔랙티브 레버리지 금 선물 상장지수증권 제89호",
+    "table": "kr_etp"
    }
   ],
   "a332e69b468dd780": [
@@ -32645,11 +34566,25 @@
     "table": "kr_etp"
    }
   ],
+  "a42caf1a11abca5c": [
+   {
+    "pd_itm_no": "FLDZ.K",
+    "pd_nm": "TrueShares Patriot Defense ETF",
+    "table": "global_etf"
+   }
+  ],
   "a4329da8432c39ac": [
    {
     "pd_itm_no": "KR7471760009",
     "pd_nm": "미래에셋 TIGER AI반도체핵심공정증권상장지수투자신탁(주식)",
     "table": "kr_etp"
+   }
+  ],
+  "a439fe1f7287f640": [
+   {
+    "pd_itm_no": "CTJL.K",
+    "pd_nm": "Corgi U.S. Equities 30% Structured Bffr ETF-July S",
+    "table": "global_etf"
    }
   ],
   "a445b11466989bf8": [
@@ -32663,6 +34598,13 @@
    {
     "pd_itm_no": "IBGM.O",
     "pd_nm": "iShares iBonds Dec 2056 Term Treasury ETF",
+    "table": "global_etf"
+   }
+  ],
+  "a4588548c8220263": [
+   {
+    "pd_itm_no": "AAOZ.K",
+    "pd_nm": "Tradr 2X Short AAOI Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -32699,6 +34641,13 @@
     "pd_itm_no": "KR7401470000",
     "pd_nm": "삼성 KODEX 메타버스액티브증권상장지수투자신탁[주식]",
     "table": "kr_etp"
+   }
+  ],
+  "a47d2adf54a4606e": [
+   {
+    "pd_itm_no": "MIC",
+    "pd_nm": "Corgi MU 2x Daily ETF",
+    "table": "global_etf"
    }
   ],
   "a483e48220ca54ea": [
@@ -32918,6 +34867,13 @@
     "table": "global_etf"
    }
   ],
+  "a5b549dd7aff179f": [
+   {
+    "pd_itm_no": "SLVY.K",
+    "pd_nm": "FT Vest Silver Strategy & Target Income ETF",
+    "table": "global_etf"
+   }
+  ],
   "a5b8067b1e5d93b1": [
    {
     "pd_itm_no": "MSOO.K",
@@ -32932,10 +34888,10 @@
     "table": "global_etf"
    }
   ],
-  "a5c701a3b6b13513": [
+  "a5c951ce1fc99c03": [
    {
-    "pd_itm_no": "QJUN.K",
-    "pd_nm": "FT Vest Nasdaq-100 Buffer ETF - June",
+    "pd_itm_no": "RMBC.K",
+    "pd_nm": "Corgi RMBS 2x Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -32972,6 +34928,13 @@
     "pd_itm_no": "KR7204450001",
     "pd_nm": "삼성 KODEX 차이나H레버리지증권상장지수투자신탁(주식-파생형)(H)",
     "table": "kr_etp"
+   }
+  ],
+  "a5f474efd8993464": [
+   {
+    "pd_itm_no": "QBUF.O",
+    "pd_nm": "Innovator Nasdaq-100 10 Buffer ETF - Quarterly",
+    "table": "global_etf"
    }
   ],
   "a610361d5dc4c809": [
@@ -33184,6 +35147,13 @@
     "table": "kr_etp"
    }
   ],
+  "a6e72c0767119fab": [
+   {
+    "pd_itm_no": "BABC.K",
+    "pd_nm": "Corgi BABA 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "a6ee25d964193775": [
    {
     "pd_itm_no": "XHYI.K",
@@ -33198,11 +35168,25 @@
     "table": "global_etf"
    }
   ],
+  "a6f668cc5f211bec": [
+   {
+    "pd_itm_no": "NVIB.K",
+    "pd_nm": "Direxion NVDA Defined Income Boost ETF",
+    "table": "global_etf"
+   }
+  ],
   "a6fb4142f5076989": [
    {
     "pd_itm_no": "KRG500000937",
     "pd_nm": "신한투자증권 신한 블룸버그 레버리지 WTI원유선물 상장지수증권 B 제93호",
     "table": "kr_etp"
+   }
+  ],
+  "a70c36b1e9e81fbd": [
+   {
+    "pd_itm_no": "DDSQ.K",
+    "pd_nm": "Innovator Equity Dual Directional 5 Bfr ETF - Qtly",
+    "table": "global_etf"
    }
   ],
   "a7103a7f80fdffad": [
@@ -33415,6 +35399,13 @@
     "table": "global_etf"
    }
   ],
+  "a80568cbf2e3fc3d": [
+   {
+    "pd_itm_no": "SMCC.K",
+    "pd_nm": "Corgi SMCI 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "a813beff97d65283": [
    {
     "pd_itm_no": "KR70182R0003",
@@ -33440,6 +35431,13 @@
    {
     "pd_itm_no": "ASHS.K",
     "pd_nm": "Xtrackers Hvst CSI500 China A-Shs SC ETF",
+    "table": "global_etf"
+   }
+  ],
+  "a8284d46f9a31661": [
+   {
+    "pd_itm_no": "BAY",
+    "pd_nm": "Corgi Bay Area Based ETF",
     "table": "global_etf"
    }
   ],
@@ -33562,6 +35560,13 @@
     "table": "global_etf"
    }
   ],
+  "a8980a6afecb0c05": [
+   {
+    "pd_itm_no": "PUL.O",
+    "pd_nm": "GraniteShares 2x Long P Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "a8a479b888c3ef44": [
    {
     "pd_itm_no": "MUSI.K",
@@ -33590,11 +35595,25 @@
     "table": "global_etf"
    }
   ],
+  "a8cd91ad3d3cdd7e": [
+   {
+    "pd_itm_no": "PUR.O",
+    "pd_nm": "Defiance Daily Target 2X Long PURR ETF",
+    "table": "global_etf"
+   }
+  ],
   "a8cdd63eedadeeec": [
    {
     "pd_itm_no": "KOLD.K",
     "pd_nm": "ProShares UltraShort Bloomberg Natural Gas",
     "table": "global_etf"
+   }
+  ],
+  "a8d63ba3cd0a4c09": [
+   {
+    "pd_itm_no": "KR70222D0001",
+    "pd_nm": "삼성액티브 KoAct 고배당액티브증권상장지수투자신탁[주식]",
+    "table": "kr_etp"
    }
   ],
   "a8defa6446ef95b0": [
@@ -33604,18 +35623,18 @@
     "table": "global_etf"
    }
   ],
+  "a8e59a7f1ca94cc8": [
+   {
+    "pd_itm_no": "HIMC.K",
+    "pd_nm": "Corgi HIMS 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "a8ef9c14b43bd26a": [
    {
     "pd_itm_no": "KR70141T0001",
     "pd_nm": "신한 SOL 중기종합채권(AA-이상)액티브증권상장지수투자신탁[채권]",
     "table": "kr_etp"
-   }
-  ],
-  "a8f3f6e5e896fe94": [
-   {
-    "pd_itm_no": "XIJN.K",
-    "pd_nm": "FT Vest US Eqty Buff & Prem Inc ETF - Jun",
-    "table": "global_etf"
    }
   ],
   "a8f8f6d3f4793ce7": [
@@ -33650,13 +35669,6 @@
    {
     "pd_itm_no": "AOCT.K",
     "pd_nm": "Innovator Eqty Defined Protctn ETF 2 Y to Oct 2026",
-    "table": "global_etf"
-   }
-  ],
-  "a907a6cf6a705c8f": [
-   {
-    "pd_itm_no": "ACGO.K",
-    "pd_nm": "Hartford Alpha Capture Growth ETF",
     "table": "global_etf"
    }
   ],
@@ -33756,6 +35768,13 @@
     "pd_itm_no": "KR7453010001",
     "pd_nm": "한화 PLUS KOFR금리특별자산상장지수투자신탁(금리)",
     "table": "kr_etp"
+   }
+  ],
+  "a953a056f6a3947d": [
+   {
+    "pd_itm_no": "RAM",
+    "pd_nm": "Roundhill T-REX 2X Long DRAM Daily Target ETF",
+    "table": "global_etf"
    }
   ],
   "a954af9164130287": [
@@ -34043,13 +36062,13 @@
   ],
   "aaa695e401b21dcd": [
    {
-    "pd_itm_no": "QBIV.K",
-    "pd_nm": "AllianzIM International Equity Buffer5 ETF",
+    "pd_itm_no": "QBIF.K",
+    "pd_nm": "AllianzIM International Equity Buffer15 ETF",
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "QBIF.K",
-    "pd_nm": "AllianzIM International Equity Buffer15 ETF",
+    "pd_itm_no": "QBIV.K",
+    "pd_nm": "AllianzIM International Equity Buffer5 ETF",
     "table": "global_etf"
    }
   ],
@@ -34158,6 +36177,13 @@
     "table": "kr_etp"
    }
   ],
+  "ab0ac6560dd38aa4": [
+   {
+    "pd_itm_no": "ASTT.K",
+    "pd_nm": "Corgi ASTS 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "ab1056faa0cd2561": [
    {
     "pd_itm_no": "RSSY.K",
@@ -34233,6 +36259,13 @@
     "pd_itm_no": "KR7308620004",
     "pd_nm": "삼성 KODEX 미국10년국채선물증권상장지수투자신탁[채권-파생형]",
     "table": "kr_etp"
+   }
+  ],
+  "ab6556acec13474f": [
+   {
+    "pd_itm_no": "ACHX.K",
+    "pd_nm": "Corgi ACHR 2x Daily ETF",
+    "table": "global_etf"
    }
   ],
   "ab6e00742ba46454": [
@@ -34487,6 +36520,13 @@
     "table": "kr_etp"
    }
   ],
+  "ac83b87d7bcc473b": [
+   {
+    "pd_itm_no": "TELG.K",
+    "pd_nm": "Leverage Shares 2X Long TEL Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "ac92144b0f27f671": [
    {
     "pd_itm_no": "RWK",
@@ -34529,7 +36569,19 @@
     "table": "kr_etp"
    }
   ],
+  "acd4df15742c258f": [
+   {
+    "pd_itm_no": "PSFD.K",
+    "pd_nm": "Pacer Swan SOS Flex (January) ETF",
+    "table": "global_etf"
+   }
+  ],
   "acee1ff3bc7c5aed": [
+   {
+    "pd_itm_no": "CBTO.K",
+    "pd_nm": "Calamos Bitcoin 80 Series Struc Alt Pro ETF - Oct",
+    "table": "global_etf"
+   },
    {
     "pd_itm_no": "CBXO.K",
     "pd_nm": "Calamos Bitcoin 90 Series Struc Alt Pro ETF - Oct",
@@ -34538,11 +36590,6 @@
    {
     "pd_itm_no": "CBOO.K",
     "pd_nm": "Calamos Bitcoin Structured Alt Pro ETF - Oct",
-    "table": "global_etf"
-   },
-   {
-    "pd_itm_no": "CBTO.K",
-    "pd_nm": "Calamos Bitcoin 80 Series Struc Alt Pro ETF - Oct",
     "table": "global_etf"
    }
   ],
@@ -34826,11 +36873,25 @@
     "table": "global_etf"
    }
   ],
+  "adf93ced1b6c2733": [
+   {
+    "pd_itm_no": "FIMU.O",
+    "pd_nm": "Fidelity Intermediate Municipal Income Fund;ETF",
+    "table": "global_etf"
+   }
+  ],
   "ae1b68467b55ce53": [
    {
     "pd_itm_no": "KRG536100230",
     "pd_nm": "삼성증권 삼성 레버리지 China A50 선물 파생결합증권(상장지수증권)(H) 제23호",
     "table": "kr_etp"
+   }
+  ],
+  "ae2290d4c202e2ce": [
+   {
+    "pd_itm_no": "KSMH.O",
+    "pd_nm": "xETFs Korea AI Semiconductor ETF",
+    "table": "global_etf"
    }
   ],
   "ae23107f39e4035a": [
@@ -35015,6 +37076,13 @@
     "table": "global_etf"
    }
   ],
+  "aee11e43e201223e": [
+   {
+    "pd_itm_no": "SMHD.K",
+    "pd_nm": "MicroSectors -3x Short Semiconductor ETN",
+    "table": "global_etf"
+   }
+  ],
   "aeebefee6d2f0241": [
    {
     "pd_itm_no": "KR7433980000",
@@ -35099,10 +37167,17 @@
     "table": "global_etf"
    }
   ],
-  "af4d46ef42f2df06": [
+  "af3ef7f1a8813d40": [
    {
-    "pd_itm_no": "TOAO.K",
-    "pd_nm": "Twin Oak Active Opportunities III ETF",
+    "pd_itm_no": "WSMD.K",
+    "pd_nm": "Wasatch Small/Mid Cap ETF",
+    "table": "global_etf"
+   }
+  ],
+  "af42f1e8e901a2b1": [
+   {
+    "pd_itm_no": "KMEM.K",
+    "pd_nm": "Kurv Memory Select ETF",
     "table": "global_etf"
    }
   ],
@@ -35277,7 +37352,7 @@
   "b04ca74971c69d36": [
    {
     "pd_itm_no": "VTV",
-    "pd_nm": "Vanguard Value Index Fund;ETF",
+    "pd_nm": "Vanguard Morningstar Value Index Fund;ETF",
     "table": "global_etf"
    }
   ],
@@ -35382,7 +37457,7 @@
   "b0b44bd56edb2a68": [
    {
     "pd_itm_no": "QLVE.K",
-    "pd_nm": "FlexShares EmMkts Quality Low Volatility Idx Fd",
+    "pd_nm": "Northern Trust Emerging Mkts Qlty Low Volty ETF",
     "table": "global_etf"
    }
   ],
@@ -35461,6 +37536,11 @@
     "pd_itm_no": "AAUM.K",
     "pd_nm": "Tema Alternative Asset Managers ETF",
     "table": "global_etf"
+   },
+   {
+    "pd_itm_no": "PRVT.K",
+    "pd_nm": "Tema Listed Private Managers ETF",
+    "table": "global_etf"
    }
   ],
   "b16a5dc2e93457f2": [
@@ -35470,18 +37550,18 @@
     "table": "global_etf"
    }
   ],
+  "b16abb52ef255168": [
+   {
+    "pd_itm_no": "RMBX.K",
+    "pd_nm": "Tradr 2X Long RMBS Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "b16ad6e91a0d046b": [
    {
     "pd_itm_no": "KR7489860007",
     "pd_nm": "키움 KIWOOM 글로벌전력GRID인프라증권상장지수투자신탁[주식]",
     "table": "kr_etp"
-   }
-  ],
-  "b17821ce68025061": [
-   {
-    "pd_itm_no": "PSFM.K",
-    "pd_nm": "Pacer Swan SOS Flex (April) ETF",
-    "table": "global_etf"
    }
   ],
   "b179308c151bdfdf": [
@@ -35496,13 +37576,6 @@
     "pd_itm_no": "KR70193T0008",
     "pd_nm": "삼성 KODEX SK하이닉스단일종목레버리지증권상장지수투자신탁[주식-파생형]",
     "table": "kr_etp"
-   }
-  ],
-  "b1831d224660b113": [
-   {
-    "pd_itm_no": "BESO.O",
-    "pd_nm": "GSR Crypto Core3 ETF",
-    "table": "global_etf"
    }
   ],
   "b1890770d079a271": [
@@ -35610,6 +37683,13 @@
     "table": "global_etf"
    }
   ],
+  "b1f993aaf42d9ed2": [
+   {
+    "pd_itm_no": "BWQG.K",
+    "pd_nm": "BWM Quality Growth ETF",
+    "table": "global_etf"
+   }
+  ],
   "b21428d7a3de0b6e": [
    {
     "pd_itm_no": "KRG500000564",
@@ -35624,6 +37704,13 @@
     "table": "global_etf"
    }
   ],
+  "b219e4da85f50fcf": [
+   {
+    "pd_itm_no": "DISK.K",
+    "pd_nm": "Tema Memory ETF",
+    "table": "global_etf"
+   }
+  ],
   "b220d89510cd9dda": [
    {
     "pd_itm_no": "SHY.O",
@@ -35633,13 +37720,20 @@
   ],
   "b22df924ce7b88f5": [
    {
-    "pd_itm_no": "STXF.K",
+    "pd_itm_no": "STRV.K",
     "pd_nm": "Strive 500 ETF",
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "STRV.K",
+    "pd_itm_no": "STXF.K",
     "pd_nm": "Strive 500 ETF",
+    "table": "global_etf"
+   }
+  ],
+  "b22e4c120161ba7c": [
+   {
+    "pd_itm_no": "DFAL.K",
+    "pd_nm": "Dimensional US Large Cap Core Equity Market ETF",
     "table": "global_etf"
    }
   ],
@@ -35668,6 +37762,13 @@
    {
     "pd_itm_no": "DVGR.O",
     "pd_nm": "DAC 3D Dividend Growth ETF",
+    "table": "global_etf"
+   }
+  ],
+  "b2544c23e09cb208": [
+   {
+    "pd_itm_no": "METQ.K",
+    "pd_nm": "Tradr 2X Short META Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -35713,13 +37814,6 @@
     "table": "global_etf"
    }
   ],
-  "b2a513250729d7d1": [
-   {
-    "pd_itm_no": "PSCJ.K",
-    "pd_nm": "Pacer Swan SOS Conservative (July) ETF",
-    "table": "global_etf"
-   }
-  ],
   "b2b68c00e1018cdb": [
    {
     "pd_itm_no": "XLSR.K",
@@ -35751,7 +37845,7 @@
   "b2ea610729545728": [
    {
     "pd_itm_no": "QDEF.K",
-    "pd_nm": "FlexShares Quality Dividend Defensive Index Fund",
+    "pd_nm": "Northern Trust Quality Dividend Defensive ETF",
     "table": "global_etf"
    }
   ],
@@ -35762,18 +37856,18 @@
     "table": "global_etf"
    }
   ],
+  "b30203f23a2fada4": [
+   {
+    "pd_itm_no": "AVGC.K",
+    "pd_nm": "Corgi AVGO 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "b30393972d4afe1d": [
    {
     "pd_itm_no": "KR70154F0001",
     "pd_nm": "우리 WON 초대형IB&금융지주증권상장지수투자신탁(주식)",
     "table": "kr_etp"
-   }
-  ],
-  "b30f4cdf94fa198e": [
-   {
-    "pd_itm_no": "DJUN.K",
-    "pd_nm": "FT Vest US Equity Deep Buffer ETF - June",
-    "table": "global_etf"
    }
   ],
   "b31f5c39c97a77a8": [
@@ -35857,6 +37951,20 @@
    {
     "pd_itm_no": "GLGG.O",
     "pd_nm": "Leverage Shares 2X Long GLXY Daily ETF",
+    "table": "global_etf"
+   }
+  ],
+  "b39e26f5abc6bad3": [
+   {
+    "pd_itm_no": "HPEL.K",
+    "pd_nm": "Leverage Shares 2X Long HPE Daily ETF",
+    "table": "global_etf"
+   }
+  ],
+  "b3a7f457cdec9721": [
+   {
+    "pd_itm_no": "XAIW.K",
+    "pd_nm": "SpaceXAI Lab Ecosystem ETF",
     "table": "global_etf"
    }
   ],
@@ -35979,6 +38087,13 @@
     "table": "global_etf"
    }
   ],
+  "b420c46170d4f1f1": [
+   {
+    "pd_itm_no": "LUMA.K",
+    "pd_nm": "KraneShares Photonic and Optical ETF",
+    "table": "global_etf"
+   }
+  ],
   "b4238f5c362cb265": [
    {
     "pd_itm_no": "PMJN.K",
@@ -36012,6 +38127,13 @@
     "pd_itm_no": "KR70043B0000",
     "pd_nm": "미래에셋 TIGER 머니마켓액티브증권상장지수투자신탁(채권)",
     "table": "kr_etp"
+   }
+  ],
+  "b44bbdc569807b20": [
+   {
+    "pd_itm_no": "EO",
+    "pd_nm": "Corgi EOSE 2x Daily ETF",
+    "table": "global_etf"
    }
   ],
   "b45bf31e5d943222": [
@@ -36091,6 +38213,13 @@
     "table": "global_etf"
    }
   ],
+  "b499f9824c784efe": [
+   {
+    "pd_itm_no": "MRVX.K",
+    "pd_nm": "Corgi MRVL 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "b49b9a04ccfe0f90": [
    {
     "pd_itm_no": "KR7473440006",
@@ -36151,6 +38280,13 @@
    {
     "pd_itm_no": "RLY",
     "pd_nm": "State Street SPDR SSGA Multi-Asset Real Return ETF",
+    "table": "global_etf"
+   }
+  ],
+  "b4c64d07680a02eb": [
+   {
+    "pd_itm_no": "ZINN.K",
+    "pd_nm": "Virtus Zevenbergen Innovative Growth ETF",
     "table": "global_etf"
    }
   ],
@@ -36224,6 +38360,13 @@
     "table": "global_etf"
    }
   ],
+  "b50ec21dfd18d9ae": [
+   {
+    "pd_itm_no": "MSIX.K",
+    "pd_nm": "Corgi MSI 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "b517ac38abd94b33": [
    {
     "pd_itm_no": "EXUS.O",
@@ -36250,6 +38393,13 @@
     "pd_itm_no": "KR7483320008",
     "pd_nm": "한국투자 ACE 엔비디아밸류체인액티브증권상장지수투자신탁(주식)",
     "table": "kr_etp"
+   }
+  ],
+  "b5590e1f4c34e562": [
+   {
+    "pd_itm_no": "MUG",
+    "pd_nm": "Leverage Shares 2X Long MU Daily ETF",
+    "table": "global_etf"
    }
   ],
   "b55e0e5e67af4f97": [
@@ -36378,6 +38528,13 @@
     "table": "global_etf"
    }
   ],
+  "b5c278924a3e86ba": [
+   {
+    "pd_itm_no": "SKHX.K",
+    "pd_nm": "Leverage Shares 2X Long SK Hynix Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "b5cdfd3660f2e832": [
    {
     "pd_itm_no": "FB",
@@ -36476,17 +38633,17 @@
     "table": "global_etf"
    }
   ],
-  "b64d00741b5bba93": [
-   {
-    "pd_itm_no": "LQ.O",
-    "pd_nm": "Simplify Tax Aware Alternatives ETF",
-    "table": "global_etf"
-   }
-  ],
   "b65262a0c410dbde": [
    {
     "pd_itm_no": "MYCI.O",
     "pd_nm": "State Street My2029 Corporate Bond ETF",
+    "table": "global_etf"
+   }
+  ],
+  "b65d8edce6f89ba0": [
+   {
+    "pd_itm_no": "MCHG.K",
+    "pd_nm": "Leverage Shares 2X Long MCHP Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -36504,13 +38661,6 @@
     "table": "global_etf"
    }
   ],
-  "b68333cfabbb377a": [
-   {
-    "pd_itm_no": "GJUL.K",
-    "pd_nm": "FT Vest US Equity Moderate Buffer ETF - Jul",
-    "table": "global_etf"
-   }
-  ],
   "b6849ca3ef3b4c09": [
    {
     "pd_itm_no": "VSOL.O",
@@ -36522,6 +38672,13 @@
    {
     "pd_itm_no": "HBRD.K",
     "pd_nm": "Invesco US Hybrid Bond ETF",
+    "table": "global_etf"
+   }
+  ],
+  "b695e8ea932387e0": [
+   {
+    "pd_itm_no": "SEUS.O",
+    "pd_nm": "SEI QiM US Equity Factor Allocation Active ETF",
     "table": "global_etf"
    }
   ],
@@ -36557,13 +38714,6 @@
    {
     "pd_itm_no": "WDAF.O",
     "pd_nm": "WisdomTree Asia Defense Fund",
-    "table": "global_etf"
-   }
-  ],
-  "b6af1ca8a25169e1": [
-   {
-    "pd_itm_no": "PSCW.K",
-    "pd_nm": "Pacer Swan SOS Conservative (April) ETF",
     "table": "global_etf"
    }
   ],
@@ -36903,6 +39053,13 @@
     "table": "global_etf"
    }
   ],
+  "b89db03c4dfd0eb0": [
+   {
+    "pd_itm_no": "PSMJ.K",
+    "pd_nm": "Pacer Swan SOS Moderate (July) ETF",
+    "table": "global_etf"
+   }
+  ],
   "b89f904984611346": [
    {
     "pd_itm_no": "SGLC.K",
@@ -36910,17 +39067,17 @@
     "table": "global_etf"
    }
   ],
-  "b8a0e0c832ee71a4": [
-   {
-    "pd_itm_no": "MNRS.K",
-    "pd_nm": "Grayscale Bitcoin Miners ETF",
-    "table": "global_etf"
-   }
-  ],
   "b8a29642d4b133fe": [
    {
     "pd_itm_no": "XTJL.K",
     "pd_nm": "Innovator US Equity Accelerated Plus ETF - July",
+    "table": "global_etf"
+   }
+  ],
+  "b8afe337098edff1": [
+   {
+    "pd_itm_no": "HJLY.K",
+    "pd_nm": "Corgi U.S. Equities 100% Strctrd Bffr ETF-July S",
     "table": "global_etf"
    }
   ],
@@ -37011,7 +39168,7 @@
   "b938f57db6aec418": [
    {
     "pd_itm_no": "YALL.K",
-    "pd_nm": "God Bless America ETF",
+    "pd_nm": "Truth Social God Bless America ETF",
     "table": "global_etf"
    }
   ],
@@ -37029,10 +39186,24 @@
     "table": "global_etf"
    }
   ],
+  "b95214f891860900": [
+   {
+    "pd_itm_no": "XJUL.K",
+    "pd_nm": "FT Vest US Equity Enh & Mod Buffer ETF - Jul",
+    "table": "global_etf"
+   }
+  ],
   "b953bbb05d22b73a": [
    {
     "pd_itm_no": "XLKI.K",
     "pd_nm": "State Street Tech Sel Sec SPDR Pr In ETF",
+    "table": "global_etf"
+   }
+  ],
+  "b95ca63ec15ec520": [
+   {
+    "pd_itm_no": "LOEV.K",
+    "pd_nm": "International Developed Markets Select Equity ETF",
     "table": "global_etf"
    }
   ],
@@ -37190,10 +39361,24 @@
     "table": "global_etf"
    }
   ],
+  "ba1fa726a898a69f": [
+   {
+    "pd_itm_no": "MUIB.K",
+    "pd_nm": "Direxion MU Defined Income Boost ETF",
+    "table": "global_etf"
+   }
+  ],
   "ba2d47d13bf89063": [
    {
     "pd_itm_no": "LFAJ.K",
     "pd_nm": "LifeX 2051 Longevity Income ETF",
+    "table": "global_etf"
+   }
+  ],
+  "ba2dc420d8f1745a": [
+   {
+    "pd_itm_no": "XIJN.K",
+    "pd_nm": "FT Vest US Eqty Buff & Prem Inc ETF - Jun",
     "table": "global_etf"
    }
   ],
@@ -37256,7 +39441,7 @@
   "ba73213e8774556b": [
    {
     "pd_itm_no": "VBK",
-    "pd_nm": "Vanguard Small-Cap Growth Index Fund;ETF",
+    "pd_nm": "Vanguard Morningstar Small-Cap Growth Idx Fd;ETF",
     "table": "global_etf"
    }
   ],
@@ -37264,6 +39449,13 @@
    {
     "pd_itm_no": "AMAX.K",
     "pd_nm": "Adaptive Hedged Multi-Asset Inc ETF",
+    "table": "global_etf"
+   }
+  ],
+  "ba81268fee1a4fbc": [
+   {
+    "pd_itm_no": "BNAV.K",
+    "pd_nm": "Amplify Fairlead Tactical Bitcoin ETF",
     "table": "global_etf"
    }
   ],
@@ -37292,6 +39484,13 @@
    {
     "pd_itm_no": "YMAG.K",
     "pd_nm": "YieldMax Magnificent 7 Fund of Option Income ETFs",
+    "table": "global_etf"
+   }
+  ],
+  "baa8f41e8a86aab5": [
+   {
+    "pd_itm_no": "MPIA.O",
+    "pd_nm": "m+ Nasdaq-100 Accelerator Autocall ETF",
     "table": "global_etf"
    }
   ],
@@ -37400,6 +39599,13 @@
     "table": "global_etf"
    }
   ],
+  "bb14110b5688cc85": [
+   {
+    "pd_itm_no": "KRG580000906",
+    "pd_nm": "KB증권 KB 솔랙티브 인버스 2X 금 선물 상장지수증권 제90호",
+    "table": "kr_etp"
+   }
+  ],
   "bb16a288fa5a88a4": [
    {
     "pd_itm_no": "LRNZ.K",
@@ -37425,6 +39631,13 @@
    {
     "pd_itm_no": "LDRC.K",
     "pd_nm": "iShares iBonds 1-5 Year Corporate Ladder ETF",
+    "table": "global_etf"
+   }
+  ],
+  "bb2bb056678caf90": [
+   {
+    "pd_itm_no": "PQXV.K",
+    "pd_nm": "PGIM S&P 500 Quarterly Buffer 15 ETF",
     "table": "global_etf"
    }
   ],
@@ -37484,6 +39697,13 @@
     "table": "global_etf"
    }
   ],
+  "bb571d1752714c01": [
+   {
+    "pd_itm_no": "FIXX.K",
+    "pd_nm": "Leverage Shares 2X Long FIX Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "bb5b4744bdd76e5c": [
    {
     "pd_itm_no": "PLA.O",
@@ -37503,6 +39723,13 @@
     "pd_itm_no": "KR70192L0007",
     "pd_nm": "KB RISE SK하이닉스단일종목레버리지증권상장지수투자신탁(주식-파생형)",
     "table": "kr_etp"
+   }
+  ],
+  "bb63fcc5228025bc": [
+   {
+    "pd_itm_no": "ACGO.K",
+    "pd_nm": "Hartford Alpha Capture Growth ETF",
+    "table": "global_etf"
    }
   ],
   "bb6e5000cab50e93": [
@@ -37673,11 +39900,25 @@
     "table": "kr_etp"
    }
   ],
+  "bbfcd881f7cfe2ea": [
+   {
+    "pd_itm_no": "DJUL.K",
+    "pd_nm": "FT Vest US Equity Deep Buffer ETF - July",
+    "table": "global_etf"
+   }
+  ],
   "bc0c12bd05745c2d": [
    {
     "pd_itm_no": "PLTW.K",
     "pd_nm": "Roundhill PLTR WeeklyPay ETF",
     "table": "global_etf"
+   }
+  ],
+  "bc11182c4ec31eec": [
+   {
+    "pd_itm_no": "KR7486240005",
+    "pd_nm": "대신 DAISHIN AI반도체&인프라액티브증권상장지수투자신탁[주식]",
+    "table": "kr_etp"
    }
   ],
   "bc19bed0fd232351": [
@@ -37726,6 +39967,13 @@
    {
     "pd_itm_no": "IGBH.K",
     "pd_nm": "iShares Interest Rate Hedged Long-Term Corp Bd",
+    "table": "global_etf"
+   }
+  ],
+  "bc51acde664e9411": [
+   {
+    "pd_itm_no": "PSCW.K",
+    "pd_nm": "Pacer Swan SOS Conservative (April) ETF",
     "table": "global_etf"
    }
   ],
@@ -37883,6 +40131,13 @@
     "table": "global_etf"
    }
   ],
+  "bd503da9c085bb5c": [
+   {
+    "pd_itm_no": "XIGV.K",
+    "pd_nm": "Defiance US 100 Tech Ex Software ETF",
+    "table": "global_etf"
+   }
+  ],
   "bd5903a56573347d": [
    {
     "pd_itm_no": "KRG500000994",
@@ -38002,6 +40257,13 @@
     "table": "global_etf"
    }
   ],
+  "bde57511052cdf20": [
+   {
+    "pd_itm_no": "UUUC.K",
+    "pd_nm": "Corgi UUUU 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "bdee9074e0559828": [
    {
     "pd_itm_no": "FMHI.O",
@@ -38110,7 +40372,7 @@
   "be39030b3620a416": [
    {
     "pd_itm_no": "QLVD.K",
-    "pd_nm": "FlexShares Dev Mkts ex-US Ql Low Volatility Idx Fd",
+    "pd_nm": "Northern Trust Developed Mkt exUS Qlty Lw Vlty ETF",
     "table": "global_etf"
    }
   ],
@@ -38126,6 +40388,13 @@
     "pd_itm_no": "KRG500000762",
     "pd_nm": "신한투자증권 신한 S&P500 VIX S/T 선물 상장지수증권 D 제76호",
     "table": "kr_etp"
+   }
+  ],
+  "be4933bb550581fc": [
+   {
+    "pd_itm_no": "CRWC.K",
+    "pd_nm": "Corgi CRWD 2x Daily ETF",
+    "table": "global_etf"
    }
   ],
   "be52526dc60aa511": [
@@ -38541,6 +40810,13 @@
     "table": "kr_etp"
    }
   ],
+  "c04ab20188b40000": [
+   {
+    "pd_itm_no": "MPIM.K",
+    "pd_nm": "m+ Income Momentum Autocall ETF",
+    "table": "global_etf"
+   }
+  ],
   "c04f4539181218a8": [
    {
     "pd_itm_no": "OGIG.K",
@@ -38552,6 +40828,13 @@
    {
     "pd_itm_no": "AWEG.K",
     "pd_nm": "Alger Weatherbie Enduring Growth ETF",
+    "table": "global_etf"
+   }
+  ],
+  "c0756e82502dbd16": [
+   {
+    "pd_itm_no": "BAGX.K",
+    "pd_nm": "EA Bridgeway Aggressive Investors ETF",
     "table": "global_etf"
    }
   ],
@@ -38660,6 +40943,13 @@
     "table": "global_etf"
    }
   ],
+  "c0d9a940135bf89e": [
+   {
+    "pd_itm_no": "DRAL.K",
+    "pd_nm": "Defiance Daily Target 2X Long DRAM ETF",
+    "table": "global_etf"
+   }
+  ],
   "c0e3b49f023ca2a3": [
    {
     "pd_itm_no": "BSEP.K",
@@ -38670,7 +40960,7 @@
   "c0e56994ef9f5c88": [
    {
     "pd_itm_no": "TILT.K",
-    "pd_nm": "FlexShares Morningstar US Market Factor Tilt Index",
+    "pd_nm": "Northern Trust Morningstar US Mrkt Factor Tilt ETF",
     "table": "global_etf"
    }
   ],
@@ -38723,6 +41013,13 @@
     "table": "kr_etp"
    }
   ],
+  "c126e15f58f75832": [
+   {
+    "pd_itm_no": "KR70207Z0004",
+    "pd_nm": "키움 KIWOOM 미국우주데이터센터인프라증권상장지수투자신탁[주식]",
+    "table": "kr_etp"
+   }
+  ],
   "c1279484fad782c3": [
    {
     "pd_itm_no": "TSLS.O",
@@ -38733,7 +41030,7 @@
   "c130900354b183cc": [
    {
     "pd_itm_no": "RVNU.K",
-    "pd_nm": "Xtrackers Municipal Infr Revenue Bd ETF",
+    "pd_nm": "Xtrackers Municipal Infr Rev Bd ETF",
     "table": "global_etf"
    }
   ],
@@ -38763,6 +41060,13 @@
     "pd_itm_no": "KRG532400311",
     "pd_nm": "삼성증권 삼성 레버리지 WTI원유 선물 상장지수증권 제31호",
     "table": "kr_etp"
+   }
+  ],
+  "c15ada402e11f553": [
+   {
+    "pd_itm_no": "FUSD.K",
+    "pd_nm": "Federated Hermes Ultrashort Bond ETF",
+    "table": "global_etf"
    }
   ],
   "c16abcc97768a482": [
@@ -38867,13 +41171,6 @@
    {
     "pd_itm_no": "USAF.O",
     "pd_nm": "Atlas America Fund",
-    "table": "global_etf"
-   }
-  ],
-  "c1d7aa3f723f88a5": [
-   {
-    "pd_itm_no": "JFLX.K",
-    "pd_nm": "JPMorgan Flexible Debt ETF",
     "table": "global_etf"
    }
   ],
@@ -39003,6 +41300,13 @@
     "table": "global_etf"
    }
   ],
+  "c2412500014a244f": [
+   {
+    "pd_itm_no": "PJIO.K",
+    "pd_nm": "PGIM Jennison Focused International Equity ETF",
+    "table": "global_etf"
+   }
+  ],
   "c24d59c8bce158f4": [
    {
     "pd_itm_no": "KRG760000163",
@@ -39098,6 +41402,18 @@
    {
     "pd_itm_no": "INTF.K",
     "pd_nm": "iShares International Equity Factor ETF",
+    "table": "global_etf"
+   }
+  ],
+  "c2f27530daff7b0f": [
+   {
+    "pd_itm_no": "HAUG.K",
+    "pd_nm": "Corgi U.S. Equities 30% Strctrd Bffr ETF - Aug S",
+    "table": "global_etf"
+   },
+   {
+    "pd_itm_no": "CTAU.K",
+    "pd_nm": "Corgi U.S. Equities 30% Strctrd Bffr ETF - Aug S",
     "table": "global_etf"
    }
   ],
@@ -39227,6 +41543,13 @@
     "table": "kr_etp"
    }
   ],
+  "c3adab182d1cef46": [
+   {
+    "pd_itm_no": "KRG610001056",
+    "pd_nm": "메리츠증권 메리츠 레버리지 국채30년 상장지수증권 B 제105호",
+    "table": "kr_etp"
+   }
+  ],
   "c3cc48307017245e": [
    {
     "pd_itm_no": "TLTP.K",
@@ -39260,6 +41583,13 @@
     "pd_itm_no": "QMY",
     "pd_nm": "Corgi Grwth & Tchnlgy 10% SB ETF- May S",
     "table": "global_etf"
+   }
+  ],
+  "c3df6ee3e2b3b424": [
+   {
+    "pd_itm_no": "KR70220A0006",
+    "pd_nm": "키움 KIWOOM 현대차그룹TOP3채권혼합50증권상장지수투자신탁[채권혼합]",
+    "table": "kr_etp"
    }
   ],
   "c3e07e0a1dafa992": [
@@ -39406,6 +41736,13 @@
    {
     "pd_itm_no": "WYFL.K",
     "pd_nm": "Defiance Daily Target 2X Long WYFI ETF",
+    "table": "global_etf"
+   }
+  ],
+  "c499084b06f989f7": [
+   {
+    "pd_itm_no": "CIR",
+    "pd_nm": "Corgi CRCL 2x Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -39563,6 +41900,13 @@
     "table": "global_etf"
    }
   ],
+  "c56c0c26ed73a4c1": [
+   {
+    "pd_itm_no": "SKHA.K",
+    "pd_nm": "Tradr 2X Long SK Hynix Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "c56ff192d4972847": [
    {
     "pd_itm_no": "TOAK.K",
@@ -39598,22 +41942,15 @@
     "table": "global_etf"
    }
   ],
-  "c581a3a1321080a2": [
-   {
-    "pd_itm_no": "PJIO.K",
-    "pd_nm": "PGIM Jennison International Opportunities ETF",
-    "table": "global_etf"
-   }
-  ],
   "c58716adba5aec91": [
-   {
-    "pd_itm_no": "GPT.O",
-    "pd_nm": "Intelligent Alpha Atlas ETF",
-    "table": "global_etf"
-   },
    {
     "pd_itm_no": "LIVR.O",
     "pd_nm": "Intelligent Livermore ETF",
+    "table": "global_etf"
+   },
+   {
+    "pd_itm_no": "GPT.O",
+    "pd_nm": "Intelligent Alpha Atlas ETF",
     "table": "global_etf"
    }
   ],
@@ -39677,6 +42014,13 @@
    {
     "pd_itm_no": "FNDC.K",
     "pd_nm": "Schwab Fundamental Intl Small Equity ETF",
+    "table": "global_etf"
+   }
+  ],
+  "c5bf3e61d4126f97": [
+   {
+    "pd_itm_no": "AEHG.K",
+    "pd_nm": "Leverage Shares 2X Long AEHR Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -39747,6 +42091,13 @@
    {
     "pd_itm_no": "EWZ",
     "pd_nm": "iShares MSCI Brazil ETF",
+    "table": "global_etf"
+   }
+  ],
+  "c60f60aee8c63576": [
+   {
+    "pd_itm_no": "JFLX.K",
+    "pd_nm": "JPMorgan Flexible Debt ETF",
     "table": "global_etf"
    }
   ],
@@ -39946,6 +42297,13 @@
     "table": "global_etf"
    }
   ],
+  "c70e38b721844eea": [
+   {
+    "pd_itm_no": "MHX",
+    "pd_nm": "Corgi MARA 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "c710f0b6a63e1629": [
    {
     "pd_itm_no": "EPV",
@@ -39964,6 +42322,20 @@
    {
     "pd_itm_no": "FLJH.K",
     "pd_nm": "Franklin FTSE Japan Hedged ETF",
+    "table": "global_etf"
+   }
+  ],
+  "c717fa567186ef2c": [
+   {
+    "pd_itm_no": "JCAL.K",
+    "pd_nm": "JPMorgan California Tax Free Bond ETF",
+    "table": "global_etf"
+   }
+  ],
+  "c71b7d555e3a41c5": [
+   {
+    "pd_itm_no": "HWIV.O",
+    "pd_nm": "Hotchkis & Wiley International Value Fund;ETF",
     "table": "global_etf"
    }
   ],
@@ -40030,6 +42402,13 @@
     "table": "global_etf"
    }
   ],
+  "c78c147c861a063f": [
+   {
+    "pd_itm_no": "DEPW.K",
+    "pd_nm": "Google DeepMind AI Lab Ecosystem ETF",
+    "table": "global_etf"
+   }
+  ],
   "c7908b9e97b796cb": [
    {
     "pd_itm_no": "COII.K",
@@ -40091,6 +42470,13 @@
     "pd_itm_no": "XBI",
     "pd_nm": "State Street SPDR S&P Biotech ETF",
     "table": "global_etf"
+   }
+  ],
+  "c7ebd5ae5d04e82d": [
+   {
+    "pd_itm_no": "KR70219Z0000",
+    "pd_nm": "NH-Amundi HANARO 미국S&P500액티브 증권상장지수투자신탁(주식)",
+    "table": "kr_etp"
    }
   ],
   "c7ec077ada4a4385": [
@@ -40156,6 +42542,13 @@
     "table": "kr_etp"
    }
   ],
+  "c839597679798a41": [
+   {
+    "pd_itm_no": "FSPC.K",
+    "pd_nm": "First Trust Bloomberg Space Economy ETF",
+    "table": "global_etf"
+   }
+  ],
   "c83adcf21766a20b": [
    {
     "pd_itm_no": "PBDE.K",
@@ -40210,13 +42603,6 @@
     "pd_itm_no": "KRG502100206",
     "pd_nm": "신한투자증권 신한 레버리지 다우존스지수 선물 상장지수증권(H) 제20호",
     "table": "kr_etp"
-   }
-  ],
-  "c895f1aa752af753": [
-   {
-    "pd_itm_no": "JAJL.K",
-    "pd_nm": "Innovator Equity Defined Protctn ETF 6 Mo Jan/Jul",
-    "table": "global_etf"
    }
   ],
   "c8a043b4a8c0ab81": [
@@ -40380,6 +42766,13 @@
     "table": "global_etf"
    }
   ],
+  "c973298abec7932e": [
+   {
+    "pd_itm_no": "KR70210E0004",
+    "pd_nm": "한화 PLUS 200커버드콜액티브증권상장지수투자신탁(주식-파생형)",
+    "table": "kr_etp"
+   }
+  ],
   "c98a26e26b1a3ca3": [
    {
     "pd_itm_no": "SEMG.K",
@@ -40434,6 +42827,13 @@
     "table": "kr_etp"
    }
   ],
+  "c9b904a9c41bf1eb": [
+   {
+    "pd_itm_no": "AIX.O",
+    "pd_nm": "Defiance US 100 Tech AI Moat ETF",
+    "table": "global_etf"
+   }
+  ],
   "c9ba4e8d8411b7e2": [
    {
     "pd_itm_no": "IPAC.K",
@@ -40445,13 +42845,6 @@
    {
     "pd_itm_no": "LIFT.K",
     "pd_nm": "LifeX 2028 Income Bucket ETF",
-    "table": "global_etf"
-   }
-  ],
-  "c9d019444428daca": [
-   {
-    "pd_itm_no": "DJUL.K",
-    "pd_nm": "FT Vest US Equity Deep Buffer ETF - July",
     "table": "global_etf"
    }
   ],
@@ -40479,7 +42872,7 @@
   "c9d9ece5040b5ec2": [
    {
     "pd_itm_no": "VV",
-    "pd_nm": "Vanguard Large-Cap Index Fund;ETF",
+    "pd_nm": "Vanguard Morningstar Large-Cap Index Fund;ETF",
     "table": "global_etf"
    }
   ],
@@ -40549,7 +42942,7 @@
   "ca27f5b4125db8eb": [
    {
     "pd_itm_no": "ESG",
-    "pd_nm": "FlexShares STOXX US ESG Select Index Fund",
+    "pd_nm": "Northern Trust STOXX US ESG Select ETF",
     "table": "global_etf"
    }
   ],
@@ -40584,7 +42977,7 @@
   "ca4d5b51a0489a37": [
    {
     "pd_itm_no": "MGK",
-    "pd_nm": "Vanguard Mega Cap Growth Index Fund;ETF",
+    "pd_nm": "Vanguard Morningstar Mega Cap Growth Index Fd;ETF",
     "table": "global_etf"
    }
   ],
@@ -40593,6 +42986,13 @@
     "pd_itm_no": "MVAL.K",
     "pd_nm": "VanEck Morningstar Wide Moat Value ETF",
     "table": "global_etf"
+   }
+  ],
+  "ca756a6503bbf2ae": [
+   {
+    "pd_itm_no": "KR70226D0007",
+    "pd_nm": "브이아이 FOCUS 금융반도체지주채권혼합50액티브증권상장지수투자신탁[채권혼합]",
+    "table": "kr_etp"
    }
   ],
   "ca88105565d5930d": [
@@ -40686,6 +43086,13 @@
     "table": "kr_etp"
    }
   ],
+  "cb1122c6d4e2f99c": [
+   {
+    "pd_itm_no": "SMHC.O",
+    "pd_nm": "VanEck China Semiconductor ETF",
+    "table": "global_etf"
+   }
+  ],
   "cb12e4fba033463f": [
    {
     "pd_itm_no": "KR7479850000",
@@ -40714,9 +43121,21 @@
     "table": "global_etf"
    }
   ],
+  "cb26e068a4e81df4": [
+   {
+    "pd_itm_no": "LOFF.K",
+    "pd_nm": "Direxion Daily SpaceX Bull 2X ETF",
+    "table": "global_etf"
+   }
+  ],
   "cb294a2d986ab0f3": [
    {
     "pd_itm_no": "GEOA.K",
+    "pd_nm": "WisdomTree GeoAlpha Opportunities Fund",
+    "table": "global_etf"
+   },
+   {
+    "pd_itm_no": "OPPG.K",
     "pd_nm": "WisdomTree GeoAlpha Opportunities Fund",
     "table": "global_etf"
    }
@@ -40770,6 +43189,13 @@
     "table": "kr_etp"
    }
   ],
+  "cb7de4a4a77e246b": [
+   {
+    "pd_itm_no": "KR70218J0001",
+    "pd_nm": "KB RISE 미국우주&로봇TOP2미국채혼합50증권상장지수투자신탁(채권혼합-재간접형)",
+    "table": "kr_etp"
+   }
+  ],
   "cba5eed93e7300d7": [
    {
     "pd_itm_no": "IBDR.K",
@@ -40784,10 +43210,24 @@
     "table": "global_etf"
    }
   ],
+  "cbc573f569169578": [
+   {
+    "pd_itm_no": "LASC.K",
+    "pd_nm": "Corgi LASR 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "cbcd85f50d6c8c63": [
    {
     "pd_itm_no": "CBOL.K",
     "pd_nm": "Calamos Laddered Bitcoin Structured Alt Protcn ETF",
+    "table": "global_etf"
+   }
+  ],
+  "cbd1d98a5105325c": [
+   {
+    "pd_itm_no": "AMKX.K",
+    "pd_nm": "Corgi AMKR 2x Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -40836,7 +43276,7 @@
   "cc399f5f26058481": [
    {
     "pd_itm_no": "QTUP.K",
-    "pd_nm": "Defiance Long Pure Quantum ETF",
+    "pd_nm": "Defiance Pure Quantum ETF",
     "table": "global_etf"
    }
   ],
@@ -41015,10 +43455,24 @@
     "table": "global_etf"
    }
   ],
+  "ccdd52f9c6f3ed6f": [
+   {
+    "pd_itm_no": "SCJL.K",
+    "pd_nm": "Corgi U.S. Small-Cap 15% Structured Bffr ETF-Jul S",
+    "table": "global_etf"
+   }
+  ],
   "ccdd6e60b33ab303": [
    {
     "pd_itm_no": "SPTL.K",
     "pd_nm": "State Street SPDR Portfolio Long Term Treasury ETF",
+    "table": "global_etf"
+   }
+  ],
+  "cce4b873fde60d75": [
+   {
+    "pd_itm_no": "ACLZ.K",
+    "pd_nm": "Corgi ACLS 2x Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -41106,13 +43560,6 @@
     "table": "global_etf"
    }
   ],
-  "cd2e4988b6f10c42": [
-   {
-    "pd_itm_no": "PSMO.K",
-    "pd_nm": "Pacer Swan SOS Moderate (October) ETF",
-    "table": "global_etf"
-   }
-  ],
   "cd3dc552293d3304": [
    {
     "pd_itm_no": "KR7139240006",
@@ -41131,6 +43578,13 @@
    {
     "pd_itm_no": "PIEQ.K",
     "pd_nm": "Principal International Equity ETF",
+    "table": "global_etf"
+   }
+  ],
+  "cd45c63ef710bcff": [
+   {
+    "pd_itm_no": "PMTL.K",
+    "pd_nm": "First Trust Indxx Quality Precious Metals Mnrs ETF",
     "table": "global_etf"
    }
   ],
@@ -41174,6 +43628,18 @@
     "pd_itm_no": "KRG610000850",
     "pd_nm": "메리츠증권 메리츠 레버리지 미국채30년 스트립 상장지수증권(H) 제85호",
     "table": "kr_etp"
+   }
+  ],
+  "cd92ec4932bdd2f8": [
+   {
+    "pd_itm_no": "SPCZ.K",
+    "pd_nm": "RiverNorth Market Neutral ETF",
+    "table": "global_etf"
+   },
+   {
+    "pd_itm_no": "RNMN.K",
+    "pd_nm": "RiverNorth Market Neutral ETF",
+    "table": "global_etf"
    }
   ],
   "cd95fc00cfcd9467": [
@@ -41267,6 +43733,13 @@
     "table": "kr_etp"
    }
   ],
+  "cdf15e24e2fd4877": [
+   {
+    "pd_itm_no": "CJUL.K",
+    "pd_nm": "Corgi US Equities 15% Structured Bffr ETF - July S",
+    "table": "global_etf"
+   }
+  ],
   "cdfac8f3ddab0456": [
    {
     "pd_itm_no": "KR7463680009",
@@ -41276,13 +43749,13 @@
   ],
   "ce066b3f5f793e16": [
    {
-    "pd_itm_no": "SCO",
-    "pd_nm": "ProShares UltraShort Bloomberg Crude Oil",
+    "pd_itm_no": "YCS",
+    "pd_nm": "ProShares UltraShort Yen",
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "YCS",
-    "pd_nm": "ProShares UltraShort Yen",
+    "pd_itm_no": "SCO",
+    "pd_nm": "ProShares UltraShort Bloomberg Crude Oil",
     "table": "global_etf"
    },
    {
@@ -41302,6 +43775,13 @@
    {
     "pd_itm_no": "RSPR.K",
     "pd_nm": "Invesco S&P 500 Equal Weight Real Estate ETF",
+    "table": "global_etf"
+   }
+  ],
+  "ce239ad31dfac8a9": [
+   {
+    "pd_itm_no": "SMCP.K",
+    "pd_nm": "SMART Mid Cap ETF",
     "table": "global_etf"
    }
   ],
@@ -41473,6 +43953,13 @@
     "table": "global_etf"
    }
   ],
+  "cef3541ef458273d": [
+   {
+    "pd_itm_no": "PSFJ.K",
+    "pd_nm": "Pacer Swan SOS Flex (July) ETF",
+    "table": "global_etf"
+   }
+  ],
   "cef3fa276a605f7f": [
    {
     "pd_itm_no": "TOV",
@@ -41518,7 +44005,7 @@
   "cf79e61522c7c639": [
    {
     "pd_itm_no": "MBSD.K",
-    "pd_nm": "FlexShares Disciplined Duration MBS Index Fund",
+    "pd_nm": "Northern Trust Disciplined Duration MBS ETF",
     "table": "global_etf"
    }
   ],
@@ -41569,6 +44056,13 @@
     "pd_itm_no": "KR7451150007",
     "pd_nm": "에셋플러스 에셋플러스 글로벌영에이지액티브증권상장지수투자신탁(주식)",
     "table": "kr_etp"
+   }
+  ],
+  "cfd6d21c00a639fe": [
+   {
+    "pd_itm_no": "PENU.K",
+    "pd_nm": "T-REX 2X Long PENG Daily Target ETF",
+    "table": "global_etf"
    }
   ],
   "cfe13c45e69fcd29": [
@@ -41697,6 +44191,13 @@
     "table": "global_etf"
    }
   ],
+  "d065e60bc82095a3": [
+   {
+    "pd_itm_no": "AMAA.K",
+    "pd_nm": "Corgi AMZN 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "d07aec51a01bcbe8": [
    {
     "pd_itm_no": "KR7143860005",
@@ -41723,6 +44224,13 @@
     "pd_itm_no": "CRDT.K",
     "pd_nm": "Simplify Opportunistic Income ETF",
     "table": "global_etf"
+   }
+  ],
+  "d09571e64c26b102": [
+   {
+    "pd_itm_no": "KR70208N0007",
+    "pd_nm": "IBK IBK 코스피액티브증권상장지수투자신탁[주식]",
+    "table": "kr_etp"
    }
   ],
   "d0ac8540a5de80d2": [
@@ -41806,6 +44314,13 @@
    {
     "pd_itm_no": "KRG610000553",
     "pd_nm": "메리츠증권 메리츠 3X 레버리지 국채3년 상장지수증권 제55호",
+    "table": "kr_etp"
+   }
+  ],
+  "d0f4193aaf2b4100": [
+   {
+    "pd_itm_no": "KR70215T0002",
+    "pd_nm": "NH-Amundi HANARO 미국AI광통신TOP10증권상장지수투자신탁(주식)",
     "table": "kr_etp"
    }
   ],
@@ -41956,6 +44471,13 @@
     "table": "global_etf"
    }
   ],
+  "d1c4ea0f61bf7e47": [
+   {
+    "pd_itm_no": "APHG.K",
+    "pd_nm": "Leverage Shares 2X Long APH Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "d1ccd17479dcd364": [
    {
     "pd_itm_no": "VFMV.K",
@@ -41973,19 +44495,19 @@
   "d1f7c418afd8485b": [
    {
     "pd_itm_no": "CAIE.K",
-    "pd_nm": "Calamos Autocallable Inc",
+    "pd_nm": "Calamos Autocallable Income ETF",
     "table": "global_etf"
    }
   ],
   "d21c16b556827824": [
    {
-    "pd_itm_no": "GBXC.K",
-    "pd_nm": "Goldman Sachs US Large Cap Buffer 3 ETF",
+    "pd_itm_no": "GBXB.K",
+    "pd_nm": "Goldman Sachs US Large Cap Buffer 2 ETF",
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "GBXB.K",
-    "pd_nm": "Goldman Sachs US Large Cap Buffer 2 ETF",
+    "pd_itm_no": "GBXC.K",
+    "pd_nm": "Goldman Sachs US Large Cap Buffer 3 ETF",
     "table": "global_etf"
    }
   ],
@@ -42066,13 +44588,6 @@
     "table": "kr_etp"
    }
   ],
-  "d2ae63ccffa62b23": [
-   {
-    "pd_itm_no": "SSCP.K",
-    "pd_nm": "SMART Small Cap ETF",
-    "table": "global_etf"
-   }
-  ],
   "d2af456f6b10a235": [
    {
     "pd_itm_no": "RKTL.K",
@@ -42125,7 +44640,7 @@
   "d2da17a302e87f33": [
    {
     "pd_itm_no": "FEUS.K",
-    "pd_nm": "FlexShares ESG & Climate US Large Cap Core Index",
+    "pd_nm": "Northern Trust ESG & Climate US Large Cap Core ETF",
     "table": "global_etf"
    }
   ],
@@ -42195,6 +44710,11 @@
   "d34034d63a166e20": [
    {
     "pd_itm_no": "GLDY.O",
+    "pd_nm": "Defiance Gold Enhanced Options Income ETF",
+    "table": "global_etf"
+   },
+   {
+    "pd_itm_no": "GOLI.O",
     "pd_nm": "Defiance Gold Enhanced Options Income ETF",
     "table": "global_etf"
    }
@@ -42325,6 +44845,13 @@
     "table": "kr_etp"
    }
   ],
+  "d390da37011fe038": [
+   {
+    "pd_itm_no": "ARMS.K",
+    "pd_nm": "Aristotle Multi-Sector Income ETF",
+    "table": "global_etf"
+   }
+  ],
   "d398e93b6afd2bc6": [
    {
     "pd_itm_no": "KRG580000179",
@@ -42402,13 +44929,6 @@
     "table": "kr_etp"
    }
   ],
-  "d3c265a6fa7bd235": [
-   {
-    "pd_itm_no": "OSCX.O",
-    "pd_nm": "Defiance Daily Target 2X Long OSCR ETF",
-    "table": "global_etf"
-   }
-  ],
   "d3d1d69ff5cb7963": [
    {
     "pd_itm_no": "BLST.K",
@@ -42430,13 +44950,6 @@
     "table": "global_etf"
    }
   ],
-  "d3db2c990b368530": [
-   {
-    "pd_itm_no": "RSJN.K",
-    "pd_nm": "FT Vest US Eqty Equal Weight Buff - Jun",
-    "table": "global_etf"
-   }
-  ],
   "d3df1c17bcec6b89": [
    {
     "pd_itm_no": "KRG610000355",
@@ -42455,6 +44968,13 @@
    {
     "pd_itm_no": "ILTB.K",
     "pd_nm": "iShares Core 10+ Year USD Bond ETF",
+    "table": "global_etf"
+   }
+  ],
+  "d3e6a1868b77fd89": [
+   {
+    "pd_itm_no": "RGTC.K",
+    "pd_nm": "Corgi RGTI 2x Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -42493,6 +45013,13 @@
     "table": "global_etf"
    }
   ],
+  "d403873b1c8c2002": [
+   {
+    "pd_itm_no": "ECHX.O",
+    "pd_nm": "Leverage Shares 2X Long ECHO Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "d4075c1b1c3af242": [
    {
     "pd_itm_no": "FELC.K",
@@ -42517,7 +45044,7 @@
   "d4190039f3348405": [
    {
     "pd_itm_no": "HYGV.K",
-    "pd_nm": "FlexShares High Yield Value-Scored Bond Index Fund",
+    "pd_nm": "Northern Trust High Yield Value-Scored Bond ETF",
     "table": "global_etf"
    }
   ],
@@ -42526,6 +45053,13 @@
     "pd_itm_no": "KR7448490003",
     "pd_nm": "NH-Amundi HANARO 32-10 국고채액티브증권상장지수투자신탁(채권)",
     "table": "kr_etp"
+   }
+  ],
+  "d425d097142b31c8": [
+   {
+    "pd_itm_no": "LSCP.K",
+    "pd_nm": "Natixis Loomis Sayles Dynamic Core Plus ETF",
+    "table": "global_etf"
    }
   ],
   "d42f5bc1f3f3bd0f": [
@@ -42560,13 +45094,6 @@
    {
     "pd_itm_no": "EEMS.K",
     "pd_nm": "iShares MSCI Emerging Markets Small-Cap ETF",
-    "table": "global_etf"
-   }
-  ],
-  "d475ba8769b48d22": [
-   {
-    "pd_itm_no": "KSTR.K",
-    "pd_nm": "KraneShares SSE STAR Market 50 Index ETF",
     "table": "global_etf"
    }
   ],
@@ -42659,13 +45186,6 @@
     "pd_itm_no": "KR7413930009",
     "pd_nm": "우리 WON AI ESG액티브증권상장지수투자신탁(주식)",
     "table": "kr_etp"
-   }
-  ],
-  "d4e2df25a6a44f25": [
-   {
-    "pd_itm_no": "MPL",
-    "pd_nm": "Defiance Daily Target 2X Long MP ETF",
-    "table": "global_etf"
    }
   ],
   "d4f304cd829bf54a": [
@@ -42941,6 +45461,13 @@
     "table": "global_etf"
    }
   ],
+  "d649838b2a0edfda": [
+   {
+    "pd_itm_no": "PINC.K",
+    "pd_nm": "PGIM Securitized Income ETF",
+    "table": "global_etf"
+   }
+  ],
   "d64bbec32c57f87a": [
    {
     "pd_itm_no": "RSSL.K",
@@ -43030,6 +45557,13 @@
     "pd_itm_no": "KR7419430004",
     "pd_nm": "삼성 KODEX 차이나2차전지MSCI증권상장지수투자신탁[주식-파생형](합성)",
     "table": "kr_etp"
+   }
+  ],
+  "d69a287d6ed4d341": [
+   {
+    "pd_itm_no": "KOID.O",
+    "pd_nm": "KraneShares Global Hmnd Rbtcs & Physcl AI Idx ETF",
+    "table": "global_etf"
    }
   ],
   "d6a6b76079f569ab": [
@@ -43494,6 +46028,13 @@
     "table": "global_etf"
    }
   ],
+  "d9019aa53317391d": [
+   {
+    "pd_itm_no": "XQTM.K",
+    "pd_nm": "Corgi Quantum Computing 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "d9082380bdd8d89d": [
    {
     "pd_itm_no": "PSL.O",
@@ -43529,10 +46070,24 @@
     "table": "global_etf"
    }
   ],
+  "d90fd93b8f963859": [
+   {
+    "pd_itm_no": "SK",
+    "pd_nm": "Corgi SK hynix 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "d918a4613b73ca9f": [
    {
     "pd_itm_no": "CANE.K",
     "pd_nm": "Teucrium Sugar Fund",
+    "table": "global_etf"
+   }
+  ],
+  "d91da39417ec6009": [
+   {
+    "pd_itm_no": "SSCP.K",
+    "pd_nm": "SMART Small Cap ETF",
     "table": "global_etf"
    }
   ],
@@ -43554,6 +46109,13 @@
    {
     "pd_itm_no": "BRF",
     "pd_nm": "VanEck Brazil Small-Cap ETF",
+    "table": "global_etf"
+   }
+  ],
+  "d930589169243515": [
+   {
+    "pd_itm_no": "ARKY.K",
+    "pd_nm": "ARK Active Autocallable Income ETF",
     "table": "global_etf"
    }
   ],
@@ -43596,6 +46158,13 @@
    {
     "pd_itm_no": "TECL.K",
     "pd_nm": "Direxion Daily Technology Bull 3X ETF",
+    "table": "global_etf"
+   }
+  ],
+  "d95802666320d872": [
+   {
+    "pd_itm_no": "QNTU.K",
+    "pd_nm": "Tradr 2X Long QNT Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -43786,6 +46355,13 @@
     "pd_itm_no": "CMDT.K",
     "pd_nm": "PIMCO Commodity Strategy Active ETF",
     "table": "global_etf"
+   }
+  ],
+  "da2c9d4676df2653": [
+   {
+    "pd_itm_no": "KR70193M0005",
+    "pd_nm": "BNK BNK 27-12 특수채(AAA이상)액티브증권상장지수투자신탁(채권)",
+    "table": "kr_etp"
    }
   ],
   "da3488396741ba58": [
@@ -44075,6 +46651,13 @@
     "table": "global_etf"
    }
   ],
+  "dbbafed7698b2b86": [
+   {
+    "pd_itm_no": "KR70219B0008",
+    "pd_nm": "삼성액티브 KoAct 광통신&위성네트워크액티브증권상장지수투자신탁[주식]",
+    "table": "kr_etp"
+   }
+  ],
   "dbbb2ed72daf5dfc": [
    {
     "pd_itm_no": "KR7238670004",
@@ -44103,6 +46686,13 @@
     "table": "global_etf"
    }
   ],
+  "dbca833875473eba": [
+   {
+    "pd_itm_no": "MTAW.K",
+    "pd_nm": "Meta AI Lab Ecosystem ETF",
+    "table": "global_etf"
+   }
+  ],
   "dbcc9fd95f8126ff": [
    {
     "pd_itm_no": "FAAA.O",
@@ -44121,6 +46711,13 @@
    {
     "pd_itm_no": "TYYY.K",
     "pd_nm": "xETFs TSLA Daily Income ETF",
+    "table": "global_etf"
+   }
+  ],
+  "dbd51b2507dd9f06": [
+   {
+    "pd_itm_no": "HLTH.O",
+    "pd_nm": "Tema Healthcare AI ETF",
     "table": "global_etf"
    }
   ],
@@ -44152,6 +46749,13 @@
     "table": "kr_etp"
    }
   ],
+  "dc03618a4a6bc705": [
+   {
+    "pd_itm_no": "KR70214M0000",
+    "pd_nm": "마이다스 MIDAS 바이오헬스케어액티브증권상장지수투자신탁(주식)",
+    "table": "kr_etp"
+   }
+  ],
   "dc07e528f5f2ab8e": [
    {
     "pd_itm_no": "KR70051G0004",
@@ -44169,7 +46773,7 @@
   "dc0f63ba8c20e787": [
    {
     "pd_itm_no": "BSR",
-    "pd_nm": "Beacon Selective Risk ETF",
+    "pd_nm": "Beacon Unified Catalyst ETF",
     "table": "global_etf"
    }
   ],
@@ -44278,13 +46882,6 @@
     "table": "global_etf"
    }
   ],
-  "dc921409c5338744": [
-   {
-    "pd_itm_no": "XJUL.K",
-    "pd_nm": "FT Vest US Equity Enh & Mod Buffer ETF - Jul",
-    "table": "global_etf"
-   }
-  ],
   "dc9b48399a2860f6": [
    {
     "pd_itm_no": "EPP",
@@ -44311,6 +46908,13 @@
     "pd_itm_no": "KR7150460004",
     "pd_nm": "미래에셋 TIGER 중국소비테마 증권상장지수투자신탁(주식)",
     "table": "kr_etp"
+   }
+  ],
+  "dcad4a785aab5425": [
+   {
+    "pd_itm_no": "LQ.O",
+    "pd_nm": "Simplify Tax Aware Alternatives ETF",
+    "table": "global_etf"
    }
   ],
   "dcb0850c8ec51c9c": [
@@ -44467,6 +47071,13 @@
     "table": "global_etf"
    }
   ],
+  "dd7b4c2942738c6d": [
+   {
+    "pd_itm_no": "AJUL.K",
+    "pd_nm": "Innovator Eqty Dfined Protctn ETF 2 Y to July 2028",
+    "table": "global_etf"
+   }
+  ],
   "dd7e8651d414fa25": [
    {
     "pd_itm_no": "HTAB.K",
@@ -44523,6 +47134,13 @@
     "table": "global_etf"
    }
   ],
+  "ddbe2403f7b60cc9": [
+   {
+    "pd_itm_no": "PSFM.K",
+    "pd_nm": "Pacer Swan SOS Flex (April) ETF",
+    "table": "global_etf"
+   }
+  ],
   "ddc5c9a6a4f64b26": [
    {
     "pd_itm_no": "KRG532400626",
@@ -44574,12 +47192,12 @@
   ],
   "ddf165e634115aea": [
    {
-    "pd_itm_no": "LVDS.K",
+    "pd_itm_no": "LVDS.O",
     "pd_nm": "JPMorgan Fundamental Data Science Large Value ETF",
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "LVDS.O",
+    "pd_itm_no": "LVDS.K",
     "pd_nm": "JPMorgan Fundamental Data Science Large Value ETF",
     "table": "global_etf"
    }
@@ -44605,11 +47223,25 @@
     "table": "global_etf"
    }
   ],
+  "ddf69cac8941127b": [
+   {
+    "pd_itm_no": "WDCC.K",
+    "pd_nm": "Corgi WDC 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "ddfb127af46236f5": [
    {
     "pd_itm_no": "KR7287180004",
     "pd_nm": "한화 PLUS 미국나스닥테크증권상장지수투자신탁(주식)",
     "table": "kr_etp"
+   }
+  ],
+  "de03b17cf12ba330": [
+   {
+    "pd_itm_no": "BRKL.K",
+    "pd_nm": "Corgi BRKB 2x Daily ETF",
+    "table": "global_etf"
    }
   ],
   "de1997436dc1097a": [
@@ -44675,6 +47307,13 @@
     "table": "global_etf"
    }
   ],
+  "de6cd1d37ff039aa": [
+   {
+    "pd_itm_no": "UXJL.K",
+    "pd_nm": "FT Vest US Equity Uncapped Accelerator ETF - July",
+    "table": "global_etf"
+   }
+  ],
   "de6cd5be52ab7628": [
    {
     "pd_itm_no": "PMMF.K",
@@ -44687,6 +47326,13 @@
     "pd_itm_no": "KR7449180009",
     "pd_nm": "삼성 KODEX 미국S&P500증권상장지수투자신탁[주식](H)",
     "table": "kr_etp"
+   }
+  ],
+  "de72a018da1d155c": [
+   {
+    "pd_itm_no": "FJUN.K",
+    "pd_nm": "FT Vest US Equity Buffer ETF - June",
+    "table": "global_etf"
    }
   ],
   "de7361a01da8f5d5": [
@@ -44743,6 +47389,13 @@
     "pd_itm_no": "KR70028X0003",
     "pd_nm": "삼성 KODEX 미국금융테크액티브증권상장지수투자신탁[주식]",
     "table": "kr_etp"
+   }
+  ],
+  "dea6a388d38a323c": [
+   {
+    "pd_itm_no": "TISC.O",
+    "pd_nm": "Thrivent International Small Cap ETF",
+    "table": "global_etf"
    }
   ],
   "dea7da17706dbb36": [
@@ -44850,6 +47503,13 @@
     "table": "global_etf"
    }
   ],
+  "df1edf954e821fb6": [
+   {
+    "pd_itm_no": "RANK.K",
+    "pd_nm": "Defiance KSM TipRanks Analyst ETF",
+    "table": "global_etf"
+   }
+  ],
   "df31516009d9ff07": [
    {
     "pd_itm_no": "GENT.K",
@@ -44910,13 +47570,6 @@
    {
     "pd_itm_no": "CATF.K",
     "pd_nm": "American Century California Municipal Bond ETF",
-    "table": "global_etf"
-   }
-  ],
-  "df6600ff2861788f": [
-   {
-    "pd_itm_no": "PSMJ.K",
-    "pd_nm": "Pacer Swan SOS Moderate (July) ETF",
     "table": "global_etf"
    }
   ],
@@ -45046,6 +47699,13 @@
     "table": "global_etf"
    }
   ],
+  "e009df18f6811980": [
+   {
+    "pd_itm_no": "SKHL.K",
+    "pd_nm": "Direxion Daily SK Hynix Bull 2X ETF",
+    "table": "global_etf"
+   }
+  ],
   "e00dff18631b1596": [
    {
     "pd_itm_no": "XLCI.K",
@@ -45088,11 +47748,25 @@
     "table": "global_etf"
    }
   ],
+  "e046ac640c765fec": [
+   {
+    "pd_itm_no": "SNTQ.K",
+    "pd_nm": "MRP SynthEquity Nasdaq 100 ETF",
+    "table": "global_etf"
+   }
+  ],
   "e056c6385574b91f": [
    {
     "pd_itm_no": "KR70132D0000",
     "pd_nm": "삼성액티브 KoAct 글로벌K컬처밸류체인액티브증권상장지수투자신탁[주식]",
     "table": "kr_etp"
+   }
+  ],
+  "e057e332b6794ce5": [
+   {
+    "pd_itm_no": "PSCQ.K",
+    "pd_nm": "Pacer Swan SOS Conservative (October) ETF",
+    "table": "global_etf"
    }
   ],
   "e06edca365066178": [
@@ -45294,7 +47968,7 @@
   "e16355b58815b420": [
    {
     "pd_itm_no": "AGGA.O",
-    "pd_nm": "EA Astoria Dynamic Core US Fixed Income ETF",
+    "pd_nm": "EA Astoria Beacon Dynamic Core US Fixed Income ETF",
     "table": "global_etf"
    }
   ],
@@ -45316,6 +47990,13 @@
    {
     "pd_itm_no": "RSBT.K",
     "pd_nm": "Return Stacked Bonds & Managed Futures ETF",
+    "table": "global_etf"
+   }
+  ],
+  "e177a59d7de31e6e": [
+   {
+    "pd_itm_no": "ALA",
+    "pd_nm": "Corgi ALAB 2x Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -45396,11 +48077,11 @@
     "table": "global_etf"
    }
   ],
-  "e1c699f8d6c5c50b": [
+  "e1e02bdf91b9d77b": [
    {
-    "pd_itm_no": "KR70189Z0006",
-    "pd_nm": "대신 DAISHIN343 금융&지주고배당증권상장지수투자신탁[주식]",
-    "table": "kr_etp"
+    "pd_itm_no": "ACMM.K",
+    "pd_nm": "Corgi ACMR 2x Daily ETF",
+    "table": "global_etf"
    }
   ],
   "e21ebad3486c5e51": [
@@ -45508,6 +48189,13 @@
     "table": "kr_etp"
    }
   ],
+  "e29c77b48312b974": [
+   {
+    "pd_itm_no": "NBIC.K",
+    "pd_nm": "Corgi NBIS 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "e2a29ce31144efb4": [
    {
     "pd_itm_no": "SCHF.K",
@@ -45592,13 +48280,6 @@
     "table": "kr_etp"
    }
   ],
-  "e2f2533f9c55b9ba": [
-   {
-    "pd_itm_no": "XDQQ.K",
-    "pd_nm": "Innovator Growth Accelerated ETF - Quarterly",
-    "table": "global_etf"
-   }
-  ],
   "e30604e4814db0b8": [
    {
     "pd_itm_no": "ORBX.O",
@@ -45669,6 +48350,13 @@
     "table": "kr_etp"
    }
   ],
+  "e36f455034937beb": [
+   {
+    "pd_itm_no": "TERC.K",
+    "pd_nm": "Corgi TER 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "e36ffdfcf444f637": [
    {
     "pd_itm_no": "MFUS.K",
@@ -45694,6 +48382,13 @@
    {
     "pd_itm_no": "FXN",
     "pd_nm": "First Trust Energy AlphaDEX Fund",
+    "table": "global_etf"
+   }
+  ],
+  "e38ceacac1a9cab3": [
+   {
+    "pd_itm_no": "UMAL.K",
+    "pd_nm": "Defiance Daily Target 2X Long UMAC ETF",
     "table": "global_etf"
    }
   ],
@@ -45735,7 +48430,7 @@
   "e3b9a190f8bc2879": [
    {
     "pd_itm_no": "MGC",
-    "pd_nm": "Vanguard Mega Cap Index Fund;ETF",
+    "pd_nm": "Vanguard Morningstar Mega Cap Index Fund;ETF",
     "table": "global_etf"
    }
   ],
@@ -45765,6 +48460,13 @@
     "pd_itm_no": "GCC",
     "pd_nm": "WisdomTree Enhanced Commodity Strategy Fund",
     "table": "global_etf"
+   }
+  ],
+  "e3cd81406b1fca4c": [
+   {
+    "pd_itm_no": "KR70224X0005",
+    "pd_nm": "하나 1Q 엔비디아알파벳미국채혼합50증권상장지수투자신탁(채권혼합)",
+    "table": "kr_etp"
    }
   ],
   "e3deded94d1282a8": [
@@ -46061,6 +48763,13 @@
     "table": "global_etf"
    }
   ],
+  "e546c97959043fb9": [
+   {
+    "pd_itm_no": "KEO",
+    "pd_nm": "Kurv Equity Option Income ETF",
+    "table": "global_etf"
+   }
+  ],
   "e5479e6d4bc90110": [
    {
     "pd_itm_no": "KRG552100445",
@@ -46173,6 +48882,13 @@
     "table": "global_etf"
    }
   ],
+  "e5f70aad52491ba7": [
+   {
+    "pd_itm_no": "GINC.K",
+    "pd_nm": "Goldman Sachs Income ETF",
+    "table": "global_etf"
+   }
+  ],
   "e5ff910f1b28eaa5": [
    {
     "pd_itm_no": "NAIL.K",
@@ -46273,12 +48989,12 @@
   ],
   "e667534d1f956a31": [
    {
-    "pd_itm_no": "SPCX.O",
+    "pd_itm_no": "SPCK.O",
     "pd_nm": "SPAC and New Issue ETF",
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "SPCK.O",
+    "pd_itm_no": "SPCX.O",
     "pd_nm": "SPAC and New Issue ETF",
     "table": "global_etf"
    }
@@ -46294,6 +49010,13 @@
    {
     "pd_itm_no": "VBCG.O",
     "pd_nm": "Vanguard Target Maturity 2033 Corporate Bond ETF",
+    "table": "global_etf"
+   }
+  ],
+  "e6704ce7d0de68dd": [
+   {
+    "pd_itm_no": "DACL.K",
+    "pd_nm": "REX Defensive Autocallable Income ETF",
     "table": "global_etf"
    }
   ],
@@ -46372,13 +49095,6 @@
     "pd_itm_no": "FSIG.K",
     "pd_nm": "First Trust Limited Duration Invt Grd Corp ETF",
     "table": "global_etf"
-   }
-  ],
-  "e6ae0f9f5d294f89": [
-   {
-    "pd_itm_no": "KR7434960001",
-    "pd_nm": "대신 DAISHIN343 K200증권상장지수투자신탁[주식]",
-    "table": "kr_etp"
    }
   ],
   "e6b18f6aa45ff68f": [
@@ -46542,6 +49258,13 @@
     "table": "global_etf"
    }
   ],
+  "e76e9d6d54c5eb23": [
+   {
+    "pd_itm_no": "MPDY.K",
+    "pd_nm": "m+ DualYield Autocall ETF",
+    "table": "global_etf"
+   }
+  ],
   "e7791fe74a4cb3cc": [
    {
     "pd_itm_no": "MBBA.K",
@@ -46554,6 +49277,13 @@
     "pd_itm_no": "KR7139290001",
     "pd_nm": "미래에셋TIGER200경기소비재증권상장지수투자신탁(주식)",
     "table": "kr_etp"
+   }
+  ],
+  "e79083740fa4ad29": [
+   {
+    "pd_itm_no": "XDQQ.K",
+    "pd_nm": "Innovator Growth Accelerated ETF - Quarterly",
+    "table": "global_etf"
    }
   ],
   "e7a090f4ce9b5963": [
@@ -46766,6 +49496,13 @@
     "table": "global_etf"
    }
   ],
+  "e8b8dba3991ba306": [
+   {
+    "pd_itm_no": "JLCO.K",
+    "pd_nm": "John Hancock Large Cap Opportunities ETF",
+    "table": "global_etf"
+   }
+  ],
   "e8c1787faba6166b": [
    {
     "pd_itm_no": "KR7475050001",
@@ -46789,13 +49526,13 @@
   ],
   "e8c67c49b3b016f1": [
    {
-    "pd_itm_no": "MMLG.K",
-    "pd_nm": "First Trust Multi-Manager Large Growth ETF",
+    "pd_itm_no": "AFGR.K",
+    "pd_nm": "First Trust Active Factor Large Cap Growth ETF",
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "AFGR.K",
-    "pd_nm": "First Trust Active Factor Large Cap Growth ETF",
+    "pd_itm_no": "MMLG.K",
+    "pd_nm": "First Trust Multi-Manager Large Growth ETF",
     "table": "global_etf"
    }
   ],
@@ -46810,6 +49547,13 @@
    {
     "pd_itm_no": "KNG",
     "pd_nm": "FT Vest S&P 500 Dividend Aristocrats Tgt Inc",
+    "table": "global_etf"
+   }
+  ],
+  "e8d7e1cb334ed36d": [
+   {
+    "pd_itm_no": "YSAU.O",
+    "pd_nm": "Texas Precious Metals Trust Y'all St Phys Gld ETF",
     "table": "global_etf"
    }
   ],
@@ -46869,13 +49613,6 @@
     "table": "global_etf"
    }
   ],
-  "e970221fa09205fe": [
-   {
-    "pd_itm_no": "YJUN.K",
-    "pd_nm": "FT Vest International Equity Mod Buffer ETF - June",
-    "table": "global_etf"
-   }
-  ],
   "e97d360a337872ad": [
    {
     "pd_itm_no": "PIO.O",
@@ -46887,6 +49624,13 @@
    {
     "pd_itm_no": "GGOV.K",
     "pd_nm": "iShares Global Government Bond USD Hedged Active",
+    "table": "global_etf"
+   }
+  ],
+  "e987a3de3563acf1": [
+   {
+    "pd_itm_no": "VBNB.O",
+    "pd_nm": "VanEck BNB ETF",
     "table": "global_etf"
    }
   ],
@@ -46932,13 +49676,6 @@
     "table": "kr_etp"
    }
   ],
-  "e9a9b96a410297cd": [
-   {
-    "pd_itm_no": "PSCQ.K",
-    "pd_nm": "Pacer Swan SOS Conservative (October) ETF",
-    "table": "global_etf"
-   }
-  ],
   "e9b6892ba6a26cc5": [
    {
     "pd_itm_no": "PLYY.O",
@@ -46956,7 +49693,7 @@
   "e9d202f5137d8606": [
    {
     "pd_itm_no": "NANC.K",
-    "pd_nm": "Unusual Whales Subversive Democratic Trading ETF",
+    "pd_nm": "Subversive Congressional Democrats Trading ETF",
     "table": "global_etf"
    }
   ],
@@ -47014,6 +49751,13 @@
     "pd_itm_no": "KR7271050007",
     "pd_nm": "삼성 KODEX WTI원유선물인버스특별자산상장지수투자신탁(원유-파생형)(H)",
     "table": "kr_etp"
+   }
+  ],
+  "ea2aba6f566abfea": [
+   {
+    "pd_itm_no": "COHC.K",
+    "pd_nm": "Corgi COHR 2x Daily ETF",
+    "table": "global_etf"
    }
   ],
   "ea4906bf6b31c33d": [
@@ -47233,6 +49977,20 @@
     "table": "global_etf"
    }
   ],
+  "eb73fdc52ee254c0": [
+   {
+    "pd_itm_no": "BBUL.O",
+    "pd_nm": "GraniteShares 2x Long BB Daily ETF",
+    "table": "global_etf"
+   }
+  ],
+  "eb784395023d1352": [
+   {
+    "pd_itm_no": "RTOO.K",
+    "pd_nm": "VistaShares Robotics Supercycle ETF",
+    "table": "global_etf"
+   }
+  ],
   "eb930d24dab58832": [
    {
     "pd_itm_no": "HYP.O",
@@ -47287,6 +50045,13 @@
     "pd_itm_no": "SCC",
     "pd_nm": "ProShares UltraShort Consumer Discretionary",
     "table": "global_etf"
+   }
+  ],
+  "ebe46ed9a7443810": [
+   {
+    "pd_itm_no": "KR70218K0008",
+    "pd_nm": "BNK BNK 스마트카증권상장지수투자신탁(주식)",
+    "table": "kr_etp"
    }
   ],
   "ebe76d5770628dbc": [
@@ -47380,6 +50145,13 @@
     "table": "global_etf"
    }
   ],
+  "ec2a42bc71d3f31f": [
+   {
+    "pd_itm_no": "PQXX.K",
+    "pd_nm": "PGIM S&P 500 Quarterly Buffer 20 ETF",
+    "table": "global_etf"
+   }
+  ],
   "ec41b3395f7eacba": [
    {
     "pd_itm_no": "HDEF.K",
@@ -47410,13 +50182,13 @@
   ],
   "ec55cacb3bdd0654": [
    {
-    "pd_itm_no": "GLL",
-    "pd_nm": "ProShares UltraShort Gold",
+    "pd_itm_no": "ZSL",
+    "pd_nm": "ProShares UltraShort Silver",
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "ZSL",
-    "pd_nm": "ProShares UltraShort Silver",
+    "pd_itm_no": "GLL",
+    "pd_nm": "ProShares UltraShort Gold",
     "table": "global_etf"
    }
   ],
@@ -47501,6 +50273,13 @@
    {
     "pd_itm_no": "IREG.O",
     "pd_nm": "Leverage Shares 2X Long IREN Daily ETF",
+    "table": "global_etf"
+   }
+  ],
+  "ececde06ce4f751c": [
+   {
+    "pd_itm_no": "NUIF.O",
+    "pd_nm": "Nuveen US Infrastructure ETF",
     "table": "global_etf"
    }
   ],
@@ -47595,6 +50374,13 @@
     "table": "global_etf"
    }
   ],
+  "ed4143131bc87b0e": [
+   {
+    "pd_itm_no": "KRG520000966",
+    "pd_nm": "미래에셋증권 미래에셋 인버스 2X WTI원유 선물 상장지수증권 제111호",
+    "table": "kr_etp"
+   }
+  ],
   "ed472f5243cb08b3": [
    {
     "pd_itm_no": "TLDR.K",
@@ -47686,6 +50472,13 @@
     "table": "global_etf"
    }
   ],
+  "edc4f10fa53209d8": [
+   {
+    "pd_itm_no": "JIDE.K",
+    "pd_nm": "JPMorgan International Dynamic ETF",
+    "table": "global_etf"
+   }
+  ],
   "edc76404d7d7ca29": [
    {
     "pd_itm_no": "NXUS.K",
@@ -47733,6 +50526,13 @@
     "pd_itm_no": "KRG500000895",
     "pd_nm": "신한투자증권 신한 26-05 공사채(AAA) 상장지수증권 제89호",
     "table": "kr_etp"
+   }
+  ],
+  "ee0e52cfeb63259b": [
+   {
+    "pd_itm_no": "LITC.K",
+    "pd_nm": "Corgi LITE 2x Daily ETF",
+    "table": "global_etf"
    }
   ],
   "ee120dce3a679968": [
@@ -47840,13 +50640,6 @@
     "table": "global_etf"
    }
   ],
-  "eec2d27ff7cdd741": [
-   {
-    "pd_itm_no": "RNWZ.K",
-    "pd_nm": "TrueShares Eagle Global Renewable Energy Inc ETF",
-    "table": "global_etf"
-   }
-  ],
   "eec85387828eaa66": [
    {
     "pd_itm_no": "VBCA.O",
@@ -47917,6 +50710,13 @@
     "table": "global_etf"
    }
   ],
+  "ef08adcc80a80db4": [
+   {
+    "pd_itm_no": "NOWX.K",
+    "pd_nm": "Corgi NOW 2x Daily ETF",
+    "table": "global_etf"
+   }
+  ],
   "ef102ad10be92e3e": [
    {
     "pd_itm_no": "KR7381570001",
@@ -47928,6 +50728,13 @@
    {
     "pd_itm_no": "BSJR.O",
     "pd_nm": "Invesco BulletShares 2027 Hi Yld Corp Bd ETF",
+    "table": "global_etf"
+   }
+  ],
+  "ef1fccf390ab5b1e": [
+   {
+    "pd_itm_no": "BEMD.K",
+    "pd_nm": "BNY Mellon Emerging Markets Debt ETF",
     "table": "global_etf"
    }
   ],
@@ -47956,6 +50763,13 @@
    {
     "pd_itm_no": "NTSX.K",
     "pd_nm": "WisdomTree US Efficient Core Fund",
+    "table": "global_etf"
+   }
+  ],
+  "ef54322d11b252d5": [
+   {
+    "pd_itm_no": "GOGL.K",
+    "pd_nm": "Corgi GOOGL 2x Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -48040,6 +50854,13 @@
    {
     "pd_itm_no": "AQLT.K",
     "pd_nm": "iShares MSCI Global Quality Factor ETF",
+    "table": "global_etf"
+   }
+  ],
+  "efc10ae4d5d5f756": [
+   {
+    "pd_itm_no": "ARCP.K",
+    "pd_nm": "Aristotle Core Plus Income ETF",
     "table": "global_etf"
    }
   ],
@@ -48302,6 +51123,13 @@
     "table": "global_etf"
    }
   ],
+  "f0bdf0ee4035fe77": [
+   {
+    "pd_itm_no": "IQQ.O",
+    "pd_nm": "iShares Nasdaq 100 ETF",
+    "table": "global_etf"
+   }
+  ],
   "f0d44ea847e48e89": [
    {
     "pd_itm_no": "BNDI.K",
@@ -48327,13 +51155,6 @@
    {
     "pd_itm_no": "SVXY.K",
     "pd_nm": "ProShares Short VIX Short-Term Futures ETF",
-    "table": "global_etf"
-   }
-  ],
-  "f0e6dffa07f7b543": [
-   {
-    "pd_itm_no": "PSFO.K",
-    "pd_nm": "Pacer Swan SOS Flex (October) ETF",
     "table": "global_etf"
    }
   ],
@@ -48398,13 +51219,6 @@
     "pd_itm_no": "KR7284980000",
     "pd_nm": "KB RISE 200금융증권상장지수투자신탁(주식)",
     "table": "kr_etp"
-   }
-  ],
-  "f148490a4180f720": [
-   {
-    "pd_itm_no": "FISR.K",
-    "pd_nm": "State Street SPDR SSGA Fixed Income Sctr Rtn ETF",
-    "table": "global_etf"
    }
   ],
   "f154914c104967be": [
@@ -48687,13 +51501,6 @@
     "table": "global_etf"
    }
   ],
-  "f2857c72cd4a6952": [
-   {
-    "pd_itm_no": "QBUF.O",
-    "pd_nm": "Innovator Nasdaq-100 10 Buffer ETF - Quarterly",
-    "table": "global_etf"
-   }
-  ],
   "f288613a9f170a9d": [
    {
     "pd_itm_no": "KR7385560008",
@@ -48776,6 +51583,13 @@
     "pd_itm_no": "DCMT.K",
     "pd_nm": "DoubleLine Commodity Strategy ETF",
     "table": "global_etf"
+   }
+  ],
+  "f2fbd10d4e6b28cc": [
+   {
+    "pd_itm_no": "KR70174J0003",
+    "pd_nm": "대신 DAISHIN 오피스리츠플러스부동산상장지수투자신탁[재간접형]",
+    "table": "kr_etp"
    }
   ],
   "f2fd67128917bebd": [
@@ -49016,13 +51830,6 @@
     "table": "kr_etp"
    }
   ],
-  "f3d53a63b6c748bc": [
-   {
-    "pd_itm_no": "QSU",
-    "pd_nm": "Defiance Daily Target 2X Long QS ETF",
-    "table": "global_etf"
-   }
-  ],
   "f3d9059ed1ba1940": [
    {
     "pd_itm_no": "LGOV.K",
@@ -49048,6 +51855,13 @@
    {
     "pd_itm_no": "LVIG.O",
     "pd_nm": "Longview Advantage Fixed Income ETF",
+    "table": "global_etf"
+   }
+  ],
+  "f3ff0c71d4132f2f": [
+   {
+    "pd_itm_no": "QUA",
+    "pd_nm": "Corgi QBTS 2x Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -49084,6 +51898,13 @@
     "pd_itm_no": "KR7453820003",
     "pd_nm": "삼성 KODEX 인도Nifty50레버리지증권상장지수투자신탁[주식-파생형](합성)",
     "table": "kr_etp"
+   }
+  ],
+  "f4551cad2691c2b3": [
+   {
+    "pd_itm_no": "COIX.K",
+    "pd_nm": "Corgi COIN 2x Daily ETF",
+    "table": "global_etf"
    }
   ],
   "f46150d44c8d1e39": [
@@ -49177,6 +51998,13 @@
     "table": "global_etf"
    }
   ],
+  "f4abd1e4c2f517cd": [
+   {
+    "pd_itm_no": "KR70216Z0003",
+    "pd_nm": "한국투자 ACE K방산TOP5+증권상장지수투자신탁(주식)",
+    "table": "kr_etp"
+   }
+  ],
   "f4b360d1b3848b32": [
    {
     "pd_itm_no": "KR7442260006",
@@ -49224,6 +52052,13 @@
     "pd_itm_no": "KR7252410006",
     "pd_nm": "KB RISE 200선물인버스증권상장지수투자신탁(주식-파생형)",
     "table": "kr_etp"
+   }
+  ],
+  "f4f67d57c5c4af89": [
+   {
+    "pd_itm_no": "FINA.K",
+    "pd_nm": "Fidelity MSCI North American Subset Index ETF",
+    "table": "global_etf"
    }
   ],
   "f4fd31913cc6bf11": [
@@ -49296,6 +52131,13 @@
     "table": "global_etf"
    }
   ],
+  "f543b3a58ed3b174": [
+   {
+    "pd_itm_no": "ACYQ.K",
+    "pd_nm": "FT Vest Autocallable Barrier & High Income ETF",
+    "table": "global_etf"
+   }
+  ],
   "f54afcb4edd2a7c9": [
    {
     "pd_itm_no": "SQLV.O",
@@ -49314,6 +52156,13 @@
    {
     "pd_itm_no": "PEVC.K",
     "pd_nm": "Pacer PE/VC ETF",
+    "table": "global_etf"
+   }
+  ],
+  "f558d7d192288bab": [
+   {
+    "pd_itm_no": "SNK",
+    "pd_nm": "GraniteShares 2x Short SpaceX Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -49378,6 +52227,13 @@
     "pd_itm_no": "KR7277650008",
     "pd_nm": "미래에셋 TIGER 코스피중형주증권상장지수투자신탁(주식)",
     "table": "kr_etp"
+   }
+  ],
+  "f5b712016a2540fb": [
+   {
+    "pd_itm_no": "CDNG.K",
+    "pd_nm": "Leverage Shares 2X Long CDNS Daily ETF",
+    "table": "global_etf"
    }
   ],
   "f5bbc3f3ae5173ae": [
@@ -49457,6 +52313,13 @@
     "table": "global_etf"
    }
   ],
+  "f608d796af7070a3": [
+   {
+    "pd_itm_no": "NQLT.K",
+    "pd_nm": "Neuberger Quality Select ETF",
+    "table": "global_etf"
+   }
+  ],
   "f6104857b80de109": [
    {
     "pd_itm_no": "JPSV.K",
@@ -49501,13 +52364,13 @@
   ],
   "f63621fc2c0c602f": [
    {
-    "pd_itm_no": "CTJN.K",
-    "pd_nm": "Corgi U.S. Equities 30% Structured Bffr ETF-June S",
+    "pd_itm_no": "HJUN.K",
+    "pd_nm": "Corgi U.S. Equities 100% Strctrd Bffr ETF-June S",
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "HJUN.K",
-    "pd_nm": "Corgi U.S. Equities 100% Strctrd Bffr ETF-June S",
+    "pd_itm_no": "CTJN.K",
+    "pd_nm": "Corgi U.S. Equities 30% Structured Bffr ETF-June S",
     "table": "global_etf"
    }
   ],
@@ -49581,13 +52444,6 @@
     "table": "global_etf"
    }
   ],
-  "f67bbce1a2a3b1d1": [
-   {
-    "pd_itm_no": "CSHP.K",
-    "pd_nm": "iShares Enhanced Short-Term Bond Active ETF",
-    "table": "global_etf"
-   }
-  ],
   "f688eda5a7b9419a": [
    {
     "pd_itm_no": "BUFR.K",
@@ -49607,6 +52463,13 @@
     "pd_itm_no": "KR7452440001",
     "pd_nm": "한국밸류 VITA 밸류알파액티브증권상장지수투자신탁(주식)",
     "table": "kr_etp"
+   }
+  ],
+  "f690e00f7b2acf70": [
+   {
+    "pd_itm_no": "SMRX.K",
+    "pd_nm": "Corgi SMR 2x Daily ETF",
+    "table": "global_etf"
    }
   ],
   "f694979bc45b1281": [
@@ -49791,6 +52654,13 @@
     "table": "global_etf"
    }
   ],
+  "f74f0a05d06f12d5": [
+   {
+    "pd_itm_no": "KRG570001278",
+    "pd_nm": "한국투자증권 한투 인버스2X코스피200선물 상장지수증권 제127호",
+    "table": "kr_etp"
+   }
+  ],
   "f74fcb7da8d6d6f2": [
    {
     "pd_itm_no": "KRG570000999",
@@ -49802,6 +52672,13 @@
    {
     "pd_itm_no": "BBUS.K",
     "pd_nm": "JPMorgan BetaBuilders US Equity ETF",
+    "table": "global_etf"
+   }
+  ],
+  "f75aeab6f6950f05": [
+   {
+    "pd_itm_no": "TRUR.O",
+    "pd_nm": "VanEck Real Estate TruSector ETF",
     "table": "global_etf"
    }
   ],
@@ -49833,6 +52710,13 @@
     "table": "global_etf"
    }
   ],
+  "f7806abc9bfe1ebb": [
+   {
+    "pd_itm_no": "HRSK.K",
+    "pd_nm": "Toews Agility Shares Hedged Risk ETF",
+    "table": "global_etf"
+   }
+  ],
   "f78df945d4c25efd": [
    {
     "pd_itm_no": "KRG500000572",
@@ -49851,6 +52735,13 @@
    {
     "pd_itm_no": "RSPT.K",
     "pd_nm": "Invesco S&P 500 Eql Wght Technology ETF",
+    "table": "global_etf"
+   }
+  ],
+  "f7a5bf0c35c1e8a1": [
+   {
+    "pd_itm_no": "BMSI.K",
+    "pd_nm": "BNY Mellon Multi-Sector Income ETF",
     "table": "global_etf"
    }
   ],
@@ -49929,10 +52820,10 @@
     "table": "global_etf"
    }
   ],
-  "f81847311fdd7dd9": [
+  "f81ce4389c24c10b": [
    {
-    "pd_itm_no": "BTCU.K",
-    "pd_nm": "Direxion Daily Bitcoin Bull 2X ETF",
+    "pd_itm_no": "MNRS.K",
+    "pd_nm": "Grayscale AI Compute ETF",
     "table": "global_etf"
    }
   ],
@@ -50090,6 +52981,20 @@
     "table": "kr_etp"
    }
   ],
+  "f8b2c68907d7fb9e": [
+   {
+    "pd_itm_no": "MSOL.K",
+    "pd_nm": "Morgan Stanley Solana Trust",
+    "table": "global_etf"
+   }
+  ],
+  "f8c24cb7ccd310f4": [
+   {
+    "pd_itm_no": "BGUS.O",
+    "pd_nm": "Baillie Gifford US Equity Growth ETF",
+    "table": "global_etf"
+   }
+  ],
   "f8c37c1f666d8a32": [
    {
     "pd_itm_no": "ISHP.O",
@@ -50100,7 +53005,14 @@
   "f8c5c44f969877d4": [
    {
     "pd_itm_no": "CEFS.K",
-    "pd_nm": "Saba Closed-End Funds ETF",
+    "pd_nm": "Saba Opportunistic Hedged Closed-End Funds ETF",
+    "table": "global_etf"
+   }
+  ],
+  "f8d5d12b3985c738": [
+   {
+    "pd_itm_no": "QNDX.O",
+    "pd_nm": "State Street SPDR Portfolio Nasdaq 100 ETF",
     "table": "global_etf"
    }
   ],
@@ -50223,6 +53135,13 @@
     "table": "kr_etp"
    }
   ],
+  "f98d653ec078a8be": [
+   {
+    "pd_itm_no": "KRG570001260",
+    "pd_nm": "한국투자증권 한투 솔랙티브인버스2X금선물 상장지수증권 제126호",
+    "table": "kr_etp"
+   }
+  ],
   "f98dd7006801e607": [
    {
     "pd_itm_no": "GYLD.K",
@@ -50272,6 +53191,13 @@
     "table": "global_etf"
    }
   ],
+  "f9c7042f8238b64f": [
+   {
+    "pd_itm_no": "FESC.K",
+    "pd_nm": "First Eagle Small Cap Equity ETF",
+    "table": "global_etf"
+   }
+  ],
   "f9c928d6ff84f8d0": [
    {
     "pd_itm_no": "BOAT.K",
@@ -50284,6 +53210,13 @@
     "pd_itm_no": "YSEP.K",
     "pd_nm": "FT Vest International Equity Mod Buffer ETF - Sept",
     "table": "global_etf"
+   }
+  ],
+  "f9d62534dfc067d3": [
+   {
+    "pd_itm_no": "KR70198A0004",
+    "pd_nm": "키움 KIWOOM 코스닥150커버드콜액티브증권상장지수투자신탁[주식-파생형]",
+    "table": "kr_etp"
    }
   ],
   "f9d7569edd4d1957": [
@@ -50311,6 +53244,13 @@
    {
     "pd_itm_no": "RVER.K",
     "pd_nm": "Trenchless Fund ETF",
+    "table": "global_etf"
+   }
+  ],
+  "fa0826c0ba73b886": [
+   {
+    "pd_itm_no": "ANGU.O",
+    "pd_nm": "SEI Ang Research Enhanced U.S. Large Cap ETF",
     "table": "global_etf"
    }
   ],
@@ -50496,6 +53436,13 @@
     "table": "kr_etp"
    }
   ],
+  "fb1fe4df2f953736": [
+   {
+    "pd_itm_no": "FJUL.K",
+    "pd_nm": "FT Vest US Equity Buffer ETF - July",
+    "table": "global_etf"
+   }
+  ],
   "fb457a2a42d8f6e3": [
    {
     "pd_itm_no": "XFLX.K",
@@ -50594,6 +53541,13 @@
     "table": "global_etf"
    }
   ],
+  "fbc564601ea1985f": [
+   {
+    "pd_itm_no": "KRG570001252",
+    "pd_nm": "한국투자증권 한투 솔랙티브레버리지금선물 상장지수증권 제125호",
+    "table": "kr_etp"
+   }
+  ],
   "fbdcfef4706cea1c": [
    {
     "pd_itm_no": "PZA",
@@ -50634,6 +53588,13 @@
     "pd_itm_no": "KR7204480008",
     "pd_nm": "미래에셋TIGER차이나CSI300레버리지증권상장지수투자신탁(주식혼합-파생재간접형)합성",
     "table": "kr_etp"
+   }
+  ],
+  "fc01b53ef0ecee70": [
+   {
+    "pd_itm_no": "AXTC.K",
+    "pd_nm": "Corgi AXTI 2x Daily ETF",
+    "table": "global_etf"
    }
   ],
   "fc0850cdf5c7841f": [
@@ -50678,6 +53639,13 @@
     "table": "global_etf"
    }
   ],
+  "fc43d1ff9aca21cd": [
+   {
+    "pd_itm_no": "BTCK.K",
+    "pd_nm": "7RCC Spot Bitcoin and Carbon Credit Futures ETF",
+    "table": "global_etf"
+   }
+  ],
   "fc4438921b805239": [
    {
     "pd_itm_no": "FSYD.K",
@@ -50718,6 +53686,13 @@
     "pd_itm_no": "KRG520000685",
     "pd_nm": "미래에셋증권 미래에셋 레버리지 홍콩H 선물 상장지수증권 제83호",
     "table": "kr_etp"
+   }
+  ],
+  "fc91d7e09c37f1a8": [
+   {
+    "pd_itm_no": "GJUN.K",
+    "pd_nm": "FT Vest US Equity Moderate Buffer ETF - Jun",
+    "table": "global_etf"
    }
   ],
   "fc92f180fdf3c635": [
@@ -50779,7 +53754,7 @@
   "fcdbe0f02dfd04a0": [
    {
     "pd_itm_no": "NFRA.K",
-    "pd_nm": "FlexShares STOXX Global Broad Infrastructure Index",
+    "pd_nm": "Northern Trust STOXX Global Broad Infrastrct ETF",
     "table": "global_etf"
    }
   ],
@@ -50898,7 +53873,7 @@
   "fd732d220727b538": [
    {
     "pd_itm_no": "BITX.K",
-    "pd_nm": "2x Bitcoin Strategy ETF",
+    "pd_nm": "2x Bitcoin ETF",
     "table": "global_etf"
    }
   ],
@@ -51000,13 +53975,6 @@
     "table": "global_etf"
    }
   ],
-  "fde52b1071c2db86": [
-   {
-    "pd_itm_no": "PSMD.K",
-    "pd_nm": "Pacer Swan SOS Moderate (January) ETF",
-    "table": "global_etf"
-   }
-  ],
   "fdf240d9d0e1d72a": [
    {
     "pd_itm_no": "KRG520000982",
@@ -51018,6 +53986,13 @@
    {
     "pd_itm_no": "FDFF.O",
     "pd_nm": "Fidelity Disruptive Finance ETF",
+    "table": "global_etf"
+   }
+  ],
+  "fdfd41c711f87161": [
+   {
+    "pd_itm_no": "QQAU.K",
+    "pd_nm": "Corgi Growth & Tech 15% Strctrd Bffr ETF-Aug S",
     "table": "global_etf"
    }
   ],
@@ -51042,6 +54017,13 @@
     "table": "global_etf"
    }
   ],
+  "fe3979502a15f991": [
+   {
+    "pd_itm_no": "FIZY.K",
+    "pd_nm": "Fitz-Gerald Must Have Portfl & Opts Overlay ETF",
+    "table": "global_etf"
+   }
+  ],
   "fe42f98c1a6d3d8a": [
    {
     "pd_itm_no": "AGIQ.K",
@@ -51060,6 +54042,13 @@
    {
     "pd_itm_no": "MAGX.K",
     "pd_nm": "Roundhill Daily 2X Long Magnificent Seven ETF",
+    "table": "global_etf"
+   }
+  ],
+  "fe4cf18006c264b5": [
+   {
+    "pd_itm_no": "LGDS.O",
+    "pd_nm": "JPMorgan Fundamental Data Science Large Growth ETF",
     "table": "global_etf"
    }
   ],
@@ -51175,6 +54164,20 @@
     "table": "global_etf"
    }
   ],
+  "fedd48f583c2c7ff": [
+   {
+    "pd_itm_no": "SFYI.K",
+    "pd_nm": "SoFi Social 50 Income ETF",
+    "table": "global_etf"
+   }
+  ],
+  "fede02179057c467": [
+   {
+    "pd_itm_no": "YSPC.K",
+    "pd_nm": "YieldMax SPCX Option Income Strategy ETF",
+    "table": "global_etf"
+   }
+  ],
   "fee26897851a0d8d": [
    {
     "pd_itm_no": "KR7387270002",
@@ -51189,14 +54192,21 @@
     "table": "global_etf"
    }
   ],
+  "fee784d0cca1c772": [
+   {
+    "pd_itm_no": "MWHS.K",
+    "pd_nm": "Skylar Electricity Futures ETF",
+    "table": "global_etf"
+   }
+  ],
   "feec56df663e4aca": [
    {
-    "pd_itm_no": "EUSM.K",
+    "pd_itm_no": "ESUM.K",
     "pd_nm": "Eventide US Market ETF",
     "table": "global_etf"
    },
    {
-    "pd_itm_no": "ESUM.K",
+    "pd_itm_no": "EUSM.K",
     "pd_nm": "Eventide US Market ETF",
     "table": "global_etf"
    }
@@ -51351,10 +54361,24 @@
     "table": "global_etf"
    }
   ],
+  "ff6a0484c87d533e": [
+   {
+    "pd_itm_no": "NSIG.K",
+    "pd_nm": "North Square Growth Opportunities ETF",
+    "table": "global_etf"
+   }
+  ],
   "ff6fca70cee533e1": [
    {
     "pd_itm_no": "EURL.K",
     "pd_nm": "Direxion Daily FTSE Europe Bull 3X ETF",
+    "table": "global_etf"
+   }
+  ],
+  "ff79998462e230d7": [
+   {
+    "pd_itm_no": "NVTC.K",
+    "pd_nm": "Corgi NVTS 2x Daily ETF",
     "table": "global_etf"
    }
   ],
@@ -51417,7 +54441,7 @@
   "ff9a744f5b1e434c": [
    {
     "pd_itm_no": "LKOR.K",
-    "pd_nm": "FlexShares Credit-Scored US Long Corp Bd Index Fd",
+    "pd_nm": "Northern Trust Credit-Scored US Long Corp Bond ETF",
     "table": "global_etf"
    }
   ],
@@ -51497,14 +54521,21 @@
     "pd_nm": "iShares US Aerospace & Defense ETF",
     "table": "global_etf"
    }
+  ],
+  "fffd231570d4aaba": [
+   {
+    "pd_itm_no": "PSCJ.K",
+    "pd_nm": "Pacer Swan SOS Conservative (July) ETF",
+    "table": "global_etf"
+   }
   ]
  },
  "missing": 0,
  "model": "clova-embedding-v2",
  "products_by_table": {
-  "global_etf": 5646,
-  "kr_etp": 1733
+  "global_etf": 6037,
+  "kr_etp": 1779
  },
  "source": "PREF02N001 해외ETF + PREF01N001 국내ETP cu_strtegy (8/22 국내 확장)",
- "unique_texts": 7300
+ "unique_texts": 7723
 }

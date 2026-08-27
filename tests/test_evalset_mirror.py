@@ -25,15 +25,18 @@ def _rows(path):
 
 
 def test_mirror_structure_follows_real_exam():
+    # 8/27: 본 35(실전 분포 미러) + 부록 A 3(MR-A — 8/26 공지의 교차질의·분배 유형)
     items, checks = _rows(EVAL), _rows(CHECKS)
-    assert len(items) == 35 and len(checks) == 35
+    assert len(items) == 38 and len(checks) == 38
     ids = [it["id"] for it in items]
-    assert len(set(ids)) == 35 and ids == [c["id"] for c in checks]
+    assert len(set(ids)) == 38 and ids == [c["id"] for c in checks]
+    core = [it for it in items if not it["id"].startswith("MR-A-")]
     by_level = {}
-    for it in items:
+    for it in core:
         by_level[it["level"]] = by_level.get(it["level"], 0) + 1
-    assert by_level == {"하": 10, "중": 10, "상": 10, "트랩": 5}      # 실전 분포(30+5)
+    assert by_level == {"하": 10, "중": 10, "상": 10, "트랩": 5}      # 실전 분포(30+5)는 본 35 기준 유지
     assert sum(1 for it in items if it["behavior"] == "refuse") == 5
+    assert sum(1 for it in items if it["id"].startswith("MR-A-")) == 3
 
 
 def _flatten(check):

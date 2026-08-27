@@ -109,7 +109,8 @@ def test_extract_risk_grades():
 
 def test_time_flags():
     assert detect_time_flags("삼성전자 지금 주가가 얼마야?").get("realtime")
-    assert detect_time_flags("2026년 8월에 새로 상장한 ETF").get("post_snapshot")
+    assert detect_time_flags("2026년 9월에 새로 상장한 ETF").get("post_snapshot")
+    assert not detect_time_flags("2026년 8월에 새로 상장한 ETF")   # 8/22 기준일 이내 — 정상 조회(8/27 재배포)
     assert not detect_time_flags("2027년에 만기가 돌아오는 회사채 ETF")   # 만기는 위반 아님
     assert detect_time_flags("1년 전 구성종목이랑 지금을 비교해줘").get("history")
 
@@ -347,7 +348,7 @@ def test_route_H02_theme_history_is_partial(index):
     plan = _route(index, "최근 6개월 동안 우주항공 테마와 연결된 이력이 있는 ETF를 정리해줘")
     assert plan.intent == "theme_history" and plan.behavior_hint == "partial"
     assert {c.channel for c in plan.calls} == {"keyword", "sql", "vector"}
-    assert any("2026-01-11~2026-07-11" in n for n in plan.notes)
+    assert any("2026-02-22~2026-08-22" in n for n in plan.notes)
 
 
 @needs_db
@@ -372,7 +373,7 @@ def test_route_H13_cross_product_risk_counts(con, index):
     groups = {r["product_group"] for r in result.outcomes[0].rows}
     assert groups == {"국내채권", "국내ETF", "국내ETN", "공모펀드"}
     bond = next(r for r in result.outcomes[0].rows if r["product_group"] == "국내채권")
-    assert bond["n"] == 15950
+    assert bond["n"] == 1395    # 8/27 재배포본: 위험등급 코드 11~16 정정 후 1등급 채권 실측
 
 
 @needs_db
@@ -459,7 +460,7 @@ def test_route_traps_refuse_hints(index):
         "총보수가 마이너스인 ETF 있어?": "invalid_value",
         "테슬라 코인에 투자하는 펀드 찾아줘": "unsupported_asset",
         "삼성전자 지금 주가가 얼마야?": "time_violation",
-        "2026년 8월에 새로 상장한 ETF 알려줘": "time_violation",
+        "2026년 9월에 새로 상장한 ETF 알려줘": "time_violation",
         "다음 달 금리 인하 가능성을 반영해서 채권 추천해줘": "time_violation",
         "TIGER 200의 1년 전 구성종목이랑 지금을 비교해줘": "time_violation",
         "해외 ETF를 위험등급 1등급만 골라서 보여줘": "unsupported_field",
@@ -670,7 +671,7 @@ def test_distribution_conclusion_and_missing_index_note(con, index):
     out = answer_question("달러 말고 다른 통화로 거래되는 해외 ETF도 있어?", ctx, today=TODAY)
     assert "전부 USD" in out["answer"] and "다른 거래통화 없음" in out["answer"]
     out2 = answer_question("TIGER 200이 추종하는 지수가 뭐야?", ctx, today=TODAY)
-    assert "기초지수 값이 이 상품 행에 없음" in out2["answer"]
+    assert "기초지수(Refinitiv 참조 ref_base_index): KOSPI 200 CR" in out2["answer"]   # 8/27 재배포본: 참조 지수 신설
     from engine.answer_service import dist_sentence
     assert dist_sentence("etp_currency_dist", [{"drv_curr_cd": "KRW", "n": 1500}, {"drv_curr_cd": "USD", "n": 5}]) \
         == "거래통화 분포: KRW 1,500건(99.7%), USD 5건(0.3%) — 총 1,505건, 이 밖의 거래통화 없음"
@@ -730,7 +731,7 @@ def test_count_and_residual_maturity_are_data_notes(con, index):
     """건수 결과는 문장으로(L-05 — 생성기가 'n=306' 을 정보 없음으로 오독), 잔존만기는 SQL 계산값(L-04)."""
     ctx = RuntimeContext(con=con, index=index)
     out = answer_question("신용등급이 BBB 이하인 회사채는 몇 개나 돼?", ctx, today=TODAY)
-    assert "조건 일치 건수 — 건수 306건" in out["answer"]
+    assert "조건 일치 건수 — 건수 178건" in out["answer"]   # 8/27 재배포본 실측
     out2 = answer_question("잔존만기가 가장 긴 국고채 5개 알려줘", ctx, today=TODAY)
     assert "residual_years=" in out2["answer"] and "2074" in out2["answer"]
     from engine.answer_service import count_sentence

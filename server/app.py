@@ -96,22 +96,28 @@ def build_runtime(kg_tables="all", with_vector=True, with_llm=True, with_generat
             pass                                      # 벡터 없이도 서비스 가능(키워드가 대체)
 
     llm_router, generator = None, None
+    intent_checker, finalizer = None, None
     if with_llm and has_key:
         from agent.clova_client import ClovaChatClient
         from engine.router_llm import make_llm_router
         llm_router = make_llm_router(ClovaChatClient(model="HCX-005", timeout=6.0))
     if with_generator and has_key:
         from agent.clova_client import ClovaChatClient
-        from engine.generator import make_hcx_generator
+        from engine.generator import (make_hcx_finalizer, make_hcx_generator,
+                                      make_hcx_intent_checker)
         generator = make_hcx_generator(ClovaChatClient(model="HCX-005", timeout=8.0))
-    return ctx, llm_router, generator
+        # 8/26 공지 준수 — 의도 분석(모든 질의)·답변 최종 출력(비생성 경로)의 HCX 필수 구간.
+        intent_checker = make_hcx_intent_checker(ClovaChatClient(model="HCX-005", timeout=4.0))
+        finalizer = make_hcx_finalizer(ClovaChatClient(model="HCX-005", timeout=8.0))
+    return ctx, llm_router, generator, intent_checker, finalizer
 
 
 # ---------------------------------------------------------------------------
 # 앱 구성
 # ---------------------------------------------------------------------------
 
-def create_app(ctx, llm_router=None, generator=None, cache_path=CACHE_PATH_DEFAULT):
+def create_app(ctx, llm_router=None, generator=None, cache_path=CACHE_PATH_DEFAULT,
+               intent_checker=None, finalizer=None):
     app = FastAPI(title="금융상품 질의응답 에이전트", docs_url=None, redoc_url=None)
 
     # 캐시: 메모리 dict + 디스크 jsonl(재시작 생존). 실패·강등 응답은 저장 안 함.
@@ -157,7 +163,8 @@ def create_app(ctx, llm_router=None, generator=None, cache_path=CACHE_PATH_DEFAU
         try:
             out = answer_question(q, req_ctx, question_id=question_id,
                                   llm_router=llm_router, generator=generator,
-                                  deadline=deadline)
+                                  deadline=deadline,
+                                  intent_checker=intent_checker, finalizer=finalizer)
         except Exception as exc:                      # 전역 방어 — 어떤 오류에도 유효 5필드
             out = serialize_answer(
                 question_id, q, [],
@@ -212,7 +219,7 @@ _TEST_PAGE = """<!doctype html><html lang="ko"><head><meta charset="utf-8">
 </style></head><body>
 <h1>금융상품 질의응답 에이전트 — 질문 시험대</h1>
 <p class="hint">질문을 입력하면 실제 평가와 동일한 경로(<code>GET /answer</code>)로 답변을 받아 보여줍니다.
-데이터 기준일 2026-07-11 — 그 이후 정보나 없는 상품을 물으면 "확인할 수 없음"이 정답입니다.</p>
+데이터 기준일 2026-08-22(국내)·2026-08-23(해외) — 그 이후 정보나 없는 상품을 물으면 "확인할 수 없음"이 정답입니다.</p>
 <form id="f"><input id="q" placeholder="예: 순자산총액 기준으로 국내 ETF 상위 5개 알려줘" autofocus>
 <button id="b">질문하기</button></form>
 <div class="ex">예시:
@@ -255,14 +262,15 @@ def main(argv=None):
     kg = args.kg if args.kg is not None else ("none" if args.light else "all")
     t0 = time.perf_counter()
     print(f"[서버] 저장소 적재 중... (그래프: {kg})")
-    ctx, llm_router, generator = build_runtime(
+    ctx, llm_router, generator, intent_checker, finalizer = build_runtime(
         kg_tables=kg, with_vector=not args.light,
         with_llm=not args.light, with_generator=not args.light)
     print(f"[서버] 적재 완료 {time.perf_counter() - t0:.1f}초 — "
           f"이름 사전 {ctx.index.entries:,}건 · 그래프 "
           f"{getattr(ctx.kg_store, 'triples', 0):,}트리플 · "
           f"HCX {'켜짐' if llm_router else '꺼짐(키 없음/--light)'}")
-    app = create_app(ctx, llm_router, generator)
+    app = create_app(ctx, llm_router, generator,
+                     intent_checker=intent_checker, finalizer=finalizer)
 
     import uvicorn
     print(f"[서버] http://localhost:{args.port}/ 에서 질문 시험대를 열 수 있습니다")

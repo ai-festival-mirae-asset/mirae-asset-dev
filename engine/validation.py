@@ -142,7 +142,12 @@ def gate_existence(question, index, policy):
     from engine.router import find_brand_token            # 8/26 v3 M-04: 'HK'⊂'삼익THK' 오인 방지(경계 검사)
     brand = find_brand_token(normalized_question)
     has_product = any(r.kind.startswith("product") for _n, refs in grounded for r in refs)
-    if brand and asks and not has_product:
+    # 8/27 교차질의 실측: '삼성전자를 보유한 …' 같은 역질의는 문장이 상품명이 아니다 —
+    # 종목·회사가 grounding 되고 보유 동사가 있으면 ② 검사를 건너뛴다('삼성' 브랜드 오인 방지).
+    # 보유 동사 없는 가짜 상품명 질의(함정)는 그대로 거절된다.
+    reverse_holding = bool(re.search(r"보유|편입|담|포함", normalized_question)) and any(
+        r.kind in ("constituent", "company") for _n, refs in grounded for r in refs)
+    if brand and asks and not has_product and not reverse_holding:
         phrase = re.sub(r"정보|알려줘|알려|수익률|어때|찾아줘|있어|\?", " ",
                         normalized_question).strip()
         if not index.exact(phrase) and not index.search(phrase, limit=1):
@@ -210,6 +215,22 @@ def gate_field_availability(question):
     return GateResult("field", "pass")
 
 
+def gate_router_rule_refusal(plan):
+    """규칙 라우터의 결정적 거절(행위 요청·원천에 없는 항목·값 도메인·미등록 개체)을 검문으로 승격.
+
+    8/27 V3-T-12 실측: '계좌 개설해줘'는 규칙이 거절인데 검문 5종에 짝 게이트가 없어
+    verdict 가 answer 로 뒤집혔고, 생성기가 정규식 밖 표현("도와드릴 수 없습니다")으로
+    거절해 함정 오답이 됐다(그동안은 표현 운으로 통과하던 잠복 결함). '라우터 판정을
+    신뢰하지 않는다'는 재검사 원칙은 LLM 단계 판정을 못 믿는다는 뜻 — 규칙 단계(stage=rule)
+    의 고정 정규식 판정은 검문과 같은 결정성이므로 그대로 승격한다."""
+    deterministic = (plan.hints.get("unsupported_request") or plan.hints.get("unavailable_field")
+                     or plan.hints.get("invalid_value") or plan.hints.get("existence_query"))
+    if plan.stage == "rule" and plan.behavior_hint == "refuse" and deterministic:
+        reason = plan.notes[-1] if plan.notes else "규칙 판정: 제공 범위 밖 요청"
+        return GateResult("router_rule", "refuse", reason)
+    return GateResult("router_rule", "pass")
+
+
 # ---------------------------------------------------------------------------
 # 검문소 5 — 충분성 검사: 커버리지가 낮으면 답하되 한계 명시(partial)
 # ---------------------------------------------------------------------------
@@ -247,6 +268,7 @@ def validate_answerability(question, plan, result, index, policy=None):
     suggestions.extend(sug)
     gates.append(gate_time_boundary(question))
     gates.append(gate_field_availability(question))
+    gates.append(gate_router_rule_refusal(plan))
     gates.append(gate_coverage(plan, result, policy))
 
     refusals = [g for g in gates if g.verdict == "refuse"]

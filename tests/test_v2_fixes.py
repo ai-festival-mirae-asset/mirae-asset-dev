@@ -51,7 +51,7 @@ def test_scan_hangul_continuation_needs_particle_or_question_word():
     idx = EntityIndex()
     idx.add("애플", EntityRef("constituent", "US0378331005", "APPLE INC", "constituent_aliases"))
     idx.add("KB스타", EntityRef("company", "KB", "KB", "alias_dictionary"))
-    fund = "KB스타골드특별자산투자신탁(금-파)Ce"
+    fund = "KB스타골드특별자산투자신탁(금-파생재간접형)C클래스"
     idx.add(fund, EntityRef("product_fund", "F1", fund, "PRFD01N001"))
     assert idx.scan("애플파이 주식을 담은 ETF 있어?") == []            # '파이' — 이름의 연속
     assert [n for n, _ in idx.scan("애플 주식을 담은 ETF 있어?")] == ["애플"]
@@ -112,7 +112,7 @@ def test_trap_answers_start_with_fixed_refusal(ctx):
 @pytest.mark.parametrize("question,intent,op", [
     ("하나캐피탈390-6 만기일이 언제야?", "bond_detail", "bond_detail"),
     ("신한카드2276-2 신용등급이 뭐야?", "bond_detail", "bond_detail"),
-    ("KB스타골드특별자산투자신탁(금-파)Ce 펀드 위험등급이 몇 등급이야?", "fund_detail", "fund_detail"),
+    ("KB스타골드특별자산투자신탁(금-파생재간접형)C클래스 펀드 위험등급이 몇 등급이야?", "fund_detail", "fund_detail"),
     ("키움투자자산운용이 운용하는 국내 ETF는 몇 개야?", "company_product_count", "mgmt_product_count"),
     ("미래에셋자산운용이 운용하는 ETF 중에 순자산이 제일 큰 건 뭐야?", "company_products_ranked", "etp_by_mgmt"),
     ("신한자산운용의 반도체 ETF 있어?", "company_products_ranked", "etp_by_mgmt"),
@@ -146,11 +146,13 @@ def test_nospace_questions_are_not_refused(ctx):
 
 def test_attribute_notes_from_detail_rows():
     from engine.answer_service import attribute_notes
-    bond = [{"PD_NO": "X", "MAT_DT": "2026-11-03", "drv_crd_grd_norm": "AA-", "PD_EVCO_CRD_GRD": "AA-, AA-, AA-", "SRFC_IRT": "4.5"}]
+    bond = [{"PD_NO": "X", "MAT_DT": "2026-11-03", "drv_crd_grd_norm": "AA-", "PD_RISK_NM": "낮은위험(5등급)", "SRFC_IRT": "4.5"}]
     notes = attribute_notes("하나캐피탈390-6 만기일이 언제야?", "bond_detail", bond)
     assert notes == ["만기일: 2026-11-03"]
     notes = attribute_notes("신한카드2276-2 신용등급이 뭐야?", "bond_detail", bond)
-    assert "신용등급(대표): AA-" in notes and "평가사별 신용등급: AA-, AA-, AA-" in notes
+    assert "신용등급(대표): AA-" in notes            # 평가사별 컬럼은 8/27 재배포본에서 삭제
+    notes = attribute_notes("이 채권 위험등급 알려줘", "bond_detail", bond)
+    assert "상품위험등급명: 낮은위험(5등급)" in notes
     etp = [{"pd_lstg_dt": "20221220", "drv_instrument_type": "ETF"}]
     assert attribute_notes("KIWOOM 미국S&P500은 언제 상장됐어?", "etp_detail", etp) == ["상장일(원천 항목명: 상품거래가능일자): 2022-12-20"]
     fund = [{"drv_risk_grade": "2", "zrin_fd_ivst_risk_grd_nm": "높은 위험"}]
@@ -279,8 +281,8 @@ def test_fund_filter_lists_on_sale_first(ctx, index):
 
 def test_trap_vocabulary_expansion(index):
     """v3 T-04/06/09/10/12: 방어 규칙의 어휘 폭 확장 — 배당·공매도, 미래 상장, 종목 시세, 행위."""
-    for q, intent in (("KODEX 2차전지산업 배당수익률이 얼마야?", "unsupported_field"),
-                      ("TIGER 200 배당금 알려줘", "unsupported_field"),
+    for q, intent in (("KODEX 200 배당락일 알려줘", "unsupported_field"),
+                      ("TIGER 200 분배락 일자 알려줘", "unsupported_field"),
                       ("KODEX 200 공매도 잔고 알려줘", "unsupported_field"),
                       ("다음 주에 상장하는 국내 ETF 뭐야?", "time_violation"),
                       ("내일 출시되는 ETF 있어?", "time_violation"),
@@ -292,6 +294,11 @@ def test_trap_vocabulary_expansion(index):
         assert plan.behavior_hint == "refuse" and plan.intent == intent, (q, plan.intent)
     plan = route("고배당 ETF 알려줘", index, policy=POLICY, today=TODAY)   # '배당' 단독=테마, 정상
     assert plan.behavior_hint != "refuse"
+    # 8/27 재배포본: 분배(배당) 필드 신설 — 수익률·분배금 질의는 거절이 아니라 조회다
+    plan = route("KODEX 2차전지산업 배당수익률이 얼마야?", index, policy=POLICY, today=TODAY)
+    assert plan.behavior_hint != "refuse" and plan.intent == "product_detail"
+    plan = route("분배금 많이 주는 ETF 알려줘", index, policy=POLICY, today=TODAY)
+    assert plan.intent == "etp_dividend_rank" and plan.behavior_hint == "partial"
 
 
 def test_brand_token_boundary():

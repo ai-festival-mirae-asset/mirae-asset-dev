@@ -219,7 +219,8 @@ class InProcBackend:
 
     def __init__(self, kg_tables="all", with_vector=True, with_hcx=True):
         from server.app import build_runtime
-        self.ctx, self.llm_router, self.generator = build_runtime(
+        (self.ctx, self.llm_router, self.generator,
+         self.intent_checker, self.finalizer) = build_runtime(
             kg_tables=kg_tables, with_vector=with_vector,
             with_llm=with_hcx, with_generator=with_hcx)
         self.con = self.ctx.con
@@ -234,7 +235,8 @@ class InProcBackend:
         ctx = dataclasses.replace(self.ctx, deadline=deadline)
         return answer_question(question, ctx, question_id=question_id,
                                llm_router=self.llm_router, generator=self.generator,
-                               deadline=deadline)
+                               deadline=deadline,
+                               intent_checker=self.intent_checker, finalizer=self.finalizer)
 
 
 class HttpBackend:

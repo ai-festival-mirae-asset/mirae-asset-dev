@@ -14,11 +14,11 @@ _spec.loader.exec_module(ck)
 
 
 @pytest.mark.parametrize("date, allow, ok", [
-    ("20260710", False, True),    # 기준일 직전 거래일 — 기본 수집일
-    ("20260711", False, True),    # 기준일 당일까지 허용
-    ("20260712", False, False),   # 기준일 이후 — 규정 게이트 차단
-    ("20260712", True, True),     # 명시 플래그로만 해제
-    ("2026-07-10", False, False), # 형식 오류
+    ("20260821", False, True),    # 기본 수집일(재배포 기준 직전 거래일 — 8/27 갱신)
+    ("20260824", False, True),    # 주최 공지 허용 상한(8/26 공지) 당일까지 허용
+    ("20260825", False, False),   # 상한 이후 — 규정 게이트 차단
+    ("20260825", True, True),     # 명시 플래그로만 해제
+    ("2026-08-21", False, False), # 형식 오류
     ("", False, False),
 ])
 def test_baseline_gate(date, allow, ok):

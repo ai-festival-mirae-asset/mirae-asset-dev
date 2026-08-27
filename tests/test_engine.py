@@ -90,9 +90,9 @@ def test_etp_top_aum_has_kodex200_first(con):
 
 @needs_db
 def test_fund_counts_master_vs_class(con):
-    """L-21: 상품 11,138 vs 클래스 95,618 함정."""
+    """L-21: 상품 23,622 vs 클래스 23,676 함정 (8/27 재배포본 — fss_itm_no 그룹 기준)."""
     r = run_template(con, "fund_counts")
-    assert r.rows[0]["products"] == 11138 and r.rows[0]["share_classes"] == 95618
+    assert r.rows[0]["products"] == 23622 and r.rows[0]["share_classes"] == 23676
 
 
 @needs_db
@@ -100,8 +100,8 @@ def test_fund_sale_status_and_our_sale_flag_are_distinct(con):
     current = run_template(con, "fund_filter", {"on_sale_only": "Y", "limit": 20000})
     ours = run_template(con, "fund_filter",
                         {"on_sale_only": "Y", "thco_sale_only": "Y", "limit": 20000})
-    assert len(current.rows) == 8445
-    assert len(ours.rows) == 8434
+    assert len(current.rows) == 10929   # 8/27 재배포본 실측
+    assert len(ours.rows) == 8528
     assert all(row["sale_yn"] == "판매중" for row in current.rows)
     assert all(row["sale_yn"] == "판매중" and row["thco_sale_yn"] == "Y"
                for row in ours.rows)

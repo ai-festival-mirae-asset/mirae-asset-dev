@@ -194,7 +194,11 @@ def rating_condition(question, policy):
             notes.append(f"'{token}급(등급대)'={token}+·{token}·{token}- 묶음"
                          f"(서열 {cond['min_rating_rank']}~{band_low})으로 해석 — 상위 등급(AAA 등)은 미포함")
         else:
+            # 8/27 실전 미러 MR-L-04: 이상/이하/급 없이 등급 '값'만 있으면("신용등급이 AA-인")
+            # 정확히 그 등급만 — 상한만 걸면 상위 등급(AAA 등)까지 섞여 나오는 오답이 된다.
             cond["max_rating_rank"] = rank
+            cond["min_rating_rank"] = rank
+            notes.append(f"'{token}'=정확히 {token} 등급(서열 {rank})만으로 해석(이상/이하 표현 없음)")
     return cond, notes
 
 
@@ -615,6 +619,13 @@ def route_stage_a(question, index, policy=None, today=None):
     is_fund_domain = "펀드" in q
     product_name, product_ref = _first_of_kind(
         entities, "product_kr_etp", "product_global_etf", "product_bond", "product_fund")
+    # 8/27 재배포본 실측: 해외 신상품 약칭 'SK'(Corgi SK hynix 2x Daily ETF)가 종목 SK 와
+    # 동명이 됐다. 편입·보유·자회사 문맥에서 동명이의는 상품이 아니라 종목·회사를 가리키므로
+    # 상품 해석을 버린다(같은 이름에 종목·회사 grounding 이 함께 있는 경우만 — MR-H-05).
+    if product_ref and re.search(r"편입|보유|담|포함|자회사|계열", q):
+        _amb_refs = next((refs for _n, refs in entities if any(r is product_ref for r in refs)), None)
+        if _amb_refs and any(r.kind in ("constituent", "company") for r in _amb_refs):
+            product_name, product_ref = None, None
     const_name, const_ref = _first_of_kind(entities, "constituent")
     n_consts = len({r.key for _n, refs in entities for r in refs if r.kind == "constituent"})
     # 같은 이름(별칭)이 복수 상장(구글=알파벳 A/C, 알리바바=홍콩/ADR)을 가리키면 한 개체로 센다 —
@@ -625,7 +636,12 @@ def route_stage_a(question, index, policy=None, today=None):
     comp_name, comp_ref = _first_of_kind(entities, "company")
     idx_name, idx_ref = _first_of_kind(entities, "index")
 
-    if not product_ref and has_etf_word and re.search(r"구성|정보|상세", q):
+    # 8/27 재배포본 실측: '미래에셋이 운용하는 중국 관련 ETF' 같은 운용사×테마 질의가
+    # 어림 상품 추정('미래에셋'+'중국' → TIGER 중국소비테마)에 걸려 특정 상품 질의로 오인됐다.
+    # 운용사+운용 동사 또는 '관련/테마' 표현이 있으면 어림 추정을 쓰지 않는다(명시 상품명은 무관).
+    mgmt_theme_style = bool(re.search(r"운용하는|이 운용|가 운용", q)
+                            or re.search(r"관련|테마", q))
+    if not product_ref and has_etf_word and re.search(r"구성|정보|상세", q) and not mgmt_theme_style:
         fuzzy_product = resolve_product_by_terms(index, q)
         if fuzzy_product:
             matched_terms, product_ref = fuzzy_product
@@ -648,11 +664,44 @@ def route_stage_a(question, index, policy=None, today=None):
         plan.notes.append("매수·매도·주문·환매 같은 행위 수행은 제공 범위 밖(정보 조회 전용 서비스)")
         plan.hints["unsupported_request"] = "action"
         return done("action_request", "refuse")
-    if re.search(r"배당락|배당\s*기준일|배당\s*지급일|배당\s*수익률|배당금|분배금|분배락|공매도", q):
-        # 8/26 v3 T-04/06: 배당·분배·공매도 계열 항목은 원천에 없다 — '배당' 단독(고배당 테마명)은 제외
-        plan.notes.append("원천 데이터에 배당(배당락일·배당수익률·배당금·분배금)·공매도 관련 항목이 없음")
-        plan.hints["unavailable_field"] = "dividend_or_short_fields"
+    # 8/27 재배포본에서 국내 ETF 분배(배당) 필드 신설(분배수익률·연간 추정 분배금·지급횟수·
+    # 지급월·과세기준) — 4차의 일괄 거절 규칙을 세분화한다. 여전히 없는 것만 거절:
+    #   배당락·분배락(이벤트 일자), 공매도. '정확한 지급일자·기준일'은 지급월 수준까지만
+    #   제공되므로 거절이 아니라 한계 노트로 명시하고 조회를 계속한다.
+    if re.search(r"배당락|분배락", q):
+        plan.notes.append("배당락(분배락) 일자 정보는 제공 데이터에 없음 — 분배 지급월·연간 지급횟수까지만 제공")
+        plan.hints["unavailable_field"] = "ex_dividend_date"
         return done("unsupported_field", "refuse")
+    if "공매도" in q:
+        plan.notes.append("원천 데이터에 공매도 관련 항목이 없음")
+        plan.hints["unavailable_field"] = "short_selling_fields"
+        return done("unsupported_field", "refuse")
+    div_hit = re.search(r"배당|분배", q)
+    if div_hit and re.search(r"지급일|기준일", q):
+        plan.notes.append("분배(배당)의 정확한 지급일자·기준일 정보는 제공 데이터에 없음 — "
+                          "분배 지급월(월 단위)·연간 지급횟수까지만 제공")
+    if div_hit and re.search(r"채권|해외", q) and not re.search(r"국내|ETF|상장지수", q):
+        plan.notes.append("분배(배당) 필드는 국내 ETF 원천(2026-08-22)에만 제공 — 채권·해외 ETF 는 해당 항목 없음")
+    # 목록형 분배 질의('분배수익률 높은 ETF', '월배당 ETF', '분배금 많은 ETF') — 상품 특정이 없으면
+    # 분배 정렬 채널로 라우팅. 상품이 특정되면 아래 상품 상세 규칙(etp_detail 에 분배 필드 포함)이 답한다.
+    if div_hit and not product_ref \
+            and re.search(r"배당\s*수익률|분배\s*수익률|배당금|분배금|월\s*배당|월배당|매월\s*분배|매달\s*분배", q) \
+            and (any(w in q for w in TOP_WORDS) or re.search(r"높|많|추천|알려|뭐|어떤", q)):
+        # 수익률 표현이 있으면 금액(분배금) 낱말이 함께 있어도 수익률 정렬이다
+        # ('분배금을 매월 지급하는 ETF 중 분배수익률이 가장 높은' — MR-A-02 실측)
+        metric = "yield" if re.search(r"수익률", q) else (
+            "amount" if re.search(r"배당금|분배금", q) else "yield")
+        div_params = {"metric": metric, "limit": max(top_n or 10, 10)}
+        if re.search(r"월\s*배당|월배당|매월|매달", q):
+            div_params["min_pay_cnt"] = 12
+            plan.notes.append("'월배당'은 연간 분배 지급횟수 12회(매월 지급) 상품으로 해석")
+        plan.calls.append(ChannelCall("sql", "etp_by_dividend", div_params))
+        plan.calls.append(ChannelCall("sql", "coverage_check", {"field": "kr_etp.pd_dvid_yield"}))
+        plan.hints["display_rows"] = top_n or 10
+        plan.hints["skip_generation"] = True
+        plan.notes.append("분배(배당) 정보는 국내 ETF 원천(2026-08-22) 기준 — 값 0·결측 상품은 순위에서 제외"
+                          "(8/26 주최 공지: 값이 0인 행은 미포함)")
+        return done("etp_dividend_rank", "partial")
     m_coupon = re.search(r"표면금리\s*(\d+(?:\.\d+)?)\s*%", q)
     if m_coupon and float(m_coupon.group(1)) > 100:
         plan.notes.append(f"표면금리 {m_coupon.group(1)}% 는 값 도메인(0~100%) 밖 — 데이터 최대 표면금리는 약 34%")
@@ -810,6 +859,29 @@ def route_stage_a(question, index, policy=None, today=None):
         plan.notes.append("구성종목 기준일 2026-07-10(직전 거래일)")
         return done("constituent_intersection_top_aum")
 
+    # ── 5.87 교차질의: 종목 보유 상품군 합산 + 연 수익률 TOP (8/26 주최 공식 예시) ──────
+    #        '삼성전자를 보유한 국내/해외ETF와 공모펀드를 연 수익률 기준 TOP10 알려줘'
+    #        — 해외 ETF 는 1년 수익률 원천이 없어 제외 무방(주최 문답 확정),
+    #        펀드 보유종목 자료는 제공 데이터에 없어 확인 불가(한계 명시 + 전체 상위 참고 제시).
+    cross_ref = constituent_refs[0] if constituent_refs else const_ref
+    if cross_ref and "펀드" in q and re.search(r"수익률", q) \
+            and (any(w in q for w in TOP_WORDS) or re.search(r"top\s*\d+", q, re.IGNORECASE)) \
+            and (any(v in q for v in HOLDING_VERBS) or "보유" in q):
+        n_want = top_n or 10
+        plan.calls.append(ChannelCall("graph", "holding_etfs", {"query": cross_ref.key, "limit": 1000}))
+        plan.calls.append(ChannelCall("sql", "constituent_holders_top_return",
+                                      {"code": cross_ref.key, "limit": max(n_want, 10)}))
+        plan.calls.append(ChannelCall("sql", "fund_top_return_1y", {"limit": max(n_want, 10)}))
+        plan.hints["display_rows"] = n_want
+        plan.hints["skip_generation"] = True
+        plan.notes.append(f"'{cross_ref.display}' 보유 여부는 국내 ETF 구성종목 수집분으로만 확인 가능 — "
+                          "국내 ETF 는 보유 상품의 1년 수익률 내림차순(0·결측 제외)")
+        plan.notes.append("해외 ETF 는 1년 수익률 항목이 제공 데이터에 없어 순위에서 제외(주최 문답 8/26 확정)")
+        plan.notes.append("공모펀드는 보유 종목 자료가 제공 데이터에 없어 해당 종목 보유 여부를 확인할 수 없음 — "
+                          "참고로 공모펀드 전체의 1년 수익률 상위를 별도 제시")
+        plan.notes.append("구성종목 기준일 2026-07-10(직전 거래일)")
+        return done("cross_holder_top_return", "partial")
+
     # ── 5.9 TDF ETF 존재 + 구성 공시 확인 (H-19) ─────────────────────────
     if has_etf_word and "TDF" in q.upper() and re.search(r"담|구성", q):
         refs, seen = [], set()
@@ -862,6 +934,12 @@ def route_stage_a(question, index, policy=None, today=None):
     # ── 6.0 그룹·계열사 질의 (M-14/H-10/H-23) — 'X그룹주' 상품 우선 + 회사명 접두 후보 집계 ──
     if group_m and (has_etf_word or re.search(r"담|편입|투자", q)):
         g = _strip_particle(group_m.group(1))
+        # 8/27 실전 미러 MR-H-06: '…계열사를 담은 ETF 중 규모가 가장 큰'처럼 순자산 순위를
+        # 물으면 종목 집계보다 접두 편입 ETF 의 순자산 정렬을 먼저 제시한다(첫 SQL 이 대표 목록).
+        if any(w in q for w in TOP_WORDS) and re.search(r"순자산|규모|AUM", q, re.IGNORECASE):
+            plan.calls.append(ChannelCall("sql", "constituent_prefix_holders_by_aum",
+                                          {"prefix_raw": g, "limit": 12}))
+            plan.hints["order"] = "aum"
         plan.calls.append(ChannelCall("sql", "etp_name_search",
                                       {"pattern_raw": g + "그룹", "limit": 10}))
         plan.calls.append(ChannelCall("sql", "etp_pattern_top_constituents",
@@ -882,6 +960,11 @@ def route_stage_a(question, index, policy=None, today=None):
     if not product_ref and (has_etf_word or re.search(r"커버드콜|그룹주|액티브", q)) \
             and re.search(r"담|들고|구성|비중|편입|보유|퍼센트|%", q):
         cand = resolve_product_candidates(index, q)
+        if cand and comp_ref and re.search(r"운용하는|이 운용|가 운용", q):
+            # 8/27 재배포본 실측: 펀드 클래스명이 대폭 늘며 '미래에셋…중국…' 같은 운용사×테마
+            # 질의가 펀드명 조각에 걸리기 시작 — 운용사+운용 동사가 있으면 상품 조각이 아니라
+            # 운용사×테마 규칙(mgmt_theme_constituents) 소관이다.
+            cand = None
         if cand and const_ref and any(v in q for v in HOLDING_VERBS):
             # '캠브리콘처럼 …을 담은'(빗댐 표현)은 그 종목의 역질의(규칙 6) 소관 — 상품명 조각이
             # 가로채면 안 된다 (v2 O-06). 빗댐 표지 없이 종목+테마가 함께 오면('에코프로비엠이
@@ -1203,8 +1286,8 @@ def route_stage_a(question, index, policy=None, today=None):
         params.update(cond)
         params = {k: v for k, v in params.items() if v is not None}
         if buyable:
-            plan.notes.append(f"매수가능 판정 기준: {policy['buyable_rule']} 플래그(§8.4 채택 규칙 명시)"
-                              " + 만기 경과 채권 제외(플래그가 행별 갱신일 기준이라 만기 상태로 이중 확인)")
+            plan.notes.append("매수가능 판정 기준: 8/26 주최 공지 확정 규칙 — 만기 도래(리스팅 종료) 제외 "
+                              "전 종목 구매가능 가정(원천 BUYABLE_QUANTITY 컬럼은 주최 공지로 값 무효)")
         if any(w in q for w in COUNT_WORDS):             # L-02/05
             count_keys = ("currency", "max_rating_rank", "min_rating_rank",
                           "maturity_status", "buyable_only", "bond_class")
@@ -1288,6 +1371,15 @@ def route_stage_a(question, index, policy=None, today=None):
                 plan.notes.append(f"상품명에 '{theme_t}' 표기가 있는 상장중 ETP 중 순자산 1위 상품의 구성 상위 종목")
                 plan.notes.append("구성종목 기준일 2026-07-10(직전 거래일)")
                 return done("theme_top_constituents")
+            if risk and risk[0] != "invalid" and not theme_t:
+                # 8/27 V3-C-11 실측: '위험등급 1등급인 ETF 중 순자산 1위' — 등급 필터를 버리고
+                # 전체 순자산 1위를 답하던 회귀. 등급 조건이 있으면 등급 필터+순자산 정렬 템플릿으로.
+                plan.calls.append(ChannelCall("sql", "etp_filter_risk",
+                                              {"instrument_type": itype, "min_grade": risk[0],
+                                               "max_grade": risk[1], "limit": top_n or 5}))
+                plan.notes.append(f"위험등급 {risk[0]}~{risk[1]}등급 필터 + 순자산총액 내림차순")
+                plan.notes.append("상장중(active) 기준 · ETF/ETN 구분 적용")
+                return done("etp_ranking")
             top_params = {"instrument_type": itype, "limit": top_n or 5}
             if theme_t:
                 top_params["name_pattern_raw"] = theme_t
@@ -1303,7 +1395,7 @@ def route_stage_a(question, index, policy=None, today=None):
                 plan.notes.extend(risk[2])
             plan.calls.append(ChannelCall("sql", "etp_top_return", params))
             if metric == "ytd":
-                plan.notes.append("YTD = 2026-01-01 ~ 2026-07-11 (기준일까지)")
+                plan.notes.append("YTD = 2026-01-01 ~ 2026-08-22 (기준일까지)")
             if "공통" in q and re.search(r"담|종목|구성", q):        # H-09: 상위 N 의 공통 구성종목
                 plan.calls.append(ChannelCall("sql", "etp_top_return_common_holdings",
                                               {"metric": metric, "top_n": top_n or 10, "limit": 15}))

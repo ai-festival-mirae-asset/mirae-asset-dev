@@ -12,7 +12,7 @@
   "_coverage": "필드 커버리지가 이 값 미만이면 partial(한계 문구 의무).",
 
   "buyable_rule": "drv_is_buyable",
-  "_buyable": "매수가능 판정 — drv_is_buyable 파생 플래그 채택(§8.4 미확정, 기준을 답변에 명시).",
+  "_buyable": "매수가능 판정 — drv_is_buyable 파생 플래그 채택. 8/26 주최 공지로 확정: 만기 도래(리스팅 종료) 제외 전부 구매가능, BUYABLE_QUANTITY 무효(전처리 R8이 이 규칙으로 파생).",
 
   "recent_window_months": 6,
   "_recent": "'최근' 해석 — 기준일(7/11) 직전 N개월. H-28/H-02 계열.",

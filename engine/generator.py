@@ -300,3 +300,90 @@ def make_hcx_generator(client=None):
         except Exception:
             return None
     return generator
+
+
+# ---------------------------------------------------------------------------
+# HCX 필수 구간 준수 (8/26 주최 공지: '질의 Intent분석'과 '답변 생성'은 HCX 필수) — 8/27
+#   우리 파이프라인은 규칙 라우팅 + 확정 답안(생성 생략) 조합에서 HCX 를 한 번도 거치지
+#   않을 수 있었다. 아래 두 콜러블이 그 공백을 메운다:
+#   ① intent_checker — 모든 질의의 의도를 HCX 가 분석해 think_trace 에 기록.
+#     라우팅 판정은 규칙·검증이 우선한다(상충 시 주최 데이터 우선 원칙과 같은 구조).
+#   ② finalizer — 확정 답안(규칙 요약·거절문 등 비생성 경로)을 HCX 가 '그대로' 최종
+#     출력하게 한다. 출력이 확정 답안과 내용 불일치면 확정 답안을 유지(결정성 보존).
+#   실패는 None 으로 돌려 파이프라인을 막지 않는다 — 준수 시도와 결과는 trace 에 남는다.
+# ---------------------------------------------------------------------------
+INTENT_CHECK_MAX_TOKENS = 1024   # ClovaChatClient 가 1024 미만 요청을 거부(짧은 분류 출력이라 실사용은 소량)
+
+
+def collapse_ws(text):
+    """공백만 다른 두 답안을 같은 내용으로 보는 비교용 정규화(순수 함수)."""
+    return re.sub(r"\s+", " ", text or "").strip()
+
+
+_ECHO_DOT_RE = re.compile(r"[·ㆍ‧•]")
+_ECHO_BULLET_RE = re.compile(r"^[\s*•\-–—>]+", re.MULTILINE)
+
+
+def echo_equivalent(a, b):
+    """HCX 최종화 출력이 확정 답안과 '내용 동일'인지 — 표기 차이만 무시(순수 함수).
+
+    실측(8/27): HCX 는 그대로 출력하라고 해도 글머리표('- ')를 지우거나 가운뎃점을
+    'ㆍ'로 바꾸고 줄을 합친다. 수치·문장이 같으면 같은 답으로 보고 HCX 출력을
+    채택한다(형식 차이 허용). 내용이 다르면 False — 확정 답안 유지."""
+    def norm(t):
+        t = _ECHO_DOT_RE.sub("·", t or "")
+        t = _ECHO_BULLET_RE.sub("", t)
+        t = re.sub(r"\s*·\s*", "·", t)      # 'A · B' vs 'AㆍB' — 가운뎃점 주변 공백 차이 무시
+        return re.sub(r"\s+", " ", t).strip()
+    return norm(a) == norm(b)
+
+
+def make_hcx_intent_checker(client=None):
+    """intent_checker(question) -> 의도 분류 한 줄 | None(실패)."""
+    if client is None:
+        from agent.clova_client import ClovaChatClient
+        client = ClovaChatClient(model="HCX-005")
+
+    def intent_checker(question):
+        try:
+            messages = [
+                {"role": "system", "content": (
+                    "너는 금융상품 질의 의도 분류기다. 질문의 의도를 정확히 한 줄로 분류한다. "
+                    "형식: 분류=<조회|비교|순위|건수|추천|거절대상|조회불가> · "
+                    "대상=<국내채권|국내ETF|해외ETF|공모펀드|복수|기타> · 핵심조건=<15자 이내>. "
+                    "다른 말은 출력하지 않는다.")},
+                {"role": "user", "content": question},
+            ]
+            resp = client.chat(messages, max_completion_tokens=INTENT_CHECK_MAX_TOKENS,
+                               temperature=0.0, seed=GENERATION_SEED)
+            content = ((resp.get("result") or {}).get("message") or {}).get("content")
+            return content.strip() if isinstance(content, str) and content.strip() else None
+        except Exception:
+            return None
+    return intent_checker
+
+
+def make_hcx_finalizer(client=None):
+    """finalizer(question, draft) -> HCX 출력 텍스트 | None(실패). 수락 판정은 호출부가
+    collapse_ws 동일성으로 한다(내용이 달라졌으면 확정 답안 유지)."""
+    if client is None:
+        from agent.clova_client import ClovaChatClient
+        client = ClovaChatClient(model="HCX-005")
+
+    def finalizer(question, draft):
+        try:
+            messages = [
+                {"role": "system", "content": (
+                    "너는 금융상품 QA 서비스의 최종 답변 출력기다. 검증이 끝난 확정 답안이 주어진다. "
+                    "확정 답안을 한 글자도 바꾸지 말고 그대로 최종 답변으로 출력한다. "
+                    "수치·상품명·목록 순서·기준일·줄바꿈을 더하거나 빼거나 바꾸지 않는다. "
+                    "확정 답안 본문 외의 말은 출력하지 않는다.")},
+                {"role": "user", "content": f"질문: {question}\n\n확정 답안:\n{draft}"},
+            ]
+            resp = client.chat(messages, max_completion_tokens=MAX_GENERATION_TOKENS,
+                               temperature=0.0, seed=GENERATION_SEED)
+            content = ((resp.get("result") or {}).get("message") or {}).get("content")
+            return content.strip() if isinstance(content, str) and content.strip() else None
+        except Exception:
+            return None
+    return finalizer

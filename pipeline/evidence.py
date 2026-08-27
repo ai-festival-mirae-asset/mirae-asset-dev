@@ -6,14 +6,17 @@ Evidence 계약 — 4채널(SQL·그래프·벡터·키워드) 공통 근거 규
       5필드는 전부 string — 공식 규격)로의 직렬화.
 왜  : ① 근거 표시(출처·기준일)는 필수 규칙(ROADMAP §3) — 채널마다 형식이 다르면
       Answer Validation·직렬화가 채널별 분기 지옥이 된다. ② 기준일이 소스별로
-      다르다(마스터 7/11 · 구성종목 7/10) — 근거 단위로 as_of 를 들고 다녀야
-      "언제 기준의 사실인가"를 잃지 않는다.
+      다르다(국내 마스터 8/22 · 해외 8/23 · 구성종목 7/10) — 근거 단위로 as_of 를
+      들고 다녀야 "언제 기준의 사실인가"를 잃지 않는다.
 구조 주의: 테스트가 순수 함수를 import 한다 — import 부작용 금지.
 """
 from dataclasses import dataclass, field
 
-AS_OF_MASTER = "2026-07-11"        # 제공 마스터 4종 스냅샷
-AS_OF_CONSTITUENTS = "2026-07-10"  # KRX 구성종목 조회일(직전 거래일)
+# 8/26 주최 재배포본 기준일: "26.08.24일 기준, 영업일 08.22 까지 / 해외는 한국시간 23일"
+AS_OF_MASTER = "2026-08-22"        # 국내 마스터 3종(채권·ETF·펀드) 반영 영업일
+AS_OF_MASTER_GL = "2026-08-23"     # 해외ETF 반영 기준일(한국시간)
+AS_OF_DIST = "2026-08-24"          # 주최 배포 기준일 (안내 문구용)
+AS_OF_CONSTITUENTS = "2026-07-10"  # KRX 구성종목 조회일(재수집 전까지 유지)
 
 # 채널 식별자 — Router 플랜·think_trace 로그와 공유하는 어휘
 CHANNELS = ("sql", "graph", "vector", "keyword", "validation")

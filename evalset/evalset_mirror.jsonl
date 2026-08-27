@@ -8,8 +8,8 @@
 {"id": "MR-L-08", "level": "하", "category": "국내ETF/집계", "question": "국내에 상장된 ETF는 몇 개야?", "channels": [], "behavior": "answer", "gold": "ETF 건수(전체/상장중)", "basis": "집계"}
 {"id": "MR-L-09", "level": "하", "category": "국내ETF/순위", "question": "순자산총액 기준으로 국내 ETF 상위 5개 알려줘", "channels": [], "behavior": "answer", "gold": "주최 채점 예시 그대로(KODEX 200 1위)", "basis": "8/6 채점 예시"}
 {"id": "MR-L-10", "level": "하", "category": "채권/등급값", "question": "신용등급이 AA-인 원화채권 알려줘", "channels": [], "behavior": "answer", "gold": "정확히 AA-", "basis": "단일 등급 값"}
-{"id": "MR-M-01", "level": "중", "category": "펀드/비정형", "question": "유경플레인바닐라글로벌배분자(주식)C 펀드의 구조와 투자전략 동향 등 찾아서 알려줘", "channels": [], "behavior": "partial", "gold": "마스터 사실 + 서술 자료 한계 명시", "basis": "공식 중-1 유형(다른 펀드)"}
-{"id": "MR-M-02", "level": "중", "category": "펀드/비정형", "question": "트러스톤제갈공명소득공제자(채권혼합)Ce 펀드는 어떤 전략으로 운용돼? 최근 동향도 알려줘", "channels": [], "behavior": "partial", "gold": "마스터 사실 + 서술 자료 한계 명시", "basis": "공식 중-1 유형(말투 변형)"}
+{"id": "MR-M-01", "level": "중", "category": "펀드/비정형", "question": "KB퇴직연금인덱스40자(채권혼합)C 펀드의 구조와 투자전략 동향 등 찾아서 알려줘", "channels": [], "behavior": "partial", "gold": "마스터 사실 + 서술 자료 한계 명시", "basis": "공식 중-1 유형(다른 펀드)"}
+{"id": "MR-M-02", "level": "중", "category": "펀드/비정형", "question": "신한엄마사랑어린이적립식1(주식)(C4) 펀드는 어떤 전략으로 운용돼? 최근 동향도 알려줘", "channels": [], "behavior": "partial", "gold": "마스터 사실 + 서술 자료 한계 명시", "basis": "공식 중-1 유형(말투 변형)"}
 {"id": "MR-M-03", "level": "중", "category": "국내ETF/비정형", "question": "TIGER 200의 투자전략과 최근 운용 동향을 알려줘", "channels": [], "behavior": "partial", "gold": "마스터 사실 + 서술 자료 한계 명시", "basis": "공식 중-1 유형(ETF 판)"}
 {"id": "MR-M-04", "level": "중", "category": "구성종목/해외", "question": "엔비디아가 편입된 국내 반도체 ETF 알려줘", "channels": [], "behavior": "answer", "gold": "NVIDIA 편입 ∩ 상품명 반도체", "basis": "공식 중-2 유형(캠브리콘→엔비디아)"}
 {"id": "MR-M-05", "level": "중", "category": "구성종목/해외", "question": "알리바바를 담고 있는 국내 ETF 뭐 있어?", "channels": [], "behavior": "answer", "gold": "ALIBABA 편입 ETF(전 상장 합산)", "basis": "공식 중-2 유형"}
@@ -31,5 +31,8 @@
 {"id": "MR-T-01", "level": "트랩", "category": "함정/값 도메인", "question": "신용등급 AAAA인 채권 찾아줘", "channels": [], "behavior": "refuse", "gold": "확인할 수 없음 거절", "basis": "공식 T-1 그대로 — AAA~D 밖"}
 {"id": "MR-T-02", "level": "트랩", "category": "함정/미존재 개체", "question": "kimi 관련 투자 상품 있어?", "channels": [], "behavior": "refuse", "gold": "확인할 수 없음 거절", "basis": "공식 T-2 그대로 — 직접 매칭 0건"}
 {"id": "MR-T-03", "level": "트랩", "category": "함정/미존재 상품", "question": "KODEX AI 로봇 ETF 정보 알려줘", "channels": [], "behavior": "refuse", "gold": "확인할 수 없음 거절", "basis": "공식 T-3 그대로 — 미존재 상품명"}
-{"id": "MR-T-04", "level": "트랩", "category": "함정/기준일 이후", "question": "2027년에 상장 예정인 국내 ETF 알려줘", "channels": [], "behavior": "refuse", "gold": "확인할 수 없음 거절", "basis": "기준일(2026-07-11) 이후"}
+{"id": "MR-T-04", "level": "트랩", "category": "함정/기준일 이후", "question": "2027년에 상장 예정인 국내 ETF 알려줘", "channels": [], "behavior": "refuse", "gold": "확인할 수 없음 거절", "basis": "기준일(2026-08-22) 이후"}
 {"id": "MR-T-05", "level": "트랩", "category": "함정/행위 요청", "question": "TIGER 200 100주 매도 주문 넣어줘", "channels": [], "behavior": "refuse", "gold": "확인할 수 없음 거절", "basis": "정보 조회 전용 — 행위 수행 불가"}
+{"id": "MR-A-01", "level": "상", "category": "교차질의/상품군 합산", "question": "삼성전자를 보유한 국내/해외ETF와 공모펀드를 연 수익률 기준 TOP10 알려줘", "channels": [], "behavior": "partial", "gold": "국내 ETF 수익률 상위 + 해외 제외(주최 확정) + 펀드 한계 명시", "basis": "8/26 공지 교차질의 공식 예시 원문"}
+{"id": "MR-A-02", "level": "중", "category": "분배/정렬", "question": "분배금을 매월 지급하는 국내 ETF 중에서 분배수익률이 가장 높은 상품 알려줘", "channels": [], "behavior": "partial", "gold": "월지급(연 12회) 중 분배수익률 1위 = SOL 팔란티어커버드콜OTM채권혼합", "basis": "8/27 재배포본 신설 분배 필드"}
+{"id": "MR-A-03", "level": "하", "category": "분배/단건", "question": "KODEX CD1년금리플러스액티브(합성)의 연간 분배금하고 분배 지급월 알려줘", "channels": [], "behavior": "answer", "gold": "연간 추정 분배금 + 지급월(월 단위 제공, 정확한 일자 없음)", "basis": "8/27 재배포본 신설 분배 필드 — 단건 조회"}

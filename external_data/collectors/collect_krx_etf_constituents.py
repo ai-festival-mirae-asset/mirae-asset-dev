@@ -13,9 +13,9 @@ KRX ETF 구성종목(PDF) 수집기 — 2026-07-11 이전 스냅샷 확보용 (�
   2. 브라우저 개발자 도구에서 로그인 세션의 Cookie 값을 복사해
      external_data/collectors/krx_cookie.txt 에 저장 (비밀값 — .gitignore 등록됨).
 
-규정 게이트: --date 가 2026-07-11(데이터 기준일) 이후면 실행을 거부한다 —
-  7/11 이후 생성 데이터 사용 금지(감점) 규정의 코드 강제. 기본 수집일은
-  2026-07-10(금, 기준일 직전 거래일).
+규정 게이트: --date 가 2026-08-24(주최 공지 수집 허용 상한) 이후면 실행을 거부한다 —
+  8/26 공지 "공시 및 기타 시장데이터는 ~26.08.24 까지 발행 자료 사용가능"의 코드 강제.
+  기본 수집일은 2026-08-21(금 — 재배포 기준일 8/22 토요일의 직전 거래일).
 
 실행:
   python external_data/collectors/collect_krx_etf_constituents.py --probe            # 프로토콜 확인(1종목)
@@ -50,8 +50,10 @@ load_env()
 OUT_BASE = os.path.join(os.path.dirname(HERE), "constituents")    # external_data/constituents/
 KR_ETF_CSV = os.path.join(ROOT, "preprocessing", "processed", "PREF01N001_kr_etf_processed.csv")
 
-BASELINE_COMPACT = "20260711"      # 데이터 기준일 — 이후 데이터 수집 금지(규정)
-DEFAULT_DATE = "20260710"          # 기준일 직전 거래일(금)
+# 8/26 주최 공지 갱신: "공시 및 기타 시장데이터는 금일 기준(~26.08.24 까지) 발행된 자료
+# 사용가능" — 수집 허용 상한을 8/24 로 올린다(구본 규정 7/11 게이트 폐기).
+BASELINE_COMPACT = "20260824"      # 수집 허용 상한(주최 공지) — 이후 데이터 수집 금지
+DEFAULT_DATE = "20260821"          # 재배포 기준일(8/22 토) 직전 거래일(금)
 PROBE_ISIN = "KR7102110004"        # TIGER 200 — 검증된 대형 ETF
 
 URL = "https://data.krx.co.kr/comm/bldAttendant/getJsonData.cmd"

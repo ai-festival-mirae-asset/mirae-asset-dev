@@ -49,7 +49,7 @@ JSON 객체 하나. **필드 5개, 값은 전부 문자열(string)** — 공식 
 | `question` | string | 요청값 그대로 | 요청의 `question` 을 공백까지 그대로 |
 | `retrieved_context` | string | 답변 근거로 참조한 데이터 | 근거 1건당 한 줄 — `[근거N \| 출처: 테이블ID \| 키: 행 키 \| 채널: sql/graph/vector/keyword/validation \| 기준일: YYYY-MM-DD] 컬럼=값 · 컬럼=값 …` (세로줄 `\|` 는 구분 기호). 근거가 없으면 `(근거 없음)`. 확인 불가 판정 자체도 `출처: validation` 근거로 남긴다 |
 | `think_trace` | string | 사고·추론·도구 사용 과정 | 줄 단위 기록 — 처리 단계(`stage=rule` 규칙 처리 / `stage=llm` HCX 계획), 의도(`intent`), 답변 태도(`behavior=answer/partial/refuse`), 연결한 개체(`grounded`), 실행한 조회(`call 채널.조회명 {조건}`), 5중 검문 결과(`검문[value/existence/time/field/coverage] pass|refuse|partial`), 해석 노트(`note:`), 마지막 줄 `응답 시간: N초` |
-| `answer` | string | 최종 답변 | 근거로 확인된 사실만으로 작성. 확인 불가일 때는 정해진 문장 `요청하신 내용은 보유 데이터 기준으로 확인할 수 없습니다.` 로 시작하고 사유를 붙인다. 답변 끝에 데이터 기준일(마스터 2026-07-11 · 구성종목 2026-07-10)을 항상 표기 |
+| `answer` | string | 최종 답변 | 근거로 확인된 사실만으로 작성. 확인 불가일 때는 정해진 문장 `요청하신 내용은 보유 데이터 기준으로 확인할 수 없습니다.` 로 시작하고 사유를 붙인다. 답변 끝에 데이터 기준일(국내 마스터 2026-08-22 · 해외 2026-08-23 · 구성종목 2026-07-10)을 항상 표기 |
 
 **응답 JSON 스키마** (JSON Schema 표기)
 
@@ -74,9 +74,9 @@ JSON 객체 하나. **필드 5개, 값은 전부 문자열(string)** — 공식 
 {
   "question_id": "Q-001",
   "question": "순자산총액 기준으로 국내 ETF 상위 5개 알려줘",
-  "retrieved_context": "[근거1 | 출처: PREF01N001 | 키: KR7069500007 | 채널: sql | 기준일: 2026-07-11] pd_itm_no=KR7069500007 · pd_abrv_nm=KODEX 200 · pd_net_tamt=28359162282520.0 · cu_fund_mgmt_co=삼성\n[근거2 | 출처: PREF01N001 | 키: KR7360750004 | 채널: sql | 기준일: 2026-07-11] pd_itm_no=KR7360750004 · pd_abrv_nm=TIGER 미국S&P500 · pd_net_tamt=19057036378642.0 · cu_fund_mgmt_co=미래에셋\n… (근거3~5 생략)",
+  "retrieved_context": "[근거1 | 출처: PREF01N001 | 키: KR7069500007 | 채널: sql | 기준일: 2026-08-22] pd_itm_no=KR7069500007 · pd_abrv_nm=KODEX 200 · pd_net_tamt=28359162282520.0 · cu_fund_mgmt_co=삼성\n[근거2 | 출처: PREF01N001 | 키: KR7360750004 | 채널: sql | 기준일: 2026-08-22] pd_itm_no=KR7360750004 · pd_abrv_nm=TIGER 미국S&P500 · pd_net_tamt=19057036378642.0 · cu_fund_mgmt_co=미래에셋\n… (근거3~5 생략)",
   "think_trace": "stage=rule intent=etp_ranking behavior=answer(라우터 힌트 answer)\ncall sql.etp_top_aum {'instrument_type': 'ETF', 'limit': 5}\n검문[value] pass\n검문[existence] pass\n검문[time] pass\n검문[field] pass\n검문[coverage] pass\nnote: 상장중(active) 기준 · ETF/ETN 구분 적용\n응답 시간: 3.96초",
-  "answer": "[etp_top_aum] 결과 5건\n  1. KODEX 200 (pd_net_tamt=28359162282520.0 · cu_fund_mgmt_co=삼성)\n  2. TIGER 미국S&P500 (pd_net_tamt=19057036378642.0 · cu_fund_mgmt_co=미래에셋)\n  3. TIGER 반도체TOP10 (…)\n  4. TIGER 200 (…)\n  5. TIGER 미국나스닥100 (…)\n\n※ 상장중(active) 기준 · ETF/ETN 구분 적용\n(데이터 기준일: 마스터 2026-07-11 · 구성종목 2026-07-10)"
+  "answer": "[etp_top_aum] 결과 5건\n  1. KODEX 200 (pd_net_tamt=28359162282520.0 · cu_fund_mgmt_co=삼성)\n  2. TIGER 미국S&P500 (pd_net_tamt=19057036378642.0 · cu_fund_mgmt_co=미래에셋)\n  3. TIGER 반도체TOP10 (…)\n  4. TIGER 200 (…)\n  5. TIGER 미국나스닥100 (…)\n\n※ 상장중(active) 기준 · ETF/ETN 구분 적용\n(데이터 기준일: 마스터 2026-08-22 · 구성종목 2026-07-10)"
 }
 ```
 
@@ -88,9 +88,9 @@ JSON 객체 하나. **필드 5개, 값은 전부 문자열(string)** — 공식 
 {
   "question_id": "Q-002",
   "question": "신용등급 AAAA인 채권 찾아줘",
-  "retrieved_context": "[근거1 | 출처: validation | 키: value | 채널: validation | 기준일: 2026-07-11] 판정=확인 불가 · 사유='AAAA'는 신용등급 체계(AAA~D)에 존재하지 않는 표기",
+  "retrieved_context": "[근거1 | 출처: validation | 키: value | 채널: validation | 기준일: 2026-08-22] 판정=확인 불가 · 사유='AAAA'는 신용등급 체계(AAA~D)에 존재하지 않는 표기",
   "think_trace": "stage=rule intent=invalid_value behavior=refuse(라우터 힌트 refuse)\n검문[value] refuse — 'AAAA'는 신용등급 체계(AAA~D)에 존재하지 않는 표기\n검문[existence] pass\n검문[time] pass\n검문[field] pass\n검문[coverage] pass\n응답 시간: 0.13초",
-  "answer": "요청하신 내용은 보유 데이터 기준으로 확인할 수 없습니다.\n- 사유: 'AAAA'는 신용등급 체계(AAA~D)에 존재하지 않는 표기\n(데이터 기준일: 마스터 2026-07-11 · 구성종목 2026-07-10)"
+  "answer": "요청하신 내용은 보유 데이터 기준으로 확인할 수 없습니다.\n- 사유: 'AAAA'는 신용등급 체계(AAA~D)에 존재하지 않는 표기\n(데이터 기준일: 마스터 2026-08-22 · 구성종목 2026-07-10)"
 }
 ```
 

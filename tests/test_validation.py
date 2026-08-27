@@ -73,7 +73,8 @@ def test_gate_value_domain():
 
 def test_gate_time_boundary():
     assert gate_time_boundary("삼성전자 지금 주가가 얼마야?").verdict == "refuse"
-    assert gate_time_boundary("2026년 8월에 새로 상장한 ETF 알려줘").verdict == "refuse"
+    assert gate_time_boundary("2026년 9월에 새로 상장한 ETF 알려줘").verdict == "refuse"
+    assert gate_time_boundary("2026년 8월에 새로 상장한 ETF 알려줘").verdict == "pass"   # 8/22 기준일 이내(8/27 재배포)
     assert gate_time_boundary("TIGER 200의 1년 전 구성종목이랑 지금을 비교해줘").verdict == "refuse"
     assert gate_time_boundary("2027년에 만기가 돌아오는 회사채 ETF 있어?").verdict == "pass"
 

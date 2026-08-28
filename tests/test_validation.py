@@ -81,7 +81,8 @@ def test_gate_time_boundary():
 
 def test_gate_field_availability():
     assert gate_field_availability("해외 ETF를 위험등급 1등급만 골라서 보여줘").verdict == "refuse"
-    assert gate_field_availability("공모펀드 중에서 총보수 제일 낮은 것 알려줘").verdict == "refuse"
+    # 8/28 r2: 재배포본 보수 분해 4종 신설 — 펀드 보수는 이제 합산으로 답한다(거절 아님)
+    assert gate_field_availability("공모펀드 중에서 총보수 제일 낮은 것 알려줘").verdict == "pass"
     assert gate_field_availability("타사에서 판매 중인 공모펀드 알려줘").verdict == "refuse"
     assert gate_field_availability("위험등급 낮은 국내 ETF 보여줘").verdict == "pass"
     assert gate_field_availability("회사채 ETF의 총보수 알려줘").verdict == "pass"   # ETF 보수는 있음
@@ -106,7 +107,7 @@ def test_refuse_questions_are_refused(ctx, qid, question):
 @needs_db
 def test_trap_count_matches_expectation():
     """모의고사의 거절 문항 수가 바뀌면(문항 추가·수정) 여기서 알아챈다."""
-    assert len(load_refuse_questions()) == 16          # 함정 15 + M-29
+    assert len(load_refuse_questions()) == 15          # 함정 14 + M-29 (T-14는 8/28 r2 에서 정상 질의로 전환)
 
 
 # ---------------------------------------------------------------------------

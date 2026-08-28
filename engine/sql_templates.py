@@ -77,7 +77,7 @@ TEMPLATES = {t.id: t for t in [
        "대상: L-01/03/05, H-26. 매수가능 판정은 8/26 주최 공지 확정 규칙(만기 도래 제외 전부 구매가능, "
        "BUYABLE_QUANTITY 무효)을 답변에 명시할 것.",
        """SELECT PD_NO, PD_NM, PD_ABRV_NM, STD_PD_MCLS_NM, CURR_CD, drv_crd_grd_norm, drv_crd_grd_rank,
-                 SRFC_IRT, MAT_DT, drv_maturity_status, drv_is_buyable
+                 SRFC_IRT, MAT_DT, drv_maturity_status, drv_is_buyable, AFTER_TAX_YIELD
           FROM kr_bond
           WHERE ($currency IS NULL OR CURR_CD = $currency)
             AND ($max_rating_rank IS NULL OR TRY_CAST(drv_crd_grd_rank AS INT) <= $max_rating_rank)
@@ -88,14 +88,18 @@ TEMPLATES = {t.id: t for t in [
             AND ($max_coupon IS NULL OR TRY_CAST(SRFC_IRT AS DOUBLE) < $max_coupon)
             AND ($bond_class IS NULL OR STD_PD_MCLS_NM = $bond_class)
             AND ($pension_only IS NULL OR upper(trim(coalesce(PD_PEN_TR_YN,''))) IN ('Y','TRUE','1'))
+            AND ($order IS NULL OR $order NOT IN ('after_tax', 'after_tax_asc')
+                 OR coalesce(TRY_CAST(AFTER_TAX_YIELD AS DOUBLE), 0) <> 0)
           ORDER BY CASE WHEN $order = 'coupon' THEN TRY_CAST(SRFC_IRT AS DOUBLE) END DESC NULLS LAST,
                    CASE WHEN $order = 'coupon_asc' THEN TRY_CAST(SRFC_IRT AS DOUBLE) END ASC NULLS LAST,
+                   CASE WHEN $order = 'after_tax' THEN TRY_CAST(AFTER_TAX_YIELD AS DOUBLE) END DESC NULLS LAST,
+                   CASE WHEN $order = 'after_tax_asc' THEN TRY_CAST(AFTER_TAX_YIELD AS DOUBLE) END ASC NULLS LAST,
                    TRY_CAST(drv_crd_grd_rank AS INT) NULLS LAST,
                    TRY_CAST(SRFC_IRT AS DOUBLE) DESC NULLS LAST, PD_NO
           LIMIT $limit""",
        [Param("currency"), Param("max_rating_rank"), Param("min_rating_rank"),
         Param("maturity_status"), Param("buyable_only"), Param("min_coupon"),
-        Param("max_coupon"), Param("bond_class"), Param("order", enum=("coupon", "coupon_asc")),
+        Param("max_coupon"), Param("bond_class"), Param("order", enum=("coupon", "coupon_asc", "after_tax", "after_tax_asc")),
         Param("pension_only"), Param("limit", required=True)],
        source="PRBD01N001", key_col="PD_NO"),
 
@@ -227,7 +231,7 @@ TEMPLATES = {t.id: t for t in [
                  cu_charge_rt, drv_risk_grade,
                  pd_net_tamt, du_er_1y, du_er_ytd, pd_lstg_dt, drv_curr_cd,
                  pd_dvid_yield, pd_divd_amt_ann, pd_dvid_pay_cnt, pd_dvid_pay_months,
-                 du_chas_errt, du_diff_rt, du_vlty_1y, cu_strtegy
+                 du_chas_errt, du_diff_rt, du_vlty_1y, du_vol_1d, cu_strtegy
           FROM kr_etp WHERE pd_itm_no = $pd_itm_no""",
        [Param("pd_itm_no", required=True)], source="PREF01N001", key_col="pd_itm_no"),
 
@@ -248,16 +252,23 @@ TEMPLATES = {t.id: t for t in [
        "국내 ETP 수익률 상위 — metric: ytd(=2026-01-01~08-22 규칙)/1y. "
        "정렬 기준 값이 0인 행은 제외한다(8/26 주최 공지: '값이 0인 행들은 아예 포함하지 않도록'). "
        "대상: L-14, M-15, H-09.",
-       """SELECT pd_itm_no, pd_abrv_nm, du_er_ytd, du_er_1y, drv_risk_grade FROM kr_etp
+       """SELECT pd_itm_no, pd_abrv_nm, du_er_ytd, du_er_1y, du_er_1m, du_er_3m, du_er_6m,
+                 drv_risk_grade FROM kr_etp
           WHERE drv_instrument_type = 'ETF' AND drv_listing_status = 'active'
             AND ($min_risk IS NULL OR TRY_CAST(drv_risk_grade AS INT) >= $min_risk)
             AND ($max_risk IS NULL OR TRY_CAST(drv_risk_grade AS INT) <= $max_risk)
-            AND coalesce(CASE WHEN $metric = 'ytd' THEN TRY_CAST(du_er_ytd AS DOUBLE)
-                              ELSE TRY_CAST(du_er_1y AS DOUBLE) END, 0) <> 0
-          ORDER BY CASE WHEN $metric = 'ytd' THEN TRY_CAST(du_er_ytd AS DOUBLE)
-                        ELSE TRY_CAST(du_er_1y AS DOUBLE) END DESC NULLS LAST
+            AND coalesce(CASE $metric WHEN 'ytd' THEN TRY_CAST(du_er_ytd AS DOUBLE)
+                                      WHEN '1m' THEN TRY_CAST(du_er_1m AS DOUBLE)
+                                      WHEN '3m' THEN TRY_CAST(du_er_3m AS DOUBLE)
+                                      WHEN '6m' THEN TRY_CAST(du_er_6m AS DOUBLE)
+                                      ELSE TRY_CAST(du_er_1y AS DOUBLE) END, 0) <> 0
+          ORDER BY CASE $metric WHEN 'ytd' THEN TRY_CAST(du_er_ytd AS DOUBLE)
+                                WHEN '1m' THEN TRY_CAST(du_er_1m AS DOUBLE)
+                                WHEN '3m' THEN TRY_CAST(du_er_3m AS DOUBLE)
+                                WHEN '6m' THEN TRY_CAST(du_er_6m AS DOUBLE)
+                                ELSE TRY_CAST(du_er_1y AS DOUBLE) END DESC NULLS LAST
           LIMIT $limit""",
-       [Param("metric", required=True, enum=("ytd", "1y")),
+       [Param("metric", required=True, enum=("ytd", "1y", "1m", "3m", "6m")),
         Param("min_risk"), Param("max_risk"), Param("limit", required=True)],
        source="PREF01N001", key_col="pd_itm_no"),
 
@@ -279,10 +290,13 @@ TEMPLATES = {t.id: t for t in [
        """SELECT pd_itm_no, pd_abrv_nm, pd_nm, drv_instrument_type, drv_listing_status
           FROM kr_etp
           WHERE (pd_nm ILIKE $pattern ESCAPE '\\' OR pd_abrv_nm ILIKE $pattern ESCAPE '\\')
+            AND ($pattern2 IS NULL OR pd_nm ILIKE $pattern2 ESCAPE '\\'
+                 OR pd_abrv_nm ILIKE $pattern2 ESCAPE '\\')
             AND ($instrument_type IS NULL OR drv_instrument_type = $instrument_type)
             AND ($status IS NULL OR drv_listing_status = $status)
           ORDER BY pd_itm_no LIMIT $limit""",
-       [Param("pattern", required=True), Param("instrument_type", enum=("ETF", "ETN")),
+       [Param("pattern", required=True), Param("pattern2"),
+        Param("instrument_type", enum=("ETF", "ETN")),
         Param("status"), Param("limit", required=True)],
        source="PREF01N001", key_col="pd_itm_no"),
 
@@ -306,8 +320,11 @@ TEMPLATES = {t.id: t for t in [
             AND ($min_aum_ge IS NULL OR TRY_CAST(pd_net_tamt AS DOUBLE) >= $min_aum_ge)
             AND ($max_aum_lt IS NULL OR TRY_CAST(pd_net_tamt AS DOUBLE) <  $max_aum_lt)
             AND ($max_aum_le IS NULL OR TRY_CAST(pd_net_tamt AS DOUBLE) <= $max_aum_le)
+            AND ($min_listed_dt IS NULL OR pd_lstg_dt >= $min_listed_dt)
+            AND ($max_listed_dt IS NULL OR pd_lstg_dt <= $max_listed_dt)
           GROUP BY 1, 2 ORDER BY 1, 2""",
-       [Param("min_aum_gt"), Param("min_aum_ge"), Param("max_aum_lt"), Param("max_aum_le")],
+       [Param("min_aum_gt"), Param("min_aum_ge"), Param("max_aum_lt"), Param("max_aum_le"),
+        Param("min_listed_dt"), Param("max_listed_dt")],
        source="PREF01N001"),
 
     _t("etp_low_fee",
@@ -343,11 +360,12 @@ TEMPLATES = {t.id: t for t in [
                               ELSE TRY_CAST(pd_dvid_yield AS DOUBLE) END, 0) <> 0
             AND ($month_pattern IS NULL OR pd_dvid_pay_months ILIKE $month_pattern ESCAPE '\\')
             AND ($min_pay_cnt IS NULL OR TRY_CAST(pd_dvid_pay_cnt AS INT) >= $min_pay_cnt)
+            AND ($min_listed_dt IS NULL OR pd_lstg_dt >= $min_listed_dt)
           ORDER BY CASE WHEN $metric = 'amount' THEN TRY_CAST(pd_divd_amt_ann AS DOUBLE)
                         ELSE TRY_CAST(pd_dvid_yield AS DOUBLE) END DESC NULLS LAST,
                    pd_itm_no LIMIT $limit""",
        [Param("metric", required=True, enum=("yield", "amount")), Param("month_pattern"),
-        Param("min_pay_cnt"), Param("limit", required=True)],
+        Param("min_pay_cnt"), Param("min_listed_dt"), Param("limit", required=True)],
        source="PREF01N001", key_col="pd_itm_no"),
 
     _t("etp_metric_rank",
@@ -363,6 +381,7 @@ TEMPLATES = {t.id: t for t in [
                  TRY_CAST(du_vlty_3m AS DOUBLE) AS du_vlty_3m,
                  TRY_CAST(du_vlty_6m AS DOUBLE) AS du_vlty_6m,
                  TRY_CAST(du_vlty_1y AS DOUBLE) AS du_vlty_1y,
+                 TRY_CAST(du_vol_1d AS DOUBLE) AS du_vol_1d,
                  cu_charge_rt, drv_risk_grade,
                  coalesce(cu_base_index, ref_base_index) AS base_index, du_last_aum
           FROM kr_etp
@@ -375,6 +394,7 @@ TEMPLATES = {t.id: t for t in [
                                       WHEN 'vol_1m' THEN TRY_CAST(du_vlty_1m AS DOUBLE)
                                       WHEN 'vol_3m' THEN TRY_CAST(du_vlty_3m AS DOUBLE)
                                       WHEN 'vol_6m' THEN TRY_CAST(du_vlty_6m AS DOUBLE)
+                                      WHEN 'volume' THEN TRY_CAST(du_vol_1d AS DOUBLE)
                                       ELSE TRY_CAST(du_vlty_1y AS DOUBLE) END, 0) <> 0
           ORDER BY CASE WHEN $direction = 'asc' THEN
                           CASE $metric WHEN 'diff' THEN TRY_CAST(du_diff_rt AS DOUBLE)
@@ -382,6 +402,7 @@ TEMPLATES = {t.id: t for t in [
                                        WHEN 'vol_1m' THEN TRY_CAST(du_vlty_1m AS DOUBLE)
                                        WHEN 'vol_3m' THEN TRY_CAST(du_vlty_3m AS DOUBLE)
                                        WHEN 'vol_6m' THEN TRY_CAST(du_vlty_6m AS DOUBLE)
+                                       WHEN 'volume' THEN TRY_CAST(du_vol_1d AS DOUBLE)
                                        ELSE TRY_CAST(du_vlty_1y AS DOUBLE) END END ASC NULLS LAST,
                    CASE WHEN $direction = 'desc' THEN
                           CASE $metric WHEN 'diff' THEN TRY_CAST(du_diff_rt AS DOUBLE)
@@ -389,11 +410,12 @@ TEMPLATES = {t.id: t for t in [
                                        WHEN 'vol_1m' THEN TRY_CAST(du_vlty_1m AS DOUBLE)
                                        WHEN 'vol_3m' THEN TRY_CAST(du_vlty_3m AS DOUBLE)
                                        WHEN 'vol_6m' THEN TRY_CAST(du_vlty_6m AS DOUBLE)
+                                       WHEN 'volume' THEN TRY_CAST(du_vol_1d AS DOUBLE)
                                        ELSE TRY_CAST(du_vlty_1y AS DOUBLE) END END DESC NULLS LAST,
                    pd_itm_no
           LIMIT $limit""",
        [Param("metric", required=True,
-              enum=("diff", "tracking", "vol_1m", "vol_3m", "vol_6m", "vol_1y")),
+              enum=("diff", "tracking", "vol_1m", "vol_3m", "vol_6m", "vol_1y", "volume")),
         Param("direction", required=True, enum=("asc", "desc")),
         Param("type", enum=("ETF", "ETN")), Param("index_pattern"),
         Param("limit", required=True)],
@@ -430,17 +452,23 @@ TEMPLATES = {t.id: t for t in [
             AND ($name_pattern IS NULL OR pd_nm ILIKE $name_pattern ESCAPE '\\'
                  OR pd_abrv_nm ILIKE $name_pattern ESCAPE '\\' OR cu_strtegy ILIKE $name_pattern ESCAPE '\\')
             AND ($inverse_only IS NULL OR upper(coalesce(drv_is_inverse,'')) IN ('Y','TRUE','1'))
+            AND ($etn_only IS NULL OR upper(coalesce(drv_is_etn,'')) IN ('Y','TRUE','1'))
             AND ($ccy IS NULL OR pd_trd_ccy = $ccy)
             AND ($exclude_ccy IS NULL OR pd_trd_ccy <> $exclude_ccy)
           ORDER BY TRY_CAST(du_last_aum AS DOUBLE) DESC NULLS LAST, pd_itm_no LIMIT $limit""",
        [Param("region_pattern"), Param("exclude_region_pattern"), Param("name_pattern"),
-        Param("inverse_only"), Param("ccy"), Param("exclude_ccy"), Param("limit", required=True)],
+        Param("inverse_only"), Param("etn_only"), Param("ccy"), Param("exclude_ccy"),
+        Param("limit", required=True)],
        source="PREF02N001", key_col="pd_itm_no", as_of=AS_OF_MASTER_GL),
 
     _t("global_etf_count",
-       "해외ETF 유형별 카운트(ETF/ETN 구분 — 8/27 재배포본 5,972/65). 대상: L-17.",
-       "SELECT drv_instrument_type, count(*) AS n FROM global_etf GROUP BY 1 ORDER BY n DESC",
-       [], source="PREF02N001", as_of=AS_OF_MASTER_GL),
+       "해외ETF 유형별 카운트(ETF/ETN 구분 — 8/27 재배포본 5,972/65). 인버스·ETN 조건 선택 "
+       "(8/28 r2 R2-05: 인버스 조건을 무시하고 전체를 세던 오답). 대상: L-17.",
+       """SELECT drv_instrument_type, count(*) AS n FROM global_etf
+          WHERE ($inverse_only IS NULL OR upper(coalesce(drv_is_inverse,'')) IN ('Y','TRUE','1'))
+            AND ($etn_only IS NULL OR upper(coalesce(drv_is_etn,'')) IN ('Y','TRUE','1'))
+          GROUP BY 1 ORDER BY n DESC""",
+       [Param("inverse_only"), Param("etn_only")], source="PREF02N001", as_of=AS_OF_MASTER_GL),
 
     _t("global_ccy_dist",
        "해외ETF 거래통화 분포. 대상: L-20.",
@@ -463,12 +491,14 @@ TEMPLATES = {t.id: t for t in [
        "공모펀드 필터 — 현재 판매상태(sale_yn)와 당사판매여부(thco_sale_yn)를 구분하고 "
        "운용속성·위험등급을 함께 적용. 마스터(상품) 단위. 대상: L-22/23.",
        """SELECT itm_no, itm_nm, itm_abrv_nm, or_attr_desc, drv_risk_grade, sale_yn, thco_sale_yn,
-                 share_class_count, ovrs_fd_desc, fd_nast_suma, fd_last_dstb_r
+                 share_class_count, ovrs_fd_desc, fd_nast_suma, fd_last_dstb_r,
+                 sale_co_rwrd_r, or_co_rwrd_r, trusc_rwrd_r, ofwk_trus_rwrd_r
           FROM fund_master
           WHERE ($on_sale_only IS NULL OR replace(trim(coalesce(sale_yn,'')), ' ', '') = '판매중')
             AND ($thco_sale_only IS NULL OR upper(trim(coalesce(thco_sale_yn,'')))
                                              IN ('Y','TRUE','1'))
             AND ($attr_pattern IS NULL OR or_attr_desc ILIKE $attr_pattern ESCAPE '\\')
+            AND ($btyp_pattern IS NULL OR zrin_btyp_nm ILIKE $btyp_pattern)
             AND ($min_risk IS NULL OR TRY_CAST(drv_risk_grade AS INT) >= $min_risk)
             AND ($max_risk IS NULL OR TRY_CAST(drv_risk_grade AS INT) <= $max_risk)
             AND ($region IS NULL OR ovrs_fd_desc = $region)
@@ -478,9 +508,55 @@ TEMPLATES = {t.id: t for t in [
                         WHEN $order IS NULL AND $on_sale_only IS NULL THEN 1
                         ELSE 0 END,                       -- 8/26 v2 O-08: 정렬 미지정 시 판매중 우선
                    itm_no LIMIT $limit""",
-       [Param("on_sale_only"), Param("thco_sale_only"), Param("attr_pattern"), Param("min_risk"),
+       [Param("on_sale_only"), Param("thco_sale_only"), Param("attr_pattern"),
+        Param("btyp_pattern"), Param("min_risk"),
         Param("max_risk"), Param("region"), Param("order"), Param("limit", required=True)],
        source="PRFD01N001", key_col="itm_no"),
+
+    _t("fund_by_fee",
+       "공모펀드 보수 정렬 — 재배포본 신설 보수 분해 4종(판매 sale_co_rwrd_r·운용 or_co_rwrd_r·"
+       "수탁 trusc_rwrd_r·사무 ofwk_trus_rwrd_r)의 합을 총보수로 계산해 정렬한다. "
+       "8/28 r2: 구본 기준 '펀드 총보수 없음' 일괄 거절이 낡은 규칙이 된 것(v1 T-14 전환). "
+       "합 0·결측 상품 제외(주최 공지 0값 원칙), 커버리지는 라우터 노트로 명시.",
+       """SELECT itm_no, itm_nm, itm_abrv_nm, zrin_btyp_nm, sale_yn,
+                 TRY_CAST(sale_co_rwrd_r AS DOUBLE) AS sale_co_rwrd_r,
+                 TRY_CAST(or_co_rwrd_r AS DOUBLE) AS or_co_rwrd_r,
+                 TRY_CAST(trusc_rwrd_r AS DOUBLE) AS trusc_rwrd_r,
+                 TRY_CAST(ofwk_trus_rwrd_r AS DOUBLE) AS ofwk_trus_rwrd_r,
+                 round(coalesce(TRY_CAST(sale_co_rwrd_r AS DOUBLE), 0)
+                       + coalesce(TRY_CAST(or_co_rwrd_r AS DOUBLE), 0)
+                       + coalesce(TRY_CAST(trusc_rwrd_r AS DOUBLE), 0)
+                       + coalesce(TRY_CAST(ofwk_trus_rwrd_r AS DOUBLE), 0), 4) AS total_fee_pct,
+                 fd_nast_suma
+          FROM fund_master
+          WHERE coalesce(TRY_CAST(sale_co_rwrd_r AS DOUBLE), 0)
+                + coalesce(TRY_CAST(or_co_rwrd_r AS DOUBLE), 0)
+                + coalesce(TRY_CAST(trusc_rwrd_r AS DOUBLE), 0)
+                + coalesce(TRY_CAST(ofwk_trus_rwrd_r AS DOUBLE), 0) > 0
+            AND ($order <> 'sale_asc' OR TRY_CAST(sale_co_rwrd_r AS DOUBLE) > 0)
+            AND ($attr_pattern IS NULL OR or_attr_desc ILIKE $attr_pattern ESCAPE '\\')
+            AND ($btyp_pattern IS NULL OR zrin_btyp_nm ILIKE $btyp_pattern)
+            AND ($on_sale_only IS NULL OR replace(trim(coalesce(sale_yn,'')), ' ', '') = '판매중')
+          ORDER BY CASE WHEN $order = 'total_asc' THEN total_fee_pct END ASC NULLS LAST,
+                   CASE WHEN $order = 'total_desc' THEN total_fee_pct END DESC NULLS LAST,
+                   CASE WHEN $order = 'sale_asc' THEN TRY_CAST(sale_co_rwrd_r AS DOUBLE) END ASC NULLS LAST,
+                   itm_no LIMIT $limit""",
+       [Param("order", required=True, enum=("total_asc", "total_desc", "sale_asc")),
+        Param("attr_pattern"), Param("btyp_pattern"), Param("on_sale_only"),
+        Param("limit", required=True)],
+       source="PRFD01N001", key_col="itm_no"),
+
+    _t("etp_filter_leverage",
+       "레버리지 배수(cu_lev_fector) 필터 — 8/28 r2 R2-06: '3배 레버리지 ETF 있어?'가 이름 검색으로 "
+       "새서 배수 조건을 무시하던 공백. 상장중 기준, 순자산 내림차순. ETF·ETN 모두 포함.",
+       """SELECT pd_itm_no, pd_abrv_nm, pd_nm, drv_instrument_type, cu_lev_fector,
+                 du_last_aum, drv_risk_grade
+          FROM kr_etp
+          WHERE drv_listing_status = 'active'
+            AND TRY_CAST(cu_lev_fector AS DOUBLE) = $factor
+          ORDER BY TRY_CAST(du_last_aum AS DOUBLE) DESC NULLS LAST, pd_itm_no LIMIT $limit""",
+       [Param("factor", required=True), Param("limit", required=True)],
+       source="PREF01N001", key_col="pd_itm_no"),
 
     _t("fund_by_composition",
        "공모펀드 자산구성 비율(zrin 4종: 국내/해외 × 주식/채권) 문턱값 필터 — 값 보유 상품만. "
@@ -542,6 +618,22 @@ TEMPLATES = {t.id: t for t in [
         Param("min_risk"), Param("max_risk"), Param("limit", required=True)],
        source="PRFD01N001", key_col="itm_no"),
 
+    _t("fund_class_count",
+       "공모펀드 클래스 조건 건수 — fund_class_by_fee 와 동일 필터의 카운트 "
+       "(8/28 r2 R2-12: 온라인 전용 클래스 수를 묻는데 목록만 내던 공백).",
+       """SELECT count(*) AS n FROM fund_class
+          WHERE ($fee_type IS NULL OR han_clas_fee_type = $fee_type)
+            AND ($channel_pattern IS NULL OR han_clas_sales_channel ILIKE $channel_pattern)
+            AND ($strategy_pattern IS NULL OR zrin_ptn_nm ILIKE $strategy_pattern
+                 OR itm_nm ILIKE $strategy_pattern)
+            AND ($on_sale_only IS NULL OR replace(trim(coalesce(sale_yn,'')), ' ', '') = '판매중')
+            AND ($min_risk IS NULL OR TRY_CAST(drv_risk_grade AS INT) >= $min_risk)
+            AND ($max_risk IS NULL OR TRY_CAST(drv_risk_grade AS INT) <= $max_risk)""",
+       [Param("fee_type", enum=("수수료미징구", "수수료선취", "수수료후취")),
+        Param("channel_pattern"), Param("strategy_pattern"), Param("on_sale_only"),
+        Param("min_risk"), Param("max_risk")],
+       source="PRFD01N001"),
+
     _t("fund_top_return_1y",
        "공모펀드 1년 수익률 상위(값 보유분만) — 커버리지는 coverage_check 로 병행 조회해 "
        "답변에 명시. 대상: L-24.",
@@ -573,6 +665,7 @@ TEMPLATES = {t.id: t for t in [
        """SELECT c.etf_isin, coalesce(e.pd_abrv_nm, c.etf_name) AS pd_abrv_nm, c.COMPST_ISU_NM,
                  TRY_CAST(replace(c.COMPST_RTO, ',', '') AS DOUBLE) AS weight_pct,
                  e.pd_net_tamt, e.drv_risk_grade, e.cu_charge_rt,
+                 e.pd_lstg_dt, e.pd_dvid_yield,
                  coalesce(m.resolved, e.cu_fund_mgmt_co) AS mgmt
           FROM etf_constituent c LEFT JOIN kr_etp e ON c.etf_isin = e.pd_itm_no
           LEFT JOIN mgmt_resolved m ON m.pd_itm_no = e.pd_itm_no

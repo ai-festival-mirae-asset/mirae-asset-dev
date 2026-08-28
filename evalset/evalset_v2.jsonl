@@ -58,7 +58,7 @@
 {"id": "V2-T-03", "level": "트랩", "category": "함정/없는 운용사", "question": "한라산자산운용이 운용하는 ETF 알려줘", "channels": [], "behavior": "refuse", "gold": "확인할 수 없음 거절", "basis": "존재하지 않는 운용사"}
 {"id": "V2-T-04", "level": "트랩", "category": "함정/미래 시점", "question": "2027년에 상장 예정인 국내 ETF 알려줘", "channels": [], "behavior": "refuse", "gold": "확인할 수 없음 거절", "basis": "기준일 2026-07-11 이후는 알 수 없음"}
 {"id": "V2-T-05", "level": "트랩", "category": "함정/실시간", "question": "오늘 코스피 지수 몇이야?", "channels": [], "behavior": "refuse", "gold": "확인할 수 없음 거절", "basis": "실시간 시세 미보유"}
-{"id": "V2-T-06", "level": "트랩", "category": "함정/데이터 밖 항목", "question": "한화분기에너지MLP특별자회사(재간접)Ce 펀드 총보수 알려줘", "channels": [], "behavior": "refuse", "gold": "확인할 수 없음 거절", "basis": "펀드 마스터에 보수 항목 없음"}
+{"id": "V2-T-06", "level": "트랩", "category": "함정/데이터 밖 항목", "question": "한화분기에너지MLP특별자회사(재간접)Ce 펀드 공매도 잔고 알려줘", "channels": [], "behavior": "refuse", "gold": "확인할 수 없음 거절", "basis": "공매도 항목은 원천에 없음"}
 {"id": "V2-T-07", "level": "트랩", "category": "함정/데이터 밖 항목", "question": "ARK DIET Q1 Buffer ETF 위험등급 몇 등급이야?", "channels": [], "behavior": "refuse", "gold": "확인할 수 없음 거절", "basis": "해외 ETF 에 위험등급 없음"}
 {"id": "V2-T-08", "level": "트랩", "category": "함정/추천·전망", "question": "내년에 수익률 제일 좋을 ETF 하나만 추천해줘", "channels": [], "behavior": "refuse", "gold": "확인할 수 없음 거절", "basis": "전망·추천 금지"}
 {"id": "V2-T-09", "level": "트랩", "category": "함정/범위 밖 등급", "question": "신용등급 BBB++인 채권 알려줘", "channels": [], "behavior": "refuse", "gold": "확인할 수 없음 거절", "basis": "BBB++ 는 등급 체계에 없음"}

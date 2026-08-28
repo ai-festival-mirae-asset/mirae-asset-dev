@@ -249,7 +249,7 @@ def dist_sentence(op, rows):
 
 
 # 건수 템플릿 — 숫자 한 개짜리 결과는 생성기가 "정보 없음"으로 오독하기 쉬워(L-05 실측) 문장으로 승격한다
-_COUNT_OPS = {"bond_count", "etp_count", "global_etf_count", "fund_counts"}
+_COUNT_OPS = {"bond_count", "etp_count", "global_etf_count", "fund_counts", "fund_class_count"}
 _COUNT_LABELS = {"n": "건수", "products": "상품(마스터) 수", "share_classes": "판매 클래스 수",
                  "on_sale_products": "판매 중 상품(마스터) 수", "on_sale_classes": "판매 중 클래스 수"}
 # 상품 1종 상세에서 질문이 콕 집은 항목은 노트로 강제한다(8/22 블라인드 v2 L-04~10 — 생성기가
@@ -280,6 +280,13 @@ _ATTR_NOTES = [
     (r"변동성", "du_vlty_1y", "1년 변동성(%)", "text"),
     (r"분배율", "fd_last_dstb_r", "최근 분배율(%)", "text"),
     (r"자산\s*구성|주식\s*비중|편입\s*비율", "zrin_dmst_stk_cmst_rt", "국내주식 구성비율(%)", "text"),
+    # 8/28 r2 — 펀드 보수 분해 4종(재배포본 신설)·거래량·세후수익률
+    (r"세후\s*수익률", "AFTER_TAX_YIELD", "세후수익률(%)", "text"),
+    (r"보수", "sale_co_rwrd_r", "판매회사 보수(%)", "text"),
+    (r"보수", "or_co_rwrd_r", "운용회사 보수(%)", "text"),
+    (r"보수", "trusc_rwrd_r", "수탁회사 보수(%)", "text"),
+    (r"보수", "ofwk_trus_rwrd_r", "사무관리 보수(%)", "text"),
+    (r"거래량", "du_vol_1d", "1일 거래량", "text"),
     (r"퇴직연금|연금", "PD_PEN_TR_YN", "퇴직연금 편입 가능 여부", "text"),
 ]
 
@@ -305,11 +312,14 @@ def attribute_notes(question, op, rows):
     if op not in _DETAIL_OPS or not rows:
         return []
     row, out = rows[0], []
+    name = next((str(row[c]) for c in _NAME_COLS if row.get(c)), None)
     for rx, col, label, fmt in _ATTR_NOTES:
         if col in row and re.search(rx, question):
             val = _fmt_attr(row, col, fmt)
             if val:
-                out.append(f"{label}: {val}")
+                # 상품 이름을 노트에 함께 박는다 — 생성기가 문장을 줄이며 이름을 빼먹어도
+                # (8/28 r2 R2-16: 'KODEX 인버스 거래량'에 값만 남긴 실측) 답에 이름이 남는다.
+                out.append(f"'{name}' {label}: {val}" if name else f"{label}: {val}")
     return list(dict.fromkeys(out))
 # 목록 1위 상품의 속성 명시 (8/26 v3 C-05/C-10) — "…중 순자산 1위 상품의 위험등급/상장일/운용사"
 # 처럼 정렬 목록의 최상위 행에서 속성을 되묻는 3단 질문의 마지막 고리. 정렬은 라우터가
@@ -463,14 +473,29 @@ def data_notes(question, plan, result):
     # "두 ETF"라고만 쓰고 상품명을 빼는 변동 실측 — 비교 대상 이름을 노트로 강제해 어느 실행에서도
     # 답변에 두 이름이 남게 한다(_ensure_notes 가 빠지면 붙인다). 모든 두-상품 비교에 유효한 일반 정책.
     if re.search(r"비교|더\s|중에|어느\s*(쪽|게|것)|랑\s|와\s|과\s", question):
-        detail_names = []
+        detail_rows = []
         for o in result.outcomes:
             if o.ok and o.channel == "sql" and o.op in _DETAIL_OPS and o.rows:
                 nm = next((str(o.rows[0][c]) for c in _NAME_COLS if o.rows[0].get(c)), None)
-                if nm and nm not in detail_names:
-                    detail_names.append(nm)
-        if len(detail_names) >= 2:
-            notes.append("비교 대상: " + " vs ".join(detail_names[:3]))
+                if nm and nm not in [n for n, _r in detail_rows]:
+                    detail_rows.append((nm, o.rows[0]))
+        if len(detail_rows) >= 2:
+            notes.append("비교 대상: " + " vs ".join(n for n, _r in detail_rows[:3]))
+            # 8/28 r2: 순자산 비교 결론을 규칙이 직접 낸다 — HCX 없이(빠른 판)도, HCX 문장
+            # 흔들림에도 "어느 쪽이 더 큰가"의 답이 항상 남는다(값·환산 표기 동반).
+            if re.search(r"순자산|규모|AUM", question, re.IGNORECASE) and re.search(r"더|어느", question):
+                vals = []
+                for nm, row in detail_rows[:2]:
+                    try:
+                        vals.append((nm, float(str(row.get("pd_net_tamt")).replace(",", "")),
+                                     row.get("pd_net_tamt_krw")))
+                    except (TypeError, ValueError):
+                        vals = []
+                        break
+                if len(vals) == 2 and vals[0][1] != vals[1][1]:
+                    big, small = (vals[0], vals[1]) if vals[0][1] > vals[1][1] else (vals[1], vals[0])
+                    notes.append(f"순자산총액은 '{big[0]}'({big[2] or f'{big[1]:,.0f}원'})가 "
+                                 f"'{small[0]}'({small[2] or f'{small[1]:,.0f}원'})보다 더 큽니다")
     notes.extend(top_rank_attribute_notes(question, result))     # v3 C-05/C-10: 1위 상품의 속성
     # v2 H-08/O-03: 운용사·테마 필터가 걸린 편입 ETF 조회가 0건이면 '없다'를 명시(거절이 아니라 사실 답변)
     mf = plan.hints.get("mgmt_filter")

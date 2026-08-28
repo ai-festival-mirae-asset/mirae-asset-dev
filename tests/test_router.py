@@ -464,7 +464,6 @@ def test_route_traps_refuse_hints(index):
         "다음 달 금리 인하 가능성을 반영해서 채권 추천해줘": "time_violation",
         "TIGER 200의 1년 전 구성종목이랑 지금을 비교해줘": "time_violation",
         "해외 ETF를 위험등급 1등급만 골라서 보여줘": "unsupported_field",
-        "공모펀드 중에서 총보수 제일 낮은 것 알려줘": "unsupported_field",
         "kimi 관련 투자 상품 있어?": "existence_check",
         "KODEX AI 로봇 ETF 정보 알려줘": "existence_check",
     }
@@ -473,6 +472,9 @@ def test_route_traps_refuse_hints(index):
         assert plan.intent == intent, f"{q} → {plan.intent} (기대 {intent})"
         assert plan.behavior_hint == "refuse", q
         assert plan.stage == "rule", q                     # 트랩 방어는 LLM 없이 확정
+    # 8/28 r2: '펀드 총보수'는 재배포본 보수 분해 4종 신설로 거절이 아니라 합산 partial 로 전환
+    plan = _route(index, "공모펀드 중에서 총보수 제일 낮은 것 알려줘")
+    assert plan.intent == "fund_fee_rank" and plan.behavior_hint == "partial"
 
 
 @needs_db

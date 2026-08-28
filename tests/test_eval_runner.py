@@ -151,7 +151,7 @@ def test_scorer_reads_real_refusals_as_correct():
     rows = [r for r in load_jsonl(os.path.join(ROOT, "evalset", "evalset_v1.jsonl")) if r["behavior"] == "refuse"]
     checks = load_checks(os.path.join(ROOT, "evalset", "checks_v1.jsonl"))
     results = evaluate(rows, backend, checks)
-    assert len(results) == 16
+    assert len(results) == 15                          # T-14는 8/28 r2 에서 정상 질의로 전환
     bad = [(r["id"], r["behavior_kind"], r["answer_head"]) for r in results if not r["behavior_ok"]]
     assert not bad, bad
     assert all(r["evidence_ok"] for r in results), [r["id"] for r in results if not r["evidence_ok"]]

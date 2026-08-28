@@ -29,7 +29,7 @@ from pipeline.evidence import (AS_OF_CONSTITUENTS, AS_OF_MASTER,  # noqa: E402
 from pipeline.themes import detect_theme_terms, expand_anchors, load_themes  # noqa: E402
 
 # 플랜에는 원문(*_raw)이 실리고 실행 직전 이스케이프된 정식 파라미터로 바뀐다
-_RAW_LIKE_PARAMS = {"pattern_raw": "pattern", "attr_pattern_raw": "attr_pattern",
+_RAW_LIKE_PARAMS = {"pattern_raw": "pattern", "pattern2_raw": "pattern2", "attr_pattern_raw": "attr_pattern",
                     "region_pattern_raw": "region_pattern",
                     "exclude_region_pattern_raw": "exclude_region_pattern", "name_pattern_raw": "name_pattern"}
 # 앞부분 일치(text%) — 그룹 계열사 후보(회사명 접두) 조회 (8/19)

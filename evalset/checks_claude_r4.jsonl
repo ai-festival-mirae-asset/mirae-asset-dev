@@ -1,0 +1,25 @@
+{"id": "R4-01", "checks": [{"type": "sql_names", "name": "DUR 하위(만기 미경과)", "min_hit": 2, "sql": "SELECT PD_ABRV_NM, PD_NM FROM kr_bond WHERE TRY_CAST(DUR AS DOUBLE)>0 AND drv_maturity_status='active' ORDER BY TRY_CAST(DUR AS DOUBLE) ASC LIMIT 8"}]}
+{"id": "R4-02", "checks": [{"type": "answer_has_any", "name": "없음/유가증권", "terms": ["없", "유가증권"]}]}
+{"id": "R4-03", "checks": [{"type": "any_of", "name": "수 또는 예시", "checks": [{"type": "answer_has_any", "name": "1,022", "terms": ["1,022", "1022"]}, {"type": "sql_names", "name": "가능 상품 예시", "min_hit": 2, "sql": "SELECT pd_abrv_nm, pd_nm FROM kr_etp WHERE upper(coalesce(pd_pen_tr_yn,''))='Y' AND drv_listing_status='active'"}]}]}
+{"id": "R4-04", "checks": [{"type": "any_of", "name": "수 또는 예시", "checks": [{"type": "answer_has_any", "name": "527", "terms": ["527"]}, {"type": "sql_names", "name": "음수 괴리율 예시", "min_hit": 1, "sql": "SELECT pd_abrv_nm, pd_nm FROM kr_etp WHERE TRY_CAST(du_diff_rt AS DOUBLE)<0 AND drv_listing_status='active' ORDER BY TRY_CAST(du_diff_rt AS DOUBLE) ASC LIMIT 8"}]}]}
+{"id": "R4-05", "checks": [{"type": "sql_names", "name": "해외 채권형", "min_hit": 1, "sql": "SELECT pd_abrv_nm, pd_nm FROM global_etf WHERE wu_inv_ast_type='Bond' ORDER BY TRY_CAST(du_last_aum AS DOUBLE) DESC NULLS LAST LIMIT 10"}]}
+{"id": "R4-06", "checks": [{"type": "answer_has_any", "name": "없음/원화/0건", "terms": ["없", "원화", "KRW", "0건"]}]}
+{"id": "R4-07", "checks": [{"type": "answer_has_any", "name": "2,061 또는 ETF만 2,015", "terms": ["2,061", "2061", "2,015", "2015"]}]}
+{"id": "R4-08", "checks": [{"type": "note_any", "name": "비교 대상 명시", "terms": ["KODEX 200", "TIGER 200"]}, {"type": "answer_has_any", "name": "보수 언급", "terms": ["보수"]}]}
+{"id": "R4-09", "checks": [{"type": "sql_names", "name": "온라인×미징구", "min_hit": 2, "sql": "SELECT itm_abrv_nm, itm_nm FROM fund_class WHERE han_clas_fee_type='수수료미징구' AND han_clas_sales_channel ILIKE '%온라인%' ORDER BY TRY_CAST(fd_nast_suma AS DOUBLE) DESC NULLS LAST LIMIT 20"}]}
+{"id": "R4-10", "checks": [{"type": "answer_has_any", "name": "255", "terms": ["255"]}]}
+{"id": "R4-11", "checks": [{"type": "answer_has_any", "name": "51", "terms": ["51"]}]}
+{"id": "R4-12", "checks": [{"type": "sql_names", "name": "미국 국채 ETF", "min_hit": 1, "sql": "SELECT pd_abrv_nm, pd_nm FROM kr_etp WHERE drv_listing_status='active' AND (pd_nm LIKE '%미국%국채%' OR pd_nm LIKE '%미국채%')"}]}
+{"id": "R4-13", "checks": [{"type": "any_of", "name": "Gross 표기 또는 한계", "checks": [{"type": "answer_has_any", "name": "Gross", "terms": ["Gross", "그로스"]}, {"type": "answer_has_any", "name": "한계", "terms": ["없", "밖", "확인할 수 없"]}]}]}
+{"id": "R4-14", "checks": [{"type": "answer_has_any", "name": "KODEX 200", "terms": ["KODEX 200", "KODEX200"]}]}
+{"id": "R4-15", "checks": [{"type": "sql_names", "name": "3중 상위", "min_hit": 1, "top": 3, "sql": "SELECT PD_ABRV_NM, PD_NM FROM kr_bond WHERE STD_PD_MCLS_NM='국공채' AND TRY_CAST(DUR AS DOUBLE)>5 ORDER BY TRY_CAST(SRFC_IRT AS DOUBLE) DESC NULLS LAST LIMIT 3"}]}
+{"id": "R4-16", "checks": [{"type": "sql_names", "name": "30%초과 편입", "min_hit": 2, "sql": "SELECT DISTINCT c.etf_name, e.pd_abrv_nm FROM etf_constituent c JOIN kr_etp e ON c.etf_isin=e.pd_itm_no WHERE c.COMPST_ISU_CD='005930' AND TRY_CAST(replace(c.COMPST_RTO,',','') AS DOUBLE)>30 AND e.drv_listing_status='active'"}, {"type": "answer_has_any", "name": "수익률 표기", "terms": ["수익률", "du_er"]}]}
+{"id": "R4-17", "checks": [{"type": "sql_names", "name": "월배당×저보수", "min_hit": 1, "sql": "SELECT pd_abrv_nm, pd_nm FROM kr_etp WHERE TRY_CAST(pd_dvid_pay_cnt AS INT)>=12 AND TRY_CAST(cu_charge_rt AS DOUBLE)>0 AND TRY_CAST(cu_charge_rt AS DOUBLE)<0.5 AND drv_listing_status='active'"}]}
+{"id": "R4-18", "checks": [{"type": "sql_names", "name": "순자산 하위", "min_hit": 2, "sql": "SELECT pd_abrv_nm, pd_nm FROM kr_etp WHERE drv_instrument_type='ETF' AND drv_listing_status='active' AND TRY_CAST(pd_net_tamt AS DOUBLE)>0 ORDER BY TRY_CAST(pd_net_tamt AS DOUBLE) ASC LIMIT 8"}]}
+{"id": "R4-19", "checks": [{"type": "sql_number", "name": "평균 추적오차", "sql": "SELECT round(avg(TRY_CAST(du_chas_errt AS DOUBLE)),2) FROM kr_etp WHERE (cu_base_index ILIKE '%KOSPI%200%' OR ref_base_index ILIKE '%KOSPI%200%') AND TRY_CAST(du_chas_errt AS DOUBLE)>0 AND drv_listing_status='active'"}]}
+{"id": "R4-20", "checks": [{"type": "sql_number", "name": "최고값", "sql": "SELECT max(TRY_CAST(fd_yr1_ern_r AS DOUBLE)) FROM fund_master WHERE zrin_btyp_nm='채권형' AND TRY_CAST(fd_yr1_ern_r AS DOUBLE)<>0"}, {"type": "answer_has_any", "name": "최저 언급", "terms": ["-13.87", "최저", "-13"]}]}
+{"id": "R4-21", "checks": [{"type": "evidence_min", "name": "검문 근거 표시", "n": 1}]}
+{"id": "R4-22", "checks": [{"type": "evidence_min", "name": "검문 근거 표시", "n": 1}]}
+{"id": "R4-23", "checks": [{"type": "evidence_min", "name": "검문 근거 표시", "n": 1}]}
+{"id": "R4-24", "checks": [{"type": "evidence_min", "name": "검문 근거 표시", "n": 1}]}
+{"id": "R4-25", "checks": [{"type": "evidence_min", "name": "검문 근거 표시", "n": 1}]}

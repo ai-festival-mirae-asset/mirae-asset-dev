@@ -131,6 +131,8 @@ def gate_existence(question, index, policy):
     # ① 미등록 라틴 토큰 — 의미 있는 부분 일치(원문 표기 기준)조차 0건일 때만 거절.
     #    공백 제거 정규화의 우연 겹침('kimi' ⊂ 'Denmark IMI')은 token_matches 가 걸러낸다.
     unknown = find_unknown_latin_terms(normalized_question, matched_names)
+    unknown = [t for t in unknown
+               if not re.fullmatch(r"(?i)isin|kr[0-9a-z]{10}", t)]   # 8/29 r4 R4-14: 코드 역조회
     for tok in unknown:
         if asks and not token_matches(index, tok, limit=1):
             return (GateResult("existence", "refuse",

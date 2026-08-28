@@ -242,3 +242,76 @@ def test_portfolio_delegation_refused(index):
 def test_past_date_price_refused(index):
     plan = _route(index, "작년 12월 31일 KODEX 200 종가 알려줘")
     assert plan.behavior_hint == "refuse" and plan.hints.get("time_violation")
+
+
+# ---------------------------------------------------------------------------
+# 8/28~29 r4 회귀 잠금 — 함정 4종·새 축(듀레이션/시장/연금/음수/자산유형/ISIN/꼴찌/평균/최고최저)
+# ---------------------------------------------------------------------------
+
+def test_r4_traps_refused(index):
+    for q in ["이 중에 원금이 보장되는 상품 골라줘",
+              "KODEX 200 팔면 양도소득세 얼마 나와? 계산해줘",
+              "어제 산 KODEX 200 환불해줘",
+              "너희 회사가 미는 추천 상품이 뭐야?"]:
+        plan = _route(index, q)
+        assert plan.behavior_hint == "refuse" and plan.hints.get("unsupported_request"), q
+
+
+def test_r4_tax_question_not_over_refused(index):
+    # 과세 '기준' 질문(계산 아님)은 거절 대상이 아니다
+    plan = _route(index, "ETF 분배금에 세금은 어떻게 매겨져?")
+    assert plan.behavior_hint != "refuse"
+
+
+def test_duration_rank_and_threshold(index):
+    plan = _route(index, "듀레이션이 제일 짧은 채권 5개만 알려줘")
+    c = _call(plan, "bond_filter")
+    assert c is not None and c.params.get("order") == "dur_asc"
+    plan = _route(index, "듀레이션이 5년 넘는 국공채 중에 표면금리 높은 순 3개 알려줘")
+    c = _call(plan, "bond_filter")
+    assert c is not None and c.params.get("min_dur") == 5.0 and c.params.get("order") == "coupon"
+
+
+def test_market_listing_and_pension(index):
+    plan = _route(index, "코스닥 시장에 상장된 ETN도 있어?")
+    assert _call(plan, "etp_market_dist") is not None
+    plan = _route(index, "퇴직연금 계좌로 살 수 있는 ETF도 있어?")
+    assert _call(plan, "etp_filter_pension") is not None
+
+
+def test_negative_metric_and_average(index):
+    plan = _route(index, "괴리율이 마이너스인 ETF도 있어?")
+    c = _call(plan, "etp_metric_rank")
+    assert c is not None and c.params.get("max_metric") == 0
+    plan = _route(index, "코스피200을 추종하는 상품들의 평균 추적오차가 얼마야?")
+    assert _call(plan, "etp_metric_avg") is not None
+
+
+def test_global_asset_type_but_not_fund(index):
+    plan = _route(index, "해외 ETF 중에 채권에 투자하는 상품 알려줘")
+    c = _call(plan, "global_etf_filter")
+    assert c is not None and c.params.get("ast_type") == "Bond"
+    # 펀드 문맥은 가로채지 않는다(자산구성 규칙 소관)
+    plan = _route(index, "채권형 펀드인데 해외 채권 비중이 50% 넘는 상품 있나요?")
+    assert _call(plan, "fund_by_composition") is not None
+
+
+def test_isin_lookup(index):
+    plan = _route(index, "ISIN이 KR7069500007인 상품이 뭐야?")
+    assert plan.intent == "code_lookup"
+
+
+def test_bottom_aum_and_minmax(index):
+    plan = _route(index, "국내 ETF 중에 순자산이 제일 작은 상품 5개는 뭐야?")
+    c = _call(plan, "etp_top_aum")
+    assert c is not None and c.params.get("order") == "asc"
+    plan = _route(index, "채권형 펀드 중에 1년 수익률 최고랑 최저를 같이 알려줘")
+    calls = [c for c in plan.calls if c.op == "fund_top_return_1y"]
+    assert len(calls) == 2 and any(c.params.get("order") == "asc" for c in calls)
+    assert all(c.params.get("btyp_pattern") == "%채권형%" for c in calls)
+
+
+def test_company_made_count(index):
+    plan = _route(index, "삼성에서 나온 ETN은 몇 개야?")
+    c = _call(plan, "mgmt_product_count")
+    assert c is not None and c.params.get("mgmt") == "삼성"

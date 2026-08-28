@@ -40,11 +40,19 @@ def _fmt_value(v):
     return str(v)
 
 
-def _fmt_row(row, max_fields=4):
-    """행 1개 → '이름 (필드=값 · …)' — 테이블 무관 요약. 비중·수익률 열(*_pct)은 % 를 붙인다."""
+def _fmt_row(row, max_fields=4, focus=()):
+    """행 1개 → '이름 (필드=값 · …)' — 테이블 무관 요약. 비중·수익률 열(*_pct)은 % 를 붙인다.
+
+    focus 열(질문이 콕 집은 속성 — 8/28 블라인드(claude) B-15: '상위 3개의 분배율 비교'에서
+    분배율 열이 표시 상한에 잘려 값이 답변에 안 실리던 것)은 열 순서와 무관하게 앞에 두고,
+    표시 상한을 focus 개수만큼 늘려 잘리지 않게 한다.
+    """
     name = next((str(row[c]) for c in _NAME_COLS if row.get(c)), None)
     parts = []
-    for k, v in row.items():
+    focus_present = [k for k in focus if k in row]
+    ordered = focus_present + [k for k in row.keys() if k not in focus_present]
+    for k in ordered:
+        v = row[k]
         if k in _SKIP_COLS or v is None or (name is not None and str(v) == name):
             continue
         if (str(k) + "_krw") in row:                      # 원 단위 원값 대신 환산 표기(…억원)만 보여 준다
@@ -53,10 +61,19 @@ def _fmt_row(row, max_fields=4):
             v = " / ".join(str(x) for x in v[:5]) + (" 외" if len(v) > 5 else "")
         unit = "%" if str(k).endswith("_pct") and isinstance(v, (int, float)) else ""
         parts.append(f"{k}={_fmt_value(v)}{unit}")
-        if len(parts) >= max_fields:
+        if len(parts) >= max_fields + len(focus_present):
             break
     body = " · ".join(parts)
     return f"{name} ({body})" if name and body else (name or body or str(row))
+
+
+def _focus_cols(question):
+    """질문 낱말이 콕 집은 속성 열 이름들(_ATTR_NOTES 사전 재사용 — 순수 함수)."""
+    cols = []
+    for rx, col, _label, _fmt in _ATTR_NOTES:
+        if re.search(rx, question or "") and col not in cols:
+            cols.append(col)
+    return cols
 
 
 def _sort_rows_by_aum(rows):
@@ -71,9 +88,10 @@ def _sort_rows_by_aum(rows):
 
 REFUSE_HEAD = "요청하신 내용은 보유 데이터 기준으로 확인할 수 없습니다"
 _FREE_REFUSAL_RE = re.compile(
-    r"확인할 수 없|확인하지 못|확인되지 않|찾을 수 없|찾지 못|제공(하지|할 수|받지) (못|없)|"
-    r"답변(을|이)?\s*(드릴 수 없|할 수 없|찾을 수 없)|정보(가|는)?\s*(없|포함되어 있지)|"
-    r"데이터(를|가)?\s*(제공받지|없)|죄송|알 수 없습니다")
+    r"확인할 수 없|확인하지 못|확인되지 않|확인(해|하여)\s*드릴 수 없|찾을 수 없|찾지 못|"
+    r"제공(하지|할 수|받지) (못|없)|"
+    r"답변(을|이)?\s*(드릴 수 없|할 수 없|찾을 수 없|드리기 어렵)|정보(가|는)?\s*(없|포함되어 있지)|"
+    r"데이터(를|가)?\s*(제공받지|없)|죄송|알 수 없습니다")   # '확인해 드릴 수 없/드리기 어렵'은 8/28 V3-T-09 표현 변형
 _NUMBERED_LINE_RE = re.compile(r"^\s*\d{1,3}[.)]\s*\S", re.M)
 
 
@@ -142,7 +160,7 @@ def _draft_rating_compare(plan):
 _CONSTITUENT_OPS = {"etp_pattern_top_constituents", "constituent_top_weights"}
 
 
-def _draft_answer(plan, result):
+def _draft_answer(plan, result, question=""):
     """규칙 기반 요약 답변 — 생성기가 없거나 실패했을 때의 폴백(항상 동작)."""
     if plan.intent == "unstructured_info":
         lines = ["요청하신 상품의 구조·투자전략·동향을 설명할 비정형 자료는 "
@@ -175,7 +193,8 @@ def _draft_answer(plan, result):
                 rows = _sort_rows_by_aum(rows)
             head = f"[{o.op}] 결과 {len(rows):,}건"
             display_rows = int(plan.hints.get("display_rows", 5))
-            body = [f"  {i}. {_fmt_row(r)}" for i, r in enumerate(rows[:display_rows], 1)]
+            focus = _focus_cols(question)                 # 질문이 콕 집은 속성 열은 잘리지 않게(B-15)
+            body = [f"  {i}. {_fmt_row(r, focus=focus)}" for i, r in enumerate(rows[:display_rows], 1)]
             lines.append("\n".join([head] + body))
         elif o.channel == "graph":
             for r in rows[:3]:
@@ -590,7 +609,7 @@ def answer_question(question, ctx, question_id="", today=None,
         answer = _draft_refusal(plan, result, verdict)
     elif plan.intent == "rating_compare":            # 사전 근거 답변 — 생성 불필요(결정적)
         # 다른 경로와 같이 해석 노트·기준일을 붙인다(8/18 채점기가 '답변에 기준일 없음'을 잡아냄)
-        answer = _ensure_notes(_draft_rating_compare(plan) or _draft_answer(plan, result), plan)
+        answer = _ensure_notes(_draft_rating_compare(plan) or _draft_answer(plan, result, question), plan)
         evidences.append(Evidence(source="credit_rating.csv", source_id="서열사전",
                                   channel="keyword", as_of=AS_OF_MASTER,
                                   fields={k: RATING_RANK[k] for k, _r in
@@ -626,7 +645,7 @@ def answer_question(question, ctx, question_id="", today=None,
             else:
                 gen_note = "생성 호출 실패 — 규칙 요약으로 폴백"
         if answer is None:
-            answer = _draft_answer(plan, result)
+            answer = _draft_answer(plan, result, question)
         # 거절 문장 통일(8/22 블라인드 v2 T-03·05·13·14 실측): 생성기·규칙 요약이 자기 말로
         # 거절하면("찾을 수 없었습니다"·"죄송합니다"류) 채점상 거절이 아니다. 조회 결과가 있으면
         # 규칙 요약(목록)으로, 0건이면 정해진 거절문으로 바꾼다 — 거절은 한 문장으로만 시작한다.
@@ -634,7 +653,7 @@ def answer_question(question, ctx, question_id="", today=None,
         if verdict.behavior == "answer" and _looks_like_free_refusal(answer):
             has_rows = any(o.ok and o.rows for o in result.outcomes)
             if has_rows:
-                draft = _draft_answer(plan, result)
+                draft = _draft_answer(plan, result, question)
                 if not _looks_like_free_refusal(draft):
                     answer = draft
                     answer_from_hcx = False
@@ -644,7 +663,7 @@ def answer_question(question, ctx, question_id="", today=None,
                 # '없다'가 사실 답변이다 — 거절문으로 바꾸면 과잉 거절. 규칙 요약("결과 0건")이
                 # 거절 문장이 아니면 그것으로 교체하고, 존재 의심 경로(미등록 토큰·HCX 계획)만
                 # 기존대로 정형 거절문으로 통일한다.
-                draft = _draft_answer(plan, result)
+                draft = _draft_answer(plan, result, question)
                 suspicious = bool(plan.unknown_terms) or plan.stage != "rule"
                 if not suspicious and draft.strip() and not _looks_like_free_refusal(draft):
                     answer = draft

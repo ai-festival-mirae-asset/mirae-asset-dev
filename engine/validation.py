@@ -224,7 +224,10 @@ def gate_router_rule_refusal(plan):
     신뢰하지 않는다'는 재검사 원칙은 LLM 단계 판정을 못 믿는다는 뜻 — 규칙 단계(stage=rule)
     의 고정 정규식 판정은 검문과 같은 결정성이므로 그대로 승격한다."""
     deterministic = (plan.hints.get("unsupported_request") or plan.hints.get("unavailable_field")
-                     or plan.hints.get("invalid_value") or plan.hints.get("existence_query"))
+                     or plan.hints.get("invalid_value") or plan.hints.get("existence_query")
+                     or plan.hints.get("time_violation") or plan.hints.get("unsupported_asset"))
+    # time_violation·unsupported_asset 추가는 8/28 회귀(V3-T-09): 시간 경계 거절이 승격 목록에
+    # 빠져 생성기로 새고, 생성기가 정규식 밖 표현("확인해 드릴 수 없습니다")으로 거절하던 것.
     if plan.stage == "rule" and plan.behavior_hint == "refuse" and deterministic:
         reason = plan.notes[-1] if plan.notes else "규칙 판정: 제공 범위 밖 요청"
         return GateResult("router_rule", "refuse", reason)

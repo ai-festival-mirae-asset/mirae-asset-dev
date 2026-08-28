@@ -97,7 +97,8 @@ def find_brand_token(text):
 
 HOLDING_VERBS = ("편입", "담은", "담고", "담아", "포함", "들어간", "들어있", "들어 있")
 COUNT_WORDS = ("몇 개", "몇개", "몇 종", "몇이", "개수", "총 몇", "얼마나 되", "얼마나 돼")
-TOP_WORDS = ("상위", "가장", "제일", "톱", "탑", "top", "1위", "순서로", "순위", "좋은")
+TOP_WORDS = ("상위", "가장", "제일", "톱", "탑", "top", "1위", "1등", "일등", "최고",
+             "순서로", "순위", "좋은")   # '1등/일등/최고'는 8/28 블라인드(claude) B-14 보강
 
 # ---------------------------------------------------------------------------
 # 플랜 자료구조 — Stage B(LLM)·채널 실행기와 공유하는 계약
@@ -739,18 +740,23 @@ def route_stage_a(question, index, policy=None, today=None):
     # ── 3. 시간 경계 위반 (T-10/11/12/15) ───────────────────────────────────
     if time_flags.get("realtime"):
         plan.notes.append(f"실시간 시세는 제공 범위 밖 — 데이터는 {AS_OF_MASTER} 스냅샷")
+        plan.hints["time_violation"] = "realtime"
         return done("time_violation", "refuse")
     if time_flags.get("history"):
         plan.notes.append("구성종목은 2026-07-10 단일 스냅샷만 보유 — 과거 시점과의 비교 불가")
+        plan.hints["time_violation"] = "history"
         return done("time_violation", "refuse")
     if time_flags.get("post_snapshot"):
         plan.notes.append(f"기준일({AS_OF_MASTER}) 이후({time_flags['post_snapshot']}) 정보는 보유하지 않음")
+        plan.hints["time_violation"] = "post_snapshot"
         return done("time_violation", "refuse")
     if time_flags.get("future") and re.search(r"상장|출시|설정되|나올|나온", q):
         plan.notes.append(f"기준일({AS_OF_MASTER}) 이후 예정 정보(상장·출시)는 보유하지 않음")   # v3 T-09
+        plan.hints["time_violation"] = "future_listing"
         return done("time_violation", "refuse")
     if time_flags.get("future") and re.search(r"추천|골라|알려", q):
         plan.notes.append("미래 전망·시장 예측 반영은 제공 불가(단정 추천 금지) — 조건 기반 사실 조회로 전환 가능")
+        plan.hints["time_violation"] = "future_forecast"
         return done("time_violation", "refuse")
 
     # ── 4. 원천에 없는 필드 (M-29/T-13/T-14) ────────────────────────────────
@@ -856,6 +862,24 @@ def route_stage_a(question, index, policy=None, today=None):
         plan.hints["display_rows"] = 5
         plan.hints["skip_generation"] = True
         plan.notes.append("두 종목을 모두 편입한 상장중 ETF 를 순자산총액 내림차순으로 조회")
+        plan.notes.append("구성종목 기준일 2026-07-10(직전 거래일)")
+        return done("constituent_intersection_top_aum")
+
+    # ── 5.86 두 종목 교집합(순위 낱말 없음) — 8/28 회귀(V3-H-01): 'A랑 B 둘 다 담은 ETF'가
+    #        규칙 없이 LLM 라우터에 넘어가 HCX 분류 흔들림('추천' 오분류)으로 폴백되던 것을
+    #        결정적 규칙으로 승격. 정렬은 순자산 내림차순 기본(노트로 명시).
+    if len(constituent_refs) >= 2 and (any(v in q for v in HOLDING_VERBS) or "보유" in q):
+        first, second = constituent_refs[:2]
+        for ref in (first, second):
+            plan.calls.append(ChannelCall("graph", "holding_etfs",
+                                          {"query": ref.key, "limit": 1000}))
+        plan.calls.append(ChannelCall("sql", "constituent_intersection_top_aum",
+                                      {"code_a": first.key, "code_b": second.key,
+                                       "limit": max(limit, 10)}))
+        plan.hints["order"] = "aum"
+        plan.hints["display_rows"] = 10
+        plan.hints["skip_generation"] = True
+        plan.notes.append("두 종목을 모두 편입한 상장중 ETF — 정렬 미지정이라 순자산총액 내림차순 기본")
         plan.notes.append("구성종목 기준일 2026-07-10(직전 거래일)")
         return done("constituent_intersection_top_aum")
 
@@ -1008,6 +1032,11 @@ def route_stage_a(question, index, policy=None, today=None):
         by_aum = bool(re.search(r"순자산|규모|AUM", q, re.IGNORECASE))
         # 8/26 v3 C-03: '…담은 ETF 중 총보수가 가장 낮은' — 보수 오름차순(0 표기 제외) 정렬
         by_fee = bool("보수" in q and re.search(r"낮|저렴|싼|최저|적은", q))
+        # 8/28 블라인드(claude) B-14: '…담고 있는 ETF들 중 1년수익률 1등' — 기본(비중순) 목록이
+        # 잘못된 1위를 제시하던 공백. 수익률 순위 요청은 전용 템플릿(0·결측 제외, 위험등급 동반)으로.
+        by_return = bool(re.search(r"수익률", q)
+                         and (any(w in q for w in TOP_WORDS)
+                              or re.search(r"높은|좋은|top\s*\d+", q, re.IGNORECASE)))
         # v2 H-08: '…담은 ETF 중에 ○○자산운용이 운용하는' — 운용사 조건을 SQL 필터로 함께 적용
         mgmt_filter = comp_ref if (comp_ref and "운용" in q) else None
         # v2 O-03: '에코프로비엠이 편입된 2차전지 ETF' — 테마 낱말이 함께 오면 상품명 필터로 교집합.
@@ -1020,6 +1049,9 @@ def route_stage_a(question, index, policy=None, today=None):
                 plan.calls.append(ChannelCall("sql", "constituent_weight_above",
                                               {"code": key, "min_weight": weight_th,
                                                "limit": limit}))
+            elif by_return:
+                plan.calls.append(ChannelCall("sql", "constituent_holders_top_return",
+                                              {"code": key, "limit": max(top_n or 5, 5)}))
             else:
                 if not mgmt_filter and not theme_pat:     # 필터 시엔 무필터 그래프 나열이 답을 흐린다
                     plan.calls.append(ChannelCall("graph", "holding_etfs",   # (O-03 실측: 생성기가 그래프 쪽을 골라 나열)
@@ -1048,6 +1080,11 @@ def route_stage_a(question, index, policy=None, today=None):
                               "순위에서 제외 — 커버리지 명시 필수")
         if by_aum:
             plan.hints["order"] = "aum"
+        if by_return and weight_th is None:
+            plan.hints["order"] = "return"
+            plan.hints["display_rows"] = top_n or 5
+            plan.notes.append("편입 ETF 를 1년 수익률 내림차순으로 표시(값 0·결측 행 제외 — 8/26 주최 공지) · "
+                              "위험등급 동반 표기")
         plan.hints["constituent"] = {"name": const_name, "key": const_ref.key, "keys": keys}
         if len(keys) > 1:
             plan.notes.append(f"'{const_name}'은(는) 복수 상장 종목 {len(keys)}건"
@@ -1106,6 +1143,44 @@ def route_stage_a(question, index, policy=None, today=None):
         plan.hints["attribute_focus"] = True
         plan.notes.append("공모펀드 1종 상세(위험등급·순자산·수익률·판매상태·벤치마크)는 마스터(PRFD01N001) 기준")
         return done("fund_detail")
+
+    # ── 7.4 ETP 수치 항목 순위 (8/28 블라인드(claude) B-04/12/16) — 재배포 신설 수치
+    #        (괴리율·추적오차·변동성)의 최대/최소·정렬 질의가 길이 없어 거절(B-04)·위험등급
+    #        대용 오답(B-12)·이름검색 폴백(B-16)으로 새던 공백. 지수 추종 검색(7.5)보다 앞.
+    _metric = next((m for w, m in (("추적오차", "tracking"), ("추적 오차", "tracking"),
+                                   ("괴리율", "diff"), ("변동성", "volatility")) if w in q), None)
+    if _metric == "volatility":
+        _vp = re.search(r"([136])\s*개월", q)
+        _metric = f"vol_{_vp.group(1)}m" if _vp else "vol_1y"
+    if _metric and not is_fund_domain and not is_global and not product_ref \
+            and (any(w in q for w in TOP_WORDS)
+                 or re.search(r"낮은|높은|작은|큰|적은|최소|최대|순으로|순서", q)):
+        direction = "asc" if re.search(r"낮|작|적|최소", q) else "desc"
+        _has_etn = bool(re.search(r"etn", q, re.IGNORECASE))
+        _has_etf = bool(re.search(r"etf|이티에프", q, re.IGNORECASE))
+        itype = "ETN" if _has_etn and not _has_etf else ("ETF" if _has_etf and not _has_etn else None)
+        params = {"metric": _metric, "direction": direction, "limit": max(top_n or 5, 5)}
+        if itype:
+            params["type"] = itype
+        else:
+            plan.notes.append("ETF·ETN 혼재 원천 — 유형 미지정이라 전체 상장 ETP 기준")
+        if idx_ref and re.search(r"추종|연동|지수", q):
+            _tight = re.sub(r"\s+", "", idx_name)
+            params["index_pattern"] = "%" + re.sub(r"(?<=[A-Za-z가-힣])(?=\d)", "%", _tight) + "%"
+            plan.notes.append(f"'{idx_name}' 표기는 기초지수(cu/ref_base_index)와 상품명에서 함께 검색")
+        plan.calls.append(ChannelCall("sql", "etp_metric_rank", params))
+        _label = {"diff": "괴리율(du_diff_rt)", "tracking": "추적오차율(du_chas_errt)",
+                  "vol_1m": "1개월 변동성(du_vlty_1m)", "vol_3m": "3개월 변동성(du_vlty_3m)",
+                  "vol_6m": "6개월 변동성(du_vlty_6m)", "vol_1y": "1년 변동성(du_vlty_1y)"}[_metric]
+        plan.notes.append(f"{_label} {'오름' if direction == 'asc' else '내림'}차순 — "
+                          "값 0·결측 행 제외(8/26 주최 공지) · 상장중 상품 기준")
+        if _metric == "diff":
+            plan.notes.append("괴리율은 부호 유지 값 기준(+는 시장가 할증, -는 할인) — 절댓값 순 아님")
+        if _metric == "vol_1y" and "1년" not in q and not re.search(r"[136]\s*개월", q):
+            plan.notes.append("변동성 기간 미지정 — 1년 변동성 기준")
+        plan.hints["display_rows"] = top_n or 5
+        plan.hints["skip_generation"] = True
+        return done("etp_metric_rank")
 
     # ── 7.5 지수 추종 상품 검색 (M-18/23) — 펀드 문맥은 12번 소관 ────────────
     if idx_ref and re.search(r"추종|따라가|연동|지수", q) and not product_ref and not is_fund_domain:
@@ -1207,6 +1282,7 @@ def route_stage_a(question, index, policy=None, today=None):
         cond, notes = rating_condition(q, policy)
         bond_class = next((v for w, v in BOND_CLASS_MAP if w in q), None)
         buyable = "Y" if re.search(r"판매\s*가능|매수\s*가능|매수할\s*수\s*있|살\s*수\s*있", q) else None   # 붙여쓴 '판매가능한'도 동일 조건 (v2 P-02)
+        pension = "Y" if "퇴직연금" in q else None       # 8/28 블라인드(claude) B-01: 조건 누락 보강
         coupon_min = next((v for v, k, d in percents if k == "coupon" and d in ("이상", "초과", "넘")), None)
         coupon_band = next((v for v, k, d in percents if k == "coupon" and d == "대"), None)
 
@@ -1279,6 +1355,7 @@ def route_stage_a(question, index, policy=None, today=None):
                 plan.notes.append("표면금리 " + ("내림" if coupon_order == "coupon" else "오름") + "차순 정렬")
         params = {"currency": currency if not ccy_exclude else None,
                   "bond_class": bond_class, "buyable_only": buyable,
+                  "pension_only": pension,
                   "maturity_status": "active" if wants_active else None,
                   "order": coupon_order,
                   "min_coupon": coupon_min if coupon_band is None else coupon_band,
@@ -1288,9 +1365,11 @@ def route_stage_a(question, index, policy=None, today=None):
         if buyable:
             plan.notes.append("매수가능 판정 기준: 8/26 주최 공지 확정 규칙 — 만기 도래(리스팅 종료) 제외 "
                               "전 종목 구매가능 가정(원천 BUYABLE_QUANTITY 컬럼은 주최 공지로 값 무효)")
+        if pension:
+            plan.notes.append("퇴직연금 편입 가능 여부는 원천 PD_PEN_TR_YN='Y' 기준")
         if any(w in q for w in COUNT_WORDS):             # L-02/05
             count_keys = ("currency", "max_rating_rank", "min_rating_rank",
-                          "maturity_status", "buyable_only", "bond_class")
+                          "maturity_status", "buyable_only", "bond_class", "pension_only")
             plan.notes.extend(notes)
             plan.calls.append(ChannelCall("sql", "bond_count",
                                           {k: v for k, v in params.items() if k in count_keys}))
@@ -1301,7 +1380,7 @@ def route_stage_a(question, index, policy=None, today=None):
             filter_params["limit"] = max(limit, 20)
             plan.calls.append(ChannelCall("sql", "bond_filter", filter_params))
             count_keys = ("currency", "max_rating_rank", "min_rating_rank",
-                          "maturity_status", "buyable_only", "bond_class")
+                          "maturity_status", "buyable_only", "bond_class", "pension_only")
             plan.calls.append(ChannelCall("sql", "bond_count",
                                           {k: v for k, v in params.items() if k in count_keys}))
             return done("bond_filter")
@@ -1514,6 +1593,62 @@ def route_stage_a(question, index, policy=None, today=None):
                                                   {"pattern_raw": p, "limit": max(limit, 20)}))
                 plan.notes.append("벤치마크 표기 변형(한/영·붙임/띄움)을 함께 검색")
                 return done("fund_by_benchmark")
+        # 8/28 블라인드(claude) B-09: '해외 채권 비중이 50% 넘는' — 자산구성 비율 조건이
+        # 필터로 안 걸려 HCX 가 상품명으로 비중을 추측하는 오답(추측 금지 위반). 지역(국내/해외)
+        # ×자산(주식/채권) 비율 문턱값을 결정적 조회로 보낸다. 값 보유 상품만 — 한계 명시.
+        m_comp = re.search(r"(국내|해외)\s*(주식|채권)\s*(?:비중|비율|구성비)\s*(?:이|가)?\s*"
+                           r"(\d+(?:\.\d+)?)\s*%?\s*(이상|초과|넘)", q)
+        if m_comp:
+            region_w, asset_w, rt, comp_w = m_comp.groups()
+            field = (("dmst" if region_w == "국내" else "ovrs") + "_"
+                     + ("stk" if asset_w == "주식" else "bd"))
+            params = {"field": field, "min_rt": float(rt), "limit": max(limit, 20)}
+            if comp_w in ("초과", "넘"):
+                params["strict"] = "Y"
+            btyp = re.search(r"(주식형|채권형|주식혼합형|채권혼합형)", q)
+            if btyp:
+                params["btyp_pattern"] = f"%{btyp.group(1).replace('형', '')}%"
+                plan.notes.append(f"'{btyp.group(1)}'은 유형 분류(zrin_btyp_nm)에 해당 낱말이 든 "
+                                  "상품 전체(해외·혼합형 포함)로 해석")
+            plan.calls.append(ChannelCall("sql", "fund_by_composition", params))
+            plan.notes.append(f"{region_w} {asset_w} 구성비율(자산구성 zrin 항목) "
+                              f"{rt}% {'초과' if 'strict' in params else '이상'} — "
+                              "구성비율 값 보유 상품 기준(값 없는 상품은 판정 제외, 원천 결측 다수)")
+            plan.hints["display_rows"] = 10
+            plan.hints["skip_generation"] = True
+            return done("fund_by_composition", "partial")
+
+        # 8/28 블라인드(claude) B-11: '판매수수료 없는 클래스로 가입할 수 있는 인덱스펀드' —
+        # 클래스 수수료 유형·판매채널이 필터로 안 걸려 MMF 대형 목록이 나가던 공백.
+        # 클래스(판매 단위) 전용 템플릿으로 조회한다(수수료 유형×채널×전략×위험 결합 일반 정책).
+        fee_free = bool(re.search(r"수수료\s*[가는를]?\s*(없|안\s*떼|안\s*내|면제|무료)", q)
+                        or "미징구" in q)
+        fee_type = ("수수료미징구" if fee_free
+                    else ("수수료선취" if "선취" in q else ("수수료후취" if "후취" in q else None)))
+        channel_pattern = "%온라인%" if "온라인" in q else None
+        if fee_type or channel_pattern:
+            params = {"limit": max(limit, 20)}
+            if fee_type:
+                params["fee_type"] = fee_type
+                plan.notes.append(f"수수료 유형은 클래스 정보 han_clas_fee_type='{fee_type}' 기준 — "
+                                  "값이 없는 클래스(원천 결측 다수)는 판정에서 제외")
+            if channel_pattern:
+                params["channel_pattern"] = channel_pattern
+                plan.notes.append("판매채널은 클래스 정보 han_clas_sales_channel 표기 기준")
+            if "인덱스" in q:
+                params["strategy_pattern"] = "%인덱스%"
+                plan.notes.append("'인덱스'는 운용전략 분류(zrin_ptn_nm)·상품명 표기 기준")
+            if re.search(r"가입|판매\s*중|살 수", q):
+                params["on_sale_only"] = "Y"
+                plan.notes.append("현재 판매상태는 sale_yn='판매중' 기준")
+            if risk and risk[0] != "invalid":
+                params["min_risk"], params["max_risk"] = risk[0], risk[1]
+                plan.notes.extend(risk[2])
+            plan.calls.append(ChannelCall("sql", "fund_class_by_fee", params))
+            plan.notes.append("클래스(판매 단위) 기준 목록 — 같은 펀드라도 조건에 맞는 클래스만 표시")
+            plan.hints["display_rows"] = 10
+            plan.hints["skip_generation"] = True
+            return done("fund_class_filter", "partial")
         if risk and risk[0] != "invalid":                 # L-23
             params = {"min_risk": risk[0], "max_risk": risk[1],
                       "limit": max(limit, 20)}

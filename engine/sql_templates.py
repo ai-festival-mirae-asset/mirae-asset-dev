@@ -87,6 +87,7 @@ TEMPLATES = {t.id: t for t in [
             AND ($min_coupon IS NULL OR TRY_CAST(SRFC_IRT AS DOUBLE) >= $min_coupon)
             AND ($max_coupon IS NULL OR TRY_CAST(SRFC_IRT AS DOUBLE) < $max_coupon)
             AND ($bond_class IS NULL OR STD_PD_MCLS_NM = $bond_class)
+            AND ($pension_only IS NULL OR upper(trim(coalesce(PD_PEN_TR_YN,''))) IN ('Y','TRUE','1'))
           ORDER BY CASE WHEN $order = 'coupon' THEN TRY_CAST(SRFC_IRT AS DOUBLE) END DESC NULLS LAST,
                    CASE WHEN $order = 'coupon_asc' THEN TRY_CAST(SRFC_IRT AS DOUBLE) END ASC NULLS LAST,
                    TRY_CAST(drv_crd_grd_rank AS INT) NULLS LAST,
@@ -95,20 +96,23 @@ TEMPLATES = {t.id: t for t in [
        [Param("currency"), Param("max_rating_rank"), Param("min_rating_rank"),
         Param("maturity_status"), Param("buyable_only"), Param("min_coupon"),
         Param("max_coupon"), Param("bond_class"), Param("order", enum=("coupon", "coupon_asc")),
-        Param("limit", required=True)],
+        Param("pension_only"), Param("limit", required=True)],
        source="PRBD01N001", key_col="PD_NO"),
 
     _t("bond_count",
-       "국내채권 조건 카운트 — bond_filter 와 동일 필터의 건수. 대상: L-02/05.",
+       "국내채권 조건 카운트 — bond_filter 와 동일 필터의 건수. 대상: L-02/05. "
+       "8/28 블라인드(claude) B-01: 퇴직연금 조건이 카운트에서 빠져 전체 AAA 건수를 세던 공백 보강.",
        """SELECT count(*) AS n FROM kr_bond
           WHERE ($currency IS NULL OR CURR_CD = $currency)
             AND ($max_rating_rank IS NULL OR TRY_CAST(drv_crd_grd_rank AS INT) <= $max_rating_rank)
             AND ($min_rating_rank IS NULL OR TRY_CAST(drv_crd_grd_rank AS INT) >= $min_rating_rank)
             AND ($maturity_status IS NULL OR drv_maturity_status = $maturity_status)
             AND ($buyable_only IS NULL OR upper(coalesce(drv_is_buyable,'')) IN ('Y','TRUE','1'))
-            AND ($bond_class IS NULL OR STD_PD_MCLS_NM = $bond_class)""",
+            AND ($bond_class IS NULL OR STD_PD_MCLS_NM = $bond_class)
+            AND ($pension_only IS NULL OR upper(trim(coalesce(PD_PEN_TR_YN,''))) IN ('Y','TRUE','1'))""",
        [Param("currency"), Param("max_rating_rank"), Param("min_rating_rank"),
-        Param("maturity_status"), Param("buyable_only"), Param("bond_class")],
+        Param("maturity_status"), Param("buyable_only"), Param("bond_class"),
+        Param("pension_only")],
        source="PRBD01N001"),
 
     _t("bond_class_dist",
@@ -346,6 +350,55 @@ TEMPLATES = {t.id: t for t in [
         Param("min_pay_cnt"), Param("limit", required=True)],
        source="PREF01N001", key_col="pd_itm_no"),
 
+    _t("etp_metric_rank",
+       "국내 ETP 수치 항목(괴리율·추적오차율·변동성) 순위 — 8/26 재배포 신설 수치의 최대/최소·"
+       "정렬 질의가 길이 없어 거절·이름검색으로 새던 공백(8/28 블라인드(claude) B-04/12/16). "
+       "정렬 기준 값이 0·결측인 행은 제외(8/26 주최 공지), 상장중(active) 기준. "
+       "괴리율은 부호 유지 값(절댓값 아님) — 해석은 라우터 노트로 명시. "
+       "$index_pattern 은 기초지수(cu/ref_base_index)와 상품명을 함께 검색('%S&P%500%' 식).",
+       """SELECT pd_itm_no, pd_abrv_nm, pd_nm, drv_instrument_type,
+                 TRY_CAST(du_diff_rt AS DOUBLE) AS du_diff_rt,
+                 TRY_CAST(du_chas_errt AS DOUBLE) AS du_chas_errt,
+                 TRY_CAST(du_vlty_1m AS DOUBLE) AS du_vlty_1m,
+                 TRY_CAST(du_vlty_3m AS DOUBLE) AS du_vlty_3m,
+                 TRY_CAST(du_vlty_6m AS DOUBLE) AS du_vlty_6m,
+                 TRY_CAST(du_vlty_1y AS DOUBLE) AS du_vlty_1y,
+                 cu_charge_rt, drv_risk_grade,
+                 coalesce(cu_base_index, ref_base_index) AS base_index, du_last_aum
+          FROM kr_etp
+          WHERE drv_listing_status = 'active'
+            AND ($type IS NULL OR drv_instrument_type = $type)
+            AND ($index_pattern IS NULL OR coalesce(cu_base_index, ref_base_index) ILIKE $index_pattern
+                 OR pd_nm ILIKE $index_pattern OR pd_abrv_nm ILIKE $index_pattern)
+            AND coalesce(CASE $metric WHEN 'diff' THEN TRY_CAST(du_diff_rt AS DOUBLE)
+                                      WHEN 'tracking' THEN TRY_CAST(du_chas_errt AS DOUBLE)
+                                      WHEN 'vol_1m' THEN TRY_CAST(du_vlty_1m AS DOUBLE)
+                                      WHEN 'vol_3m' THEN TRY_CAST(du_vlty_3m AS DOUBLE)
+                                      WHEN 'vol_6m' THEN TRY_CAST(du_vlty_6m AS DOUBLE)
+                                      ELSE TRY_CAST(du_vlty_1y AS DOUBLE) END, 0) <> 0
+          ORDER BY CASE WHEN $direction = 'asc' THEN
+                          CASE $metric WHEN 'diff' THEN TRY_CAST(du_diff_rt AS DOUBLE)
+                                       WHEN 'tracking' THEN TRY_CAST(du_chas_errt AS DOUBLE)
+                                       WHEN 'vol_1m' THEN TRY_CAST(du_vlty_1m AS DOUBLE)
+                                       WHEN 'vol_3m' THEN TRY_CAST(du_vlty_3m AS DOUBLE)
+                                       WHEN 'vol_6m' THEN TRY_CAST(du_vlty_6m AS DOUBLE)
+                                       ELSE TRY_CAST(du_vlty_1y AS DOUBLE) END END ASC NULLS LAST,
+                   CASE WHEN $direction = 'desc' THEN
+                          CASE $metric WHEN 'diff' THEN TRY_CAST(du_diff_rt AS DOUBLE)
+                                       WHEN 'tracking' THEN TRY_CAST(du_chas_errt AS DOUBLE)
+                                       WHEN 'vol_1m' THEN TRY_CAST(du_vlty_1m AS DOUBLE)
+                                       WHEN 'vol_3m' THEN TRY_CAST(du_vlty_3m AS DOUBLE)
+                                       WHEN 'vol_6m' THEN TRY_CAST(du_vlty_6m AS DOUBLE)
+                                       ELSE TRY_CAST(du_vlty_1y AS DOUBLE) END END DESC NULLS LAST,
+                   pd_itm_no
+          LIMIT $limit""",
+       [Param("metric", required=True,
+              enum=("diff", "tracking", "vol_1m", "vol_3m", "vol_6m", "vol_1y")),
+        Param("direction", required=True, enum=("asc", "desc")),
+        Param("type", enum=("ETF", "ETN")), Param("index_pattern"),
+        Param("limit", required=True)],
+       source="PREF01N001", key_col="pd_itm_no"),
+
     _t("risk_grade_product_counts",
        "금융상품 위험등급별 국내채권·ETF·ETN·공모펀드 상품 수. 국내채권은 원천의 "
        "상품 위험등급 1~6을 사용하고, 해외ETF는 위험등급 필드가 없어 제외한다. 대상: H-13.",
@@ -410,7 +463,7 @@ TEMPLATES = {t.id: t for t in [
        "공모펀드 필터 — 현재 판매상태(sale_yn)와 당사판매여부(thco_sale_yn)를 구분하고 "
        "운용속성·위험등급을 함께 적용. 마스터(상품) 단위. 대상: L-22/23.",
        """SELECT itm_no, itm_nm, itm_abrv_nm, or_attr_desc, drv_risk_grade, sale_yn, thco_sale_yn,
-                 share_class_count, ovrs_fd_desc, fd_nast_suma
+                 share_class_count, ovrs_fd_desc, fd_nast_suma, fd_last_dstb_r
           FROM fund_master
           WHERE ($on_sale_only IS NULL OR replace(trim(coalesce(sale_yn,'')), ' ', '') = '판매중')
             AND ($thco_sale_only IS NULL OR upper(trim(coalesce(thco_sale_yn,'')))
@@ -427,6 +480,66 @@ TEMPLATES = {t.id: t for t in [
                    itm_no LIMIT $limit""",
        [Param("on_sale_only"), Param("thco_sale_only"), Param("attr_pattern"), Param("min_risk"),
         Param("max_risk"), Param("region"), Param("order"), Param("limit", required=True)],
+       source="PRFD01N001", key_col="itm_no"),
+
+    _t("fund_by_composition",
+       "공모펀드 자산구성 비율(zrin 4종: 국내/해외 × 주식/채권) 문턱값 필터 — 값 보유 상품만. "
+       "8/28 블라인드(claude) B-09: '해외 채권 비중 50% 넘는' 조건이 필터로 안 걸려 HCX 가 "
+       "상품명으로 비중을 추측하는 오답이 나오던 공백(추측 금지 원칙 위반). "
+       "$strict='Y' 면 초과(>), 없으면 이상(>=). 결측 다수 — 커버리지 한계는 라우터 노트로 명시. "
+       "$field 는 필수 짝($min_rt 와 함께)이며 라우터만 채운다.",
+       """SELECT itm_no, itm_nm, itm_abrv_nm, zrin_btyp_nm,
+                 TRY_CAST(zrin_dmst_stk_cmst_rt AS DOUBLE) AS zrin_dmst_stk_cmst_rt,
+                 TRY_CAST(zrin_ovrs_stk_cmst_rt AS DOUBLE) AS zrin_ovrs_stk_cmst_rt,
+                 TRY_CAST(zrin_dmst_bd_cmst_rt AS DOUBLE) AS zrin_dmst_bd_cmst_rt,
+                 TRY_CAST(zrin_ovrs_bd_cmst_rt AS DOUBLE) AS zrin_ovrs_bd_cmst_rt,
+                 drv_risk_grade, sale_yn, fd_nast_suma
+          FROM fund_master
+          WHERE CASE $field WHEN 'dmst_stk' THEN TRY_CAST(zrin_dmst_stk_cmst_rt AS DOUBLE)
+                            WHEN 'ovrs_stk' THEN TRY_CAST(zrin_ovrs_stk_cmst_rt AS DOUBLE)
+                            WHEN 'dmst_bd' THEN TRY_CAST(zrin_dmst_bd_cmst_rt AS DOUBLE)
+                            ELSE TRY_CAST(zrin_ovrs_bd_cmst_rt AS DOUBLE) END IS NOT NULL
+            AND (($strict IS NULL AND CASE $field WHEN 'dmst_stk' THEN TRY_CAST(zrin_dmst_stk_cmst_rt AS DOUBLE)
+                                                  WHEN 'ovrs_stk' THEN TRY_CAST(zrin_ovrs_stk_cmst_rt AS DOUBLE)
+                                                  WHEN 'dmst_bd' THEN TRY_CAST(zrin_dmst_bd_cmst_rt AS DOUBLE)
+                                                  ELSE TRY_CAST(zrin_ovrs_bd_cmst_rt AS DOUBLE) END >= $min_rt)
+                 OR ($strict = 'Y' AND CASE $field WHEN 'dmst_stk' THEN TRY_CAST(zrin_dmst_stk_cmst_rt AS DOUBLE)
+                                                   WHEN 'ovrs_stk' THEN TRY_CAST(zrin_ovrs_stk_cmst_rt AS DOUBLE)
+                                                   WHEN 'dmst_bd' THEN TRY_CAST(zrin_dmst_bd_cmst_rt AS DOUBLE)
+                                                   ELSE TRY_CAST(zrin_ovrs_bd_cmst_rt AS DOUBLE) END > $min_rt))
+            AND ($btyp_pattern IS NULL OR zrin_btyp_nm ILIKE $btyp_pattern)
+            AND ($on_sale_only IS NULL OR replace(trim(coalesce(sale_yn,'')), ' ', '') = '판매중')
+          ORDER BY CASE $field WHEN 'dmst_stk' THEN TRY_CAST(zrin_dmst_stk_cmst_rt AS DOUBLE)
+                               WHEN 'ovrs_stk' THEN TRY_CAST(zrin_ovrs_stk_cmst_rt AS DOUBLE)
+                               WHEN 'dmst_bd' THEN TRY_CAST(zrin_dmst_bd_cmst_rt AS DOUBLE)
+                               ELSE TRY_CAST(zrin_ovrs_bd_cmst_rt AS DOUBLE) END DESC NULLS LAST,
+                   TRY_CAST(fd_nast_suma AS DOUBLE) DESC NULLS LAST, itm_no
+          LIMIT $limit""",
+       [Param("field", required=True, enum=("dmst_stk", "ovrs_stk", "dmst_bd", "ovrs_bd")),
+        Param("min_rt", required=True), Param("strict"), Param("btyp_pattern"),
+        Param("on_sale_only"), Param("limit", required=True)],
+       source="PRFD01N001", key_col="itm_no"),
+
+    _t("fund_class_by_fee",
+       "공모펀드 클래스(판매 단위) 필터 — 수수료 유형(han_clas_fee_type: 수수료미징구/선취/후취)·"
+       "판매채널·운용전략(인덱스 등)·위험등급 결합. 8/28 블라인드(claude) B-11: "
+       "'판매수수료 없는 클래스' 조건이 필터로 안 걸려 MMF 대형 목록이 나가던 공백. "
+       "수수료 유형 값이 없는 클래스(원천 결측 다수)는 판정에서 제외 — 한계는 라우터 노트로 명시.",
+       """SELECT itm_no, itm_nm, itm_abrv_nm, han_clas_fee_type, han_clas_sales_channel,
+                 zrin_ptn_nm, zrin_btyp_nm, drv_risk_grade, sale_yn, fd_nast_suma
+          FROM fund_class
+          WHERE ($fee_type IS NULL OR han_clas_fee_type = $fee_type)
+            AND ($channel_pattern IS NULL OR han_clas_sales_channel ILIKE $channel_pattern)
+            AND ($strategy_pattern IS NULL OR zrin_ptn_nm ILIKE $strategy_pattern
+                 OR itm_nm ILIKE $strategy_pattern)
+            AND ($on_sale_only IS NULL OR replace(trim(coalesce(sale_yn,'')), ' ', '') = '판매중')
+            AND ($min_risk IS NULL OR TRY_CAST(drv_risk_grade AS INT) >= $min_risk)
+            AND ($max_risk IS NULL OR TRY_CAST(drv_risk_grade AS INT) <= $max_risk)
+          ORDER BY TRY_CAST(fd_nast_suma AS DOUBLE) DESC NULLS LAST, itm_no
+          LIMIT $limit""",
+       [Param("fee_type", enum=("수수료미징구", "수수료선취", "수수료후취")),
+        Param("channel_pattern"), Param("strategy_pattern"), Param("on_sale_only"),
+        Param("min_risk"), Param("max_risk"), Param("limit", required=True)],
        source="PRFD01N001", key_col="itm_no"),
 
     _t("fund_top_return_1y",
@@ -480,7 +593,7 @@ TEMPLATES = {t.id: t for t in [
        "해외 ETF 는 1년 수익률 원천이 없어 제외해도 무방(주최 문답 확정), 펀드 보유종목 자료는 "
        "제공 데이터에 없음 — 두 한계는 라우터 노트로 답변에 명시한다. 수익률 0·결측 행 제외.",
        """SELECT c.etf_isin, coalesce(e.pd_abrv_nm, c.etf_name) AS pd_abrv_nm,
-                 e.du_er_1y, e.du_er_ytd,
+                 e.du_er_1y, e.du_er_ytd, e.drv_risk_grade,
                  max(TRY_CAST(replace(c.COMPST_RTO, ',', '') AS DOUBLE)) AS weight_pct,
                  e.pd_net_tamt, coalesce(m.resolved, e.cu_fund_mgmt_co) AS mgmt
           FROM etf_constituent c
@@ -490,7 +603,7 @@ TEMPLATES = {t.id: t for t in [
             AND e.drv_instrument_type = 'ETF' AND e.drv_listing_status = 'active'
             AND coalesce(TRY_CAST(e.du_er_1y AS DOUBLE), 0) <> 0
           GROUP BY c.etf_isin, coalesce(e.pd_abrv_nm, c.etf_name), e.du_er_1y, e.du_er_ytd,
-                   e.pd_net_tamt, coalesce(m.resolved, e.cu_fund_mgmt_co)
+                   e.drv_risk_grade, e.pd_net_tamt, coalesce(m.resolved, e.cu_fund_mgmt_co)
           ORDER BY TRY_CAST(e.du_er_1y AS DOUBLE) DESC NULLS LAST, c.etf_isin
           LIMIT $limit""",
        [Param("code", required=True), Param("limit", required=True)],

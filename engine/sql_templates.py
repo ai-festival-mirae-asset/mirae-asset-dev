@@ -88,6 +88,8 @@ TEMPLATES = {t.id: t for t in [
             AND ($max_coupon IS NULL OR TRY_CAST(SRFC_IRT AS DOUBLE) < $max_coupon)
             AND ($bond_class IS NULL OR STD_PD_MCLS_NM = $bond_class)
             AND ($pension_only IS NULL OR upper(trim(coalesce(PD_PEN_TR_YN,''))) IN ('Y','TRUE','1'))
+            AND ($min_issue_dt IS NULL OR ISU_DT >= $min_issue_dt)
+            AND ($max_issue_dt IS NULL OR ISU_DT <= $max_issue_dt)
             AND ($order IS NULL OR $order NOT IN ('after_tax', 'after_tax_asc')
                  OR coalesce(TRY_CAST(AFTER_TAX_YIELD AS DOUBLE), 0) <> 0)
           ORDER BY CASE WHEN $order = 'coupon' THEN TRY_CAST(SRFC_IRT AS DOUBLE) END DESC NULLS LAST,
@@ -100,7 +102,8 @@ TEMPLATES = {t.id: t for t in [
        [Param("currency"), Param("max_rating_rank"), Param("min_rating_rank"),
         Param("maturity_status"), Param("buyable_only"), Param("min_coupon"),
         Param("max_coupon"), Param("bond_class"), Param("order", enum=("coupon", "coupon_asc", "after_tax", "after_tax_asc")),
-        Param("pension_only"), Param("limit", required=True)],
+        Param("pension_only"), Param("min_issue_dt"), Param("max_issue_dt"),
+        Param("limit", required=True)],
        source="PRBD01N001", key_col="PD_NO"),
 
     _t("bond_count",
@@ -113,10 +116,12 @@ TEMPLATES = {t.id: t for t in [
             AND ($maturity_status IS NULL OR drv_maturity_status = $maturity_status)
             AND ($buyable_only IS NULL OR upper(coalesce(drv_is_buyable,'')) IN ('Y','TRUE','1'))
             AND ($bond_class IS NULL OR STD_PD_MCLS_NM = $bond_class)
-            AND ($pension_only IS NULL OR upper(trim(coalesce(PD_PEN_TR_YN,''))) IN ('Y','TRUE','1'))""",
+            AND ($pension_only IS NULL OR upper(trim(coalesce(PD_PEN_TR_YN,''))) IN ('Y','TRUE','1'))
+            AND ($min_issue_dt IS NULL OR ISU_DT >= $min_issue_dt)
+            AND ($max_issue_dt IS NULL OR ISU_DT <= $max_issue_dt)""",
        [Param("currency"), Param("max_rating_rank"), Param("min_rating_rank"),
         Param("maturity_status"), Param("buyable_only"), Param("bond_class"),
-        Param("pension_only")],
+        Param("pension_only"), Param("min_issue_dt"), Param("max_issue_dt")],
        source="PRBD01N001"),
 
     _t("bond_class_dist",
@@ -152,12 +157,15 @@ TEMPLATES = {t.id: t for t in [
             AND ($min_coupon IS NULL OR TRY_CAST(SRFC_IRT AS DOUBLE) >= $min_coupon)
             AND ($max_coupon IS NULL OR TRY_CAST(SRFC_IRT AS DOUBLE) < $max_coupon)
             AND ($bond_class IS NULL OR STD_PD_MCLS_NM = $bond_class)
-          ORDER BY TRY_CAST(drv_crd_grd_rank AS INT) NULLS LAST,
+          ORDER BY CASE WHEN $order = 'coupon' THEN TRY_CAST(SRFC_IRT AS DOUBLE) END DESC NULLS LAST,
+                   CASE WHEN $order = 'coupon_asc' THEN TRY_CAST(SRFC_IRT AS DOUBLE) END ASC NULLS LAST,
+                   TRY_CAST(drv_crd_grd_rank AS INT) NULLS LAST,
                    TRY_CAST(SRFC_IRT AS DOUBLE) DESC NULLS LAST,
                    replace(MAT_DT,'-',''), PD_NO LIMIT $limit""",
        [Param("as_of_date", required=True), Param("until", required=True), Param("currency"),
         Param("max_rating_rank"), Param("min_rating_rank"), Param("min_coupon"),
         Param("max_coupon"), Param("bond_class"),
+        Param("order", enum=("coupon", "coupon_asc")),
         Param("limit", required=True)],
        source="PRBD01N001", key_col="PD_NO"),
 
@@ -322,24 +330,29 @@ TEMPLATES = {t.id: t for t in [
             AND ($max_aum_le IS NULL OR TRY_CAST(pd_net_tamt AS DOUBLE) <= $max_aum_le)
             AND ($min_listed_dt IS NULL OR pd_lstg_dt >= $min_listed_dt)
             AND ($max_listed_dt IS NULL OR pd_lstg_dt <= $max_listed_dt)
+            AND ($min_grade IS NULL OR TRY_CAST(drv_risk_grade AS INT) >= $min_grade)
+            AND ($max_grade IS NULL OR TRY_CAST(drv_risk_grade AS INT) <= $max_grade)
           GROUP BY 1, 2 ORDER BY 1, 2""",
        [Param("min_aum_gt"), Param("min_aum_ge"), Param("max_aum_lt"), Param("max_aum_le"),
-        Param("min_listed_dt"), Param("max_listed_dt")],
+        Param("min_listed_dt"), Param("max_listed_dt"), Param("min_grade"), Param("max_grade")],
        source="PREF01N001"),
 
     _t("etp_low_fee",
        "총보수 상한 필터(값 보유분만, 0 표기 제외) — 커버리지(실질결측 87.5%)와 0의 의미 미확정을 "
        "답변에 반드시 명시(partial). 0 은 '무보수'가 아니라 미수집일 가능성이 커(KODEX 200 도 0 으로 "
        "표기됨 — 실제 0.15%) 순위에서 뺀다(8/19). 대상: L-26, H-03/30.",
-       """SELECT pd_itm_no, pd_abrv_nm, cu_charge_rt, drv_risk_grade FROM kr_etp
+       """SELECT pd_itm_no, pd_abrv_nm, cu_charge_rt, drv_risk_grade,
+                 coalesce(cu_base_index, ref_base_index) AS base_index FROM kr_etp
           WHERE drv_instrument_type = 'ETF' AND drv_listing_status = 'active'
+            AND ($name_pattern IS NULL OR pd_nm ILIKE $name_pattern OR pd_abrv_nm ILIKE $name_pattern
+                 OR coalesce(cu_base_index, ref_base_index) ILIKE $name_pattern)
             AND TRY_CAST(cu_charge_rt AS DOUBLE) > 0
             AND TRY_CAST(cu_charge_rt AS DOUBLE) <= $max_fee
             AND ($min_grade IS NULL OR TRY_CAST(drv_risk_grade AS INT) >= $min_grade)
             AND ($max_grade IS NULL OR TRY_CAST(drv_risk_grade AS INT) <= $max_grade)
           ORDER BY TRY_CAST(cu_charge_rt AS DOUBLE), pd_itm_no LIMIT $limit""",
        [Param("max_fee", required=True), Param("limit", required=True),
-        Param("min_grade"), Param("max_grade")],
+        Param("min_grade"), Param("max_grade"), Param("name_pattern")],
        source="PREF01N001", key_col="pd_itm_no"),
 
     _t("etp_currency_dist",
@@ -382,6 +395,8 @@ TEMPLATES = {t.id: t for t in [
                  TRY_CAST(du_vlty_6m AS DOUBLE) AS du_vlty_6m,
                  TRY_CAST(du_vlty_1y AS DOUBLE) AS du_vlty_1y,
                  TRY_CAST(du_vol_1d AS DOUBLE) AS du_vol_1d,
+                 TRY_CAST(du_val_1d AS DOUBLE) AS du_val_1d,
+                 TRY_CAST(du_last_nav AS DOUBLE) AS du_last_nav,
                  cu_charge_rt, drv_risk_grade,
                  coalesce(cu_base_index, ref_base_index) AS base_index, du_last_aum
           FROM kr_etp
@@ -395,6 +410,8 @@ TEMPLATES = {t.id: t for t in [
                                       WHEN 'vol_3m' THEN TRY_CAST(du_vlty_3m AS DOUBLE)
                                       WHEN 'vol_6m' THEN TRY_CAST(du_vlty_6m AS DOUBLE)
                                       WHEN 'volume' THEN TRY_CAST(du_vol_1d AS DOUBLE)
+                                      WHEN 'value' THEN TRY_CAST(du_val_1d AS DOUBLE)
+                                      WHEN 'nav' THEN TRY_CAST(du_last_nav AS DOUBLE)
                                       ELSE TRY_CAST(du_vlty_1y AS DOUBLE) END, 0) <> 0
           ORDER BY CASE WHEN $direction = 'asc' THEN
                           CASE $metric WHEN 'diff' THEN TRY_CAST(du_diff_rt AS DOUBLE)
@@ -403,6 +420,8 @@ TEMPLATES = {t.id: t for t in [
                                        WHEN 'vol_3m' THEN TRY_CAST(du_vlty_3m AS DOUBLE)
                                        WHEN 'vol_6m' THEN TRY_CAST(du_vlty_6m AS DOUBLE)
                                        WHEN 'volume' THEN TRY_CAST(du_vol_1d AS DOUBLE)
+                                       WHEN 'value' THEN TRY_CAST(du_val_1d AS DOUBLE)
+                                       WHEN 'nav' THEN TRY_CAST(du_last_nav AS DOUBLE)
                                        ELSE TRY_CAST(du_vlty_1y AS DOUBLE) END END ASC NULLS LAST,
                    CASE WHEN $direction = 'desc' THEN
                           CASE $metric WHEN 'diff' THEN TRY_CAST(du_diff_rt AS DOUBLE)
@@ -411,11 +430,13 @@ TEMPLATES = {t.id: t for t in [
                                        WHEN 'vol_3m' THEN TRY_CAST(du_vlty_3m AS DOUBLE)
                                        WHEN 'vol_6m' THEN TRY_CAST(du_vlty_6m AS DOUBLE)
                                        WHEN 'volume' THEN TRY_CAST(du_vol_1d AS DOUBLE)
+                                       WHEN 'value' THEN TRY_CAST(du_val_1d AS DOUBLE)
+                                       WHEN 'nav' THEN TRY_CAST(du_last_nav AS DOUBLE)
                                        ELSE TRY_CAST(du_vlty_1y AS DOUBLE) END END DESC NULLS LAST,
                    pd_itm_no
           LIMIT $limit""",
        [Param("metric", required=True,
-              enum=("diff", "tracking", "vol_1m", "vol_3m", "vol_6m", "vol_1y", "volume")),
+              enum=("diff", "tracking", "vol_1m", "vol_3m", "vol_6m", "vol_1y", "volume", "value", "nav")),
         Param("direction", required=True, enum=("asc", "desc")),
         Param("type", enum=("ETF", "ETN")), Param("index_pattern"),
         Param("limit", required=True)],
@@ -618,6 +639,12 @@ TEMPLATES = {t.id: t for t in [
         Param("min_risk"), Param("max_risk"), Param("limit", required=True)],
        source="PRFD01N001", key_col="itm_no"),
 
+    _t("fund_missing_bmrk",
+       "벤치마크 표기(bmrk_nm)가 비어 있는 공모펀드 마스터 상품 수 — 8/28 r3 R3-08 "
+       "('벤치마크가 아예 없는 펀드도 있어?') 결측 존재 질의 대응.",
+       "SELECT count(*) AS n FROM fund_master WHERE bmrk_nm IS NULL OR trim(bmrk_nm) = ''",
+       [], source="PRFD01N001"),
+
     _t("fund_class_count",
        "공모펀드 클래스 조건 건수 — fund_class_by_fee 와 동일 필터의 카운트 "
        "(8/28 r2 R2-12: 온라인 전용 클래스 수를 묻는데 목록만 내던 공백).",
@@ -665,7 +692,7 @@ TEMPLATES = {t.id: t for t in [
        """SELECT c.etf_isin, coalesce(e.pd_abrv_nm, c.etf_name) AS pd_abrv_nm, c.COMPST_ISU_NM,
                  TRY_CAST(replace(c.COMPST_RTO, ',', '') AS DOUBLE) AS weight_pct,
                  e.pd_net_tamt, e.drv_risk_grade, e.cu_charge_rt,
-                 e.pd_lstg_dt, e.pd_dvid_yield,
+                 e.pd_lstg_dt, e.pd_dvid_yield, e.du_chas_errt,
                  coalesce(m.resolved, e.cu_fund_mgmt_co) AS mgmt
           FROM etf_constituent c LEFT JOIN kr_etp e ON c.etf_isin = e.pd_itm_no
           LEFT JOIN mgmt_resolved m ON m.pd_itm_no = e.pd_itm_no

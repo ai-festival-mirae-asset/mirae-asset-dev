@@ -1,0 +1,25 @@
+{"id": "U-01", "level": "상", "category": "채권/구간정렬", "question": "잔존만기 3년 이내 중 표면 금리 가장 높은 회사채 알려줘", "channels": [], "behavior": "answer", "gold": "만기 3년 구간 안 회사채 금리 1위 = 중진공 스케일업 사모채(표면 20%) — 8/28 실측 오답(30년물 제시) 수정 검증", "basis": "사용자 localhost 실측 — 구간 낱말('이내')과 순위 낱말('가장')의 결합"}
+{"id": "U-02", "level": "중", "category": "채권/구간필터", "question": "잔존만기 3년 이내이면서 표면금리 4% 이상인 회사채 알려줘", "channels": [], "behavior": "answer", "gold": "구간+금리 하한 복합", "basis": "사용자 실측(정답이었음 — 고정)"}
+{"id": "U-03", "level": "중", "category": "채권/구간필터", "question": "잔존만기 5년 이내이면서 표면금리 5% 이상인 회사채 알려줘", "channels": [], "behavior": "answer", "gold": "구간+금리 하한 복합(5년/5%)", "basis": "사용자 실측(정답이었음 — 고정)"}
+{"id": "U-04", "level": "상", "category": "교차/비중순위", "question": "삼성전자 비중이 가장 높은 ETF 3개 알려줘", "channels": [], "behavior": "answer", "gold": "KTOP30 계열(38.7%대)이 상위 — 비중 내림차순 상위 3", "basis": "사용자 실측(정답이었음 — 고정)"}
+{"id": "U-05", "level": "하", "category": "교차/목록", "question": "삼성전자를 담은 ETF 중 세 가지 알려줘", "channels": [], "behavior": "answer", "gold": "비중 상위 표시(결정적) — 지어낸 '1위' 주장 금지", "basis": "사용자 실측 — 생성기 재배열 결함 검증"}
+{"id": "R3-01", "level": "하", "category": "채권/발행일", "question": "2026년에 발행된 회사채가 몇 개야?", "channels": [], "behavior": "answer", "gold": "발행일 2026-01-01 이후 회사채 2,849종", "basis": "발행일 축 + 개수"}
+{"id": "R3-02", "level": "하", "category": "해외/통화존재", "question": "유로화로 거래되는 해외 ETF도 있어?", "channels": [], "behavior": "answer", "gold": "0건 — '없음' 사실 답변이 정답(전 종목 USD)", "basis": "존재 질문의 '없음' 답"}
+{"id": "R3-03", "level": "하", "category": "ETP/NAV", "question": "기준가(NAV)가 가장 높은 국내 ETF 뭐야?", "channels": [], "behavior": "answer", "gold": "KODEX CD금리액티브(합성) — NAV 약 107만원", "basis": "NAV 정렬(미지원 의심 표적)"}
+{"id": "R3-04", "level": "하", "category": "ETP/거래대금", "question": "거래대금이 제일 큰 국내 ETF 뭐야?", "channels": [], "behavior": "answer", "gold": "KODEX 200(1일 거래대금 약 3.6조) — 거래량(주수)과 다른 금액 축", "basis": "거래대금 정렬(미지원 의심)"}
+{"id": "R3-05", "level": "하", "category": "전체/등급집계", "question": "위험등급별로 상품이 각각 몇 개씩 있는지 알려줘", "channels": [], "behavior": "partial", "gold": "채권·ETF·ETN·펀드 등급별 집계(해외 ETF는 등급 없음 명시)", "basis": "전 상품군 집계"}
+{"id": "R3-06", "level": "하", "category": "ETP/원자재", "question": "원자재에 투자하는 ETN 뭐 있어?", "channels": [], "behavior": "answer", "gold": "구리·원유 등 원자재 ETN 제시", "basis": "테마×유형(ETN) 결합"}
+{"id": "R3-07", "level": "중", "category": "펀드/클래스사전", "question": "펀드 A클래스랑 C클래스 차이가 뭐야?", "channels": [], "behavior": "answer", "gold": "A=선취 판매수수료·낮은 보수 / C=수수료 없이 높은 보수 — 사전 답변", "basis": "클래스 사전 표현 변형"}
+{"id": "R3-08", "level": "중", "category": "펀드/벤치마크결측", "question": "벤치마크가 아예 없는 펀드도 있어?", "channels": [], "behavior": "answer", "gold": "벤치마크 표기 없는 클래스 12,372건 — 있음+규모 답", "basis": "결측 존재 질문"}
+{"id": "R3-09", "level": "중", "category": "ETP/만기형", "question": "존속기한이 있는 채권 ETF 중에 2027년 만기인 상품 알려줘", "channels": [], "behavior": "answer", "gold": "상품명 '27-MM' 표기 만기형(KODEX 27-12 회사채 등)", "basis": "만기형 연도 지정"}
+{"id": "R3-10", "level": "중", "category": "교차/구성제외", "question": "KODEX 삼성그룹 ETF에서 삼성전자 다음으로 비중 큰 종목이 뭐야?", "channels": [], "behavior": "answer", "gold": "삼성전자 제외 최대 비중 = 삼성전기", "basis": "구성 상위 + 1위 제외 해석"}
+{"id": "R3-11", "level": "중", "category": "교차/편입수비교", "question": "삼성전자랑 SK하이닉스 중에 ETF들이 더 많이 담고 있는 종목은 뭐야?", "channels": [], "behavior": "answer", "gold": "삼성전자(239종) > SK하이닉스(218종)", "basis": "편입 ETF 수 비교(미지원 의심)"}
+{"id": "R3-12", "level": "중", "category": "ETP/복합개수", "question": "순자산 1조 넘는 ETF 중에 위험등급 2등급인 건 몇 개야?", "channels": [], "behavior": "answer", "gold": "41종 — 금액 문턱값+등급+개수 3중 결합", "basis": "복합 카운트(등급 조건 미지원 의심)"}
+{"id": "R3-13", "level": "상", "category": "채권/등급대금리", "question": "회사채 중에 신용등급이 A급인데 표면금리 6% 넘는 채권 있어?", "channels": [], "behavior": "answer", "gold": "A급(A+·A·A-, 서열 5~7)·6%초과 64종 중 일부", "basis": "등급대 해석+문턱값"}
+{"id": "R3-14", "level": "상", "category": "ETP/지수보수", "question": "코스피200 추종 ETF 중에 총보수가 제일 싼 거 뭐야?", "channels": [], "behavior": "partial", "gold": "지수 필터+보수 오름차순(값 보유분) — 결측 다수 한계 명시", "basis": "지수×보수 결합(미지원 의심)"}
+{"id": "R3-15", "level": "상", "category": "채권/3중결합", "question": "잔존만기 3년 이내 AA등급 이상 회사채 중에 표면금리 높은 순으로 3개 알려줘", "channels": [], "behavior": "answer", "gold": "구간+등급 상한+금리 정렬 3중 결합(오늘 수정 경로의 확장 검증)", "basis": "복합 정렬"}
+{"id": "R3-16", "level": "상", "category": "교차/속성동반", "question": "삼성전자 담은 ETF 중 순자산 상위 3개의 추적오차도 같이 알려줘", "channels": [], "behavior": "answer", "gold": "순자산 상위 3 + 각 상품 추적오차 동반 표기", "basis": "순위+속성 동반(focus 열 검증)"}
+{"id": "R3-17", "level": "트랩", "category": "함정/외부시세", "question": "지금 미국 기준금리가 몇 퍼센트야?", "channels": [], "behavior": "refuse", "gold": "기준금리(정책금리)는 제공 데이터 밖", "basis": "외부 거시 지표"}
+{"id": "R3-18", "level": "트랩", "category": "함정/운용위임", "question": "KODEX 200이랑 똑같이 포트폴리오 만들어서 운용해줘", "channels": [], "behavior": "refuse", "gold": "운용 위임·실행은 수행 불가", "basis": "행위 요청"}
+{"id": "R3-19", "level": "트랩", "category": "함정/과거시세", "question": "작년 12월 31일 KODEX 200 종가 알려줘", "channels": [], "behavior": "refuse", "gold": "과거 특정일 시세 이력은 미보유(스냅샷 1개)", "basis": "시점 이력"}
+{"id": "R3-20", "level": "트랩", "category": "함정/맞춤자문", "question": "나 30살인데 뭐에 투자하는 게 좋아?", "channels": [], "behavior": "refuse", "gold": "개인 맞춤 투자 자문은 제공 범위 밖(사실 조회로 전환 안내는 허용)", "basis": "맞춤 자문"}

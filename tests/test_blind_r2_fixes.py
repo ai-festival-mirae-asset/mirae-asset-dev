@@ -165,3 +165,80 @@ def test_hangul_alias_no_false_product_grab(index):
     plan = _route(index, "LG에너지솔루션 들어있는 ETF 알려줘")
     c = _call(plan, "constituent_holders")
     assert c is not None and c.params["code"] != "003550"
+
+
+# ---------------------------------------------------------------------------
+# 8/28 r3(사용자 실측 + 3바퀴) 회귀 잠금
+# ---------------------------------------------------------------------------
+
+def test_maturity_window_with_coupon_rank(index):
+    # 사용자 실측: '잔존만기 3년 이내 중 표면 금리 가장 높은' — 구간+금리 정렬(30년물 오답 수정)
+    plan = _route(index, "잔존만기 3년 이내 중 표면 금리 가장 높은 회사채 알려줘")
+    c = _call(plan, "bond_maturing_within")
+    assert c is not None and c.params.get("order") == "coupon"
+    assert plan.hints.get("skip_generation")
+
+
+def test_longest_maturity_rule_kept(index):
+    plan = _route(index, "잔존만기가 가장 긴 국고채 5개 알려줘")
+    assert _call(plan, "bond_top_maturity") is not None
+
+
+def test_issue_year_count(index):
+    plan = _route(index, "2026년에 발행된 회사채가 몇 개야?")
+    c = _call(plan, "bond_count")
+    assert c is not None and c.params.get("min_issue_dt") == "2026-01-01"
+
+
+def test_nav_and_value_rank(index):
+    plan = _route(index, "기준가(NAV)가 가장 높은 국내 ETF 뭐야?")
+    c = _call(plan, "etp_metric_rank")
+    assert c is not None and c.params["metric"] == "nav"
+    plan = _route(index, "거래대금이 제일 큰 국내 ETF 뭐야?")
+    c = _call(plan, "etp_metric_rank")
+    assert c is not None and c.params["metric"] == "value"
+
+
+def test_eur_currency_global(index):
+    plan = _route(index, "유로화로 거래되는 해외 ETF도 있어?")
+    c = _call(plan, "global_etf_filter")
+    assert c is not None and c.params.get("ccy") == "EUR"
+
+
+def test_grade_wise_counts(index):
+    plan = _route(index, "위험등급별로 상품이 각각 몇 개씩 있는지 알려줘")
+    assert _call(plan, "risk_grade_product_counts") is not None
+
+
+def test_class_dictionary_wording(index):
+    plan = _route(index, "펀드 A클래스랑 C클래스 차이가 뭐야?")
+    assert any(c.op == "fund_class_dictionary" for c in plan.calls)
+
+
+def test_missing_benchmark(index):
+    plan = _route(index, "벤치마크가 아예 없는 펀드도 있어?")
+    assert _call(plan, "fund_missing_bmrk") is not None
+
+
+def test_count_with_risk_grade(index):
+    plan = _route(index, "순자산 1조 넘는 ETF 중에 위험등급 2등급인 건 몇 개야?")
+    c = _call(plan, "etp_count")
+    assert c is not None and c.params.get("min_grade") == 2 and c.params.get("max_grade") == 2
+
+
+def test_index_fee_filter(index):
+    plan = _route(index, "코스피200 추종 ETF 중에 총보수가 제일 싼 거 뭐야?")
+    c = _call(plan, "etp_low_fee")
+    assert c is not None and c.params.get("name_pattern")
+
+
+def test_portfolio_delegation_refused(index):
+    plan = _route(index, "KODEX 200이랑 똑같이 포트폴리오 만들어서 운용해줘")
+    assert plan.behavior_hint == "refuse" and plan.hints.get("unsupported_request")
+    plan = _route(index, "미래에셋자산운용이 운용하는 ETF 알려줘")   # 정상 '운용' 표현은 그대로
+    assert plan.behavior_hint != "refuse"
+
+
+def test_past_date_price_refused(index):
+    plan = _route(index, "작년 12월 31일 KODEX 200 종가 알려줘")
+    assert plan.behavior_hint == "refuse" and plan.hints.get("time_violation")

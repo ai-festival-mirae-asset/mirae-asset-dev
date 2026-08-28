@@ -16,6 +16,7 @@
 운용사: 오염 복구값(mgmt_resolved) 기준. 구성종목: 이름 변형 전부 + 한글 별칭 병합.
 구조 주의: 테스트가 순수 함수를 import 한다 — import 부작용 금지.
 """
+import io
 import os
 import re
 import sys
@@ -259,12 +260,31 @@ def build_entity_index(con):
     except Exception:
         pass                                          # 사전이 없어도 색인은 성립(원시 표기만)
 
-    # ⑤ 지수·벤치마크 — 원시 표기(정규화 사전 승격은 후속)
+    # ⑤ 지수·벤치마크 — 원시 표기 + 정규화 사전(base_index.csv)의 동의어
+    #    (8/28 r3: 'KOSPI 200'은 원시 표기로 잡히는데 한글 '코스피200'이 안 잡히던 공백 —
+    #     네이버/NAVER 와 같은 '한글 표기 누락' 가족. 사전의 키·한글명·동의어를 색인에 승격.)
     for table, col, source in (("kr_etp", "cu_base_index", "PREF01N001"),
                                ("global_etf", "cu_base_index", "PREF02N001"),
                                ("fund_master", "bmrk_nm", "PRFD01N001")):
         for (name,) in con.execute(
                 f"SELECT DISTINCT {col} FROM {table} WHERE {col} IS NOT NULL").fetchall():
             idx.add(name, EntityRef("index", name, name, source))
+    try:
+        import csv as _csv
+        _bi = os.path.join(ROOT, "external_data", "dictionaries", "base_index.csv")
+        with io.open(_bi, "r", encoding="utf-8-sig", newline="") as fh:
+            for row in _csv.DictReader(fh):
+                if not str(row.get("분류", "")).startswith("지수정규화"):
+                    continue
+                key = (row.get("키") or "").strip()
+                if not key:
+                    continue
+                names = [key, (row.get("한글명") or "").strip()]
+                names += [a.strip() for a in (row.get("동의어") or "").split(";")]
+                for alias in names:
+                    if alias and len(alias) >= 3:         # 'MID' 같은 2자 티커 오인 방지
+                        idx.add(alias, EntityRef("index", key, key, "base_index.csv"))
+    except Exception:
+        pass                                          # 사전이 없어도 색인은 성립(원시 표기만)
 
     return idx

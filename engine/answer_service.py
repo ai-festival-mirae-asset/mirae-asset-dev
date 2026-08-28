@@ -249,7 +249,8 @@ def dist_sentence(op, rows):
 
 
 # 건수 템플릿 — 숫자 한 개짜리 결과는 생성기가 "정보 없음"으로 오독하기 쉬워(L-05 실측) 문장으로 승격한다
-_COUNT_OPS = {"bond_count", "etp_count", "global_etf_count", "fund_counts", "fund_class_count"}
+_COUNT_OPS = {"bond_count", "etp_count", "global_etf_count", "fund_counts", "fund_class_count",
+              "fund_missing_bmrk"}
 _COUNT_LABELS = {"n": "건수", "products": "상품(마스터) 수", "share_classes": "판매 클래스 수",
                  "on_sale_products": "판매 중 상품(마스터) 수", "on_sale_classes": "판매 중 클래스 수"}
 # 상품 1종 상세에서 질문이 콕 집은 항목은 노트로 강제한다(8/22 블라인드 v2 L-04~10 — 생성기가
@@ -324,7 +325,7 @@ def attribute_notes(question, op, rows):
 # 목록 1위 상품의 속성 명시 (8/26 v3 C-05/C-10) — "…중 순자산 1위 상품의 위험등급/상장일/운용사"
 # 처럼 정렬 목록의 최상위 행에서 속성을 되묻는 3단 질문의 마지막 고리. 정렬은 라우터가
 # 이미 SQL 로 해 두므로 여기서는 첫 목록의 첫 행 값을 사실 노트로 밝히기만 한다.
-_RANK_WORD_RE = re.compile(r"1\s*위|가장|제일|최고|최대")
+_RANK_WORD_RE = re.compile(r"1\s*위|가장|제일|최고|최대|상위")   # 상위: 8/28 r3 R3-16
 _TOP_ATTRS = [
     (r"운용사|어느 운용|누가 운용", "mgmt", "운용사(복구값 기준)", "text"),
     (r"위험\s*등급", "drv_risk_grade", "위험등급(1=매우 높음~6=매우 낮음)", "risk"),
@@ -332,6 +333,7 @@ _TOP_ATTRS = [
     (r"기초\s*지수|추종", "cu_base_index", "기초지수", "text"),
     (r"보수", "cu_charge_rt", "총보수(%)", "text"),
     (r"배당\s*수익률|분배\s*수익률", "pd_dvid_yield", "분배(배당)수익률(%)", "text"),
+    (r"추적\s*오차", "du_chas_errt", "추적오차율(%)", "text"),
     (r"수익률", "du_er_1y", "1년 수익률(%)", "text"),
 ]
 _TOP_OPS = {"constituent_holders", "etp_by_mgmt", "etp_top_aum", "constituent_intersection_top_aum",

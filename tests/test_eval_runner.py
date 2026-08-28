@@ -21,9 +21,9 @@ DB_PATH = os.path.join(ROOT, "storage", "output", "products.duckdb")
 needs_db = pytest.mark.skipif(not os.path.exists(DB_PATH), reason="products.duckdb 미생성")
 
 REFUSAL = (REFUSE_HEAD + "\n- 사유: 'kimi'로 식별되는 상품·종목이 기준일 데이터에 없음\n"
-           "(데이터 기준일: 마스터 2026-07-11 · 구성종목 2026-07-10)")
+           "(데이터 기준일: 마스터 2026-07-11 · 구성종목 2026-08-21)")
 LISTING = ("[etp_top_aum] 결과 5건\n  1. KODEX 200 (pd_net_tamt=1)\n  2. TIGER 200 (pd_net_tamt=2)\n"
-           "(데이터 기준일: 마스터 2026-07-11 · 구성종목 2026-07-10)")
+           "(데이터 기준일: 마스터 2026-07-11 · 구성종목 2026-08-21)")
 SNEAKY = REFUSE_HEAD + "\n  1. KODEX AI로봇 ETF — 위험등급 3\n  2. TIGER AI로봇 — 위험등급 2"   # 거절문 뒤에 목록
 CTX_OK = "[근거1 | 출처: PREF01N001 | 키: KR7069500007 | 채널: sql | 기준일: 2026-07-11] pd_abrv_nm=KODEX 200"
 

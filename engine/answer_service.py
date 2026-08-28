@@ -496,6 +496,20 @@ def data_notes(question, plan, result):
                     big, small = (vals[0], vals[1]) if vals[0][1] > vals[1][1] else (vals[1], vals[0])
                     notes.append(f"순자산총액은 '{big[0]}'({big[2] or f'{big[1]:,.0f}원'})가 "
                                  f"'{small[0]}'({small[2] or f'{small[1]:,.0f}원'})보다 더 큽니다")
+    # 8/28 실측(M-11·L-19 계열): 테마 검색의 생성 답변이 상품 목록을 통째로 생략하는 일이
+    # 있다 — 검색 상위 이름을 노트로 강제해 어떤 실행에서도 이름이 답에 남게 한다(일반 정책).
+    if plan.intent == "theme_search":
+        _tnames = []
+        for o in result.outcomes:
+            if o.ok and o.rows:
+                for row in o.rows:
+                    nm = next((str(row[c]) for c in _NAME_COLS if row.get(c)), None)
+                    if nm and nm not in _tnames:
+                        _tnames.append(nm)
+            if len(_tnames) >= 5:
+                break
+        if _tnames:
+            notes.append("검색 상위 상품: " + " / ".join(_tnames[:5]))
     notes.extend(top_rank_attribute_notes(question, result))     # v3 C-05/C-10: 1위 상품의 속성
     # v2 H-08/O-03: 운용사·테마 필터가 걸린 편입 ETF 조회가 0건이면 '없다'를 명시(거절이 아니라 사실 답변)
     mf = plan.hints.get("mgmt_filter")

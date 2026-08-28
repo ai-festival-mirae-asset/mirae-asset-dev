@@ -14,7 +14,7 @@ RDB 적재 — 전처리 CSV 4종 + 구성종목 수집분 → DuckDB 파일 1�
   global_etf      해외ETF 6,037
   fund_master     공모펀드 상품 단위 23,622 (fss_itm_no 그룹 대표 + share_class_count)
   fund_class      공모펀드 판매 클래스 23,676 — itm_no 단독 키 (재배포본은 1행=1클래스)
-  etf_constituent 구성종목 75,081 (기준일 2026-07-10 — 재수집 전까지 유지, 마스터 8/22 와 다름)
+  etf_constituent 구성종목 75,867 (기준일 2026-08-21 — 8/28 재수집분, 마스터 8/22 와 하루 차)
 
 수치 정렬·비교 규약: 적재는 무손실 VARCHAR 로 하고, SQL 템플릿에서
   TRY_CAST(col AS DOUBLE) 를 쓴다(콤마 포함 컬럼은 replace 후 캐스트).
@@ -32,11 +32,11 @@ HERE = os.path.dirname(os.path.abspath(__file__))            # storage/
 ROOT = os.path.dirname(HERE)
 PROCESSED = os.path.join(ROOT, "preprocessing", "processed")
 CONSTITUENTS_CSV = os.path.join(ROOT, "external_data", "constituents",
-                                "constituents_20260710.csv")
+                                "constituents_20260821.csv")
 OUT_DIR = os.path.join(HERE, "output")
 DB_PATH = os.path.join(OUT_DIR, "products.duckdb")
 
-CONSTITUENTS_AS_OF = "2026-07-10"   # 구성종목 조회 기준일 — 근거 표시용 컬럼으로 적재
+CONSTITUENTS_AS_OF = "2026-08-21"   # 구성종목 조회 기준일 — 근거 표시용 컬럼으로 적재
 
 # (테이블명, CSV 경로, 기대 행수) — 기대치는 8/27 재배포본 실측(어긋나면 적재 실패로 처리)
 TABLES = [
@@ -45,7 +45,7 @@ TABLES = [
     ("kr_etp",      os.path.join(PROCESSED, "PREF01N001_kr_etf_processed.csv"),      1779),
     ("global_etf",  os.path.join(PROCESSED, "PREF02N001_global_etf_processed.csv"),  6037),
     ("fund_class",  os.path.join(PROCESSED, "PRFD01N001_public_fund_processed.csv"), 23676),
-    ("etf_constituent", CONSTITUENTS_CSV,                                           75081),
+    ("etf_constituent", CONSTITUENTS_CSV,                                           75867),
 ]
 FUND_MASTER_EXPECTED = 23622
 

@@ -23,7 +23,7 @@ sys.path.insert(0, os.path.dirname(HERE))  # repo 루트 — `python kg/query_kg
 from kg.kg_store import FP, RDFS_LABEL, TripleStore, norm_name  # noqa: E402
 
 AS_OF = "2026-08-22"  # 8/26 재배포본(국내 영업일)
-CONSTITUENTS_AS_OF = "2026-07-10"  # 구성종목(KRX)은 기준일 직전 거래일 조회분
+CONSTITUENTS_AS_OF = "2026-08-21"  # 구성종목(KRX)은 기준일 직전 거래일 조회분
 
 # 인스턴스에 붙는 클래스(가장 구체적인 것) → 표시명. 온톨로지 5파일(fp:) 기준.
 CLASS_KO = {

@@ -70,7 +70,7 @@ DoD 검증: `"TIGER 200 증권"` 질의 → 국내ETF · 운용사 미래에셋 
 
 ## 5. 구성종목 확장 (8/13 — CQ6 가동)
 
-KRX 수집분(`external_data/constituents/constituents_20260710.csv`)을 `constituents.nt`로 변환한다. **기준일이 마스터(7/11)와 다르다: 2026-07-10(직전 거래일) 조회분.**
+KRX 수집분(`external_data/constituents/constituents_20260710.csv`)을 `constituents.nt`로 변환한다. **기준일이 마스터(7/11)와 다르다: 2026-08-21(직전 거래일) 조회분.**
 
 **membership 적재 정책** (실측 SECUGRP_ID 분포 기반 — `CONSTITUENTS_PLAN.md` 3장):
 

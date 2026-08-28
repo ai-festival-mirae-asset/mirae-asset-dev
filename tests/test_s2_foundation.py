@@ -79,11 +79,11 @@ def test_evidence_serialization_includes_source_and_asof():
     evs = [Evidence(source="PREF01N001", source_id="KR7102110004", channel="graph",
                     as_of="2026-07-11", fields={"운용사": "미래에셋"}),
            Evidence(source="KRX-PDF", source_id="KR7102110004", channel="sql",
-                    as_of="2026-07-10", fields={"삼성전자 비중(%)": "33.03"},
+                    as_of="2026-08-21", fields={"삼성전자 비중(%)": "33.03"},
                     note="구성종목은 직전 거래일 기준")]
     text = to_context_string(evs)
     assert "PREF01N001" in text and "2026-07-11" in text
-    assert "KRX-PDF" in text and "2026-07-10" in text        # 소스별 기준일 구분 보존
+    assert "KRX-PDF" in text and "2026-08-21" in text        # 소스별 기준일 구분 보존
     assert "삼성전자 비중(%)=33.03" in text
     assert text.count("[근거") == 2
 

@@ -35,7 +35,7 @@ def build():
     n_risk1 = rows_of(con, "SELECT count(*) FROM kr_etp WHERE drv_risk_grade=1 AND drv_listing_status='active'")[0][0]
     assert n_risk1 == 595, f"위험 1등급 상장 ETP 수가 595가 아님: {n_risk1}"
     n_sepw = rows_of(con, "SELECT count(DISTINCT etf_name) FROM etf_constituent WHERE COMPST_ISU_NM='삼성전자우'")[0][0]
-    assert n_sepw == 15, f"삼성전자우 편입 ETF 수가 15가 아님: {n_sepw}"
+    assert n_sepw == 20, f"삼성전자우 편입 ETF 수가 20이 아님: {n_sepw}"   # 8/21 재수집분(구 7/10은 15)
 
     ev, ck = [], []
 
@@ -76,7 +76,7 @@ def build():
                   "AND drv_listing_status='active'")}])
 
     add("B-05", "하", "교차/구성종목", "삼성전자우 들어있는 ETF 있어?",
-        "answer", "삼성전자우(우선주) 편입 ETF 15종 — 삼성전자(보통주)와 구분되어야 함",
+        "answer", "삼성전자우(우선주) 편입 ETF 20종(8/21 수집분) — 삼성전자(보통주)와 구분되어야 함",
         "우선주 이름이 정확히 구분되는지",
         [{"type": "sql_names", "name": "삼성전자우 편입 ETF", "min_hit": 2,
           "sql": ("SELECT DISTINCT c.etf_name, e.pd_abrv_nm FROM etf_constituent c "

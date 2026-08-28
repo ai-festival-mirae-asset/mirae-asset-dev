@@ -187,7 +187,7 @@ def gate_time_boundary(question):
                           f"실시간 시세는 제공 범위 밖 — 데이터는 {AS_OF_MASTER} 시점 스냅샷")
     if flags.get("history"):
         return GateResult("time", "refuse",
-                          "구성종목은 2026-07-10 하루치만 보유 — 과거 시점과의 비교 불가")
+                          "구성종목은 2026-08-21 하루치만 보유 — 과거 시점과의 비교 불가")
     if flags.get("post_snapshot"):
         return GateResult("time", "refuse",
                           f"기준일({AS_OF_MASTER}) 이후({flags['post_snapshot']}) 정보는 보유하지 않음")

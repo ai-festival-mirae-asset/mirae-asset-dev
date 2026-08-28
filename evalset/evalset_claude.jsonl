@@ -2,7 +2,7 @@
 {"id": "B-02", "level": "하", "category": "ETP/분배", "question": "SOL 미국배당다우존스 분배금 일년에 몇번 줘?", "channels": [], "behavior": "answer", "gold": "연 지급횟수 12회(1~12월 매월)", "basis": "신설 분배 항목의 단건 조회"}
 {"id": "B-03", "level": "하", "category": "ETP/위험등급", "question": "위험등급 1등급(매우 위험)인 국내 ETF 아무거나 5개만 보여주세요", "channels": [], "behavior": "answer", "gold": "위험등급 1(매우높은위험) 상장 ETP 595종 중 아무 5종", "basis": "위험등급 필터 목록"}
 {"id": "B-04", "level": "하", "category": "ETP/괴리율", "question": "괴리율이 제일 큰 국내 상장 ETN이 뭔지 알려주세요", "channels": [], "behavior": "answer", "gold": "미래에셋 레버리지 WTI원유 선물 ETN 110호(+5.21%) — 부호/절댓값 어느 해석이든 동일", "basis": "신설 괴리율 항목 + ETN 한정 정렬"}
-{"id": "B-05", "level": "하", "category": "교차/구성종목", "question": "삼성전자우 들어있는 ETF 있어?", "channels": [], "behavior": "answer", "gold": "삼성전자우(우선주) 편입 ETF 15종 — 삼성전자(보통주)와 구분되어야 함", "basis": "우선주 이름이 정확히 구분되는지"}
+{"id": "B-05", "level": "하", "category": "교차/구성종목", "question": "삼성전자우 들어있는 ETF 있어?", "channels": [], "behavior": "answer", "gold": "삼성전자우(우선주) 편입 ETF 20종(8/21 수집분) — 삼성전자(보통주)와 구분되어야 함", "basis": "우선주 이름이 정확히 구분되는지"}
 {"id": "B-06", "level": "하", "category": "채권/만기", "question": "만기가 2030년 이후인 국공채좀찾아줘", "channels": [], "behavior": "answer", "gold": "국공채·만기 2030-01-01 이후 720종(더 좁은 해석이어도 이 집합의 부분집합)", "basis": "만기 조건 + 분류 필터, 띄어쓰기 없는 말투"}
 {"id": "B-07", "level": "중", "category": "ETP/운용사", "question": "미래에셋자산운용이 굴리는 ETF 중에서 순자산 제일 큰 게 뭐야?", "channels": [], "behavior": "answer", "gold": "미래에셋 TIGER 미국S&P500(순자산 약 20.2조)", "basis": "운용사 필터 + 순자산 1위, '굴리는' 구어체"}
 {"id": "B-08", "level": "중", "category": "ETP/분배", "question": "월배당 ETF 중에 분배수익률 3% 넘는 거 알려줘요", "channels": [], "behavior": "answer", "gold": "지급 12회·분배수익률>3% 인 상장 ETP 112종", "basis": "신설 항목 2개 결합 + 문턱값"}

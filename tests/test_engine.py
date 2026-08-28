@@ -114,7 +114,7 @@ def test_constituent_holders_samsung(con):
     assert len(r.rows) > 200
     w = [row["weight_pct"] for row in r.rows if row["weight_pct"] is not None]
     assert w == sorted(w, reverse=True)
-    assert r.evidences[0].as_of == "2026-07-10"
+    assert r.evidences[0].as_of == "2026-08-21"
 
 
 @needs_db

@@ -544,7 +544,7 @@ def test_graph_channel_samsung_holdings(con, index, kg_store):
     assert graph.ok and graph.rows
     assert graph.rows[0]["편입ETF수"] > 200                 # 실측 229종목
     out = answer_question("삼성전자가 포함된 ETF 알려줘", ctx, question_id="M-01", today=TODAY)
-    assert "삼성전자" in out["answer"] and "2026-07-10" in out["answer"]
+    assert "삼성전자" in out["answer"] and "2026-08-21" in out["answer"]
 
 
 # ---------------------------------------------------------------------------

@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 AS_OF_MASTER = "2026-08-22"        # 국내 마스터 3종(채권·ETF·펀드) 반영 영업일
 AS_OF_MASTER_GL = "2026-08-23"     # 해외ETF 반영 기준일(한국시간)
 AS_OF_DIST = "2026-08-24"          # 주최 배포 기준일 (안내 문구용)
-AS_OF_CONSTITUENTS = "2026-07-10"  # KRX 구성종목 조회일(재수집 전까지 유지)
+AS_OF_CONSTITUENTS = "2026-08-21"  # KRX 구성종목 조회일(재수집 전까지 유지)
 
 # 채널 식별자 — Router 플랜·think_trace 로그와 공유하는 어휘
 CHANNELS = ("sql", "graph", "vector", "keyword", "validation")

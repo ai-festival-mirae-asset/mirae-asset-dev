@@ -774,7 +774,7 @@ def route_stage_a(question, index, policy=None, today=None):
         plan.hints["time_violation"] = "realtime"
         return done("time_violation", "refuse")
     if time_flags.get("history"):
-        plan.notes.append("구성종목은 2026-07-10 단일 스냅샷만 보유 — 과거 시점과의 비교 불가")
+        plan.notes.append("구성종목은 2026-08-21 단일 스냅샷만 보유 — 과거 시점과의 비교 불가")
         plan.hints["time_violation"] = "history"
         return done("time_violation", "refuse")
     if time_flags.get("post_snapshot"):
@@ -891,7 +891,7 @@ def route_stage_a(question, index, policy=None, today=None):
         plan.hints["display_rows"] = 5
         plan.hints["skip_generation"] = True
         plan.notes.append("두 종목을 모두 편입한 상장중 ETF 를 순자산총액 내림차순으로 조회")
-        plan.notes.append("구성종목 기준일 2026-07-10(직전 거래일)")
+        plan.notes.append("구성종목 기준일 2026-08-21")
         return done("constituent_intersection_top_aum")
 
     # ── 5.86 두 종목 교집합(순위 낱말 없음) — 8/28 회귀(V3-H-01): 'A랑 B 둘 다 담은 ETF'가
@@ -909,7 +909,7 @@ def route_stage_a(question, index, policy=None, today=None):
         plan.hints["display_rows"] = 10
         plan.hints["skip_generation"] = True
         plan.notes.append("두 종목을 모두 편입한 상장중 ETF — 정렬 미지정이라 순자산총액 내림차순 기본")
-        plan.notes.append("구성종목 기준일 2026-07-10(직전 거래일)")
+        plan.notes.append("구성종목 기준일 2026-08-21")
         return done("constituent_intersection_top_aum")
 
     # ── 5.87 교차질의: 종목 보유 상품군 합산 + 연 수익률 TOP (8/26 주최 공식 예시) ──────
@@ -932,7 +932,7 @@ def route_stage_a(question, index, policy=None, today=None):
         plan.notes.append("해외 ETF 는 1년 수익률 항목이 제공 데이터에 없어 순위에서 제외(주최 문답 8/26 확정)")
         plan.notes.append("공모펀드는 보유 종목 자료가 제공 데이터에 없어 해당 종목 보유 여부를 확인할 수 없음 — "
                           "참고로 공모펀드 전체의 1년 수익률 상위를 별도 제시")
-        plan.notes.append("구성종목 기준일 2026-07-10(직전 거래일)")
+        plan.notes.append("구성종목 기준일 2026-08-21")
         return done("cross_holder_top_return", "partial")
 
     # ── 5.9 TDF ETF 존재 + 구성 공시 확인 (H-19) ─────────────────────────
@@ -950,7 +950,7 @@ def route_stage_a(question, index, policy=None, today=None):
         for ref in ace_refs:
             plan.calls.append(ChannelCall("sql", "constituent_top_weights",
                                           {"etf_id": ref.key, "limit": 10}))
-        plan.notes.append("TDF ETF 상품은 확인되지만 ACE TDF 시리즈의 2026-07-10 구성 공시는 빈 값")
+        plan.notes.append("TDF ETF 상품은 확인되지만 ACE TDF 시리즈의 2026-08-21 구성 공시는 빈 값")
         plan.notes.append("상품명에서 자산군을 추정하지 않고, 실제 구성 공시가 있는 범위만 안내")
         plan.hints["skip_generation"] = True
         return done("tdf_products_constituents", "partial")
@@ -964,7 +964,7 @@ def route_stage_a(question, index, policy=None, today=None):
         plan.hints["skip_generation"] = True
         plan.notes.append(f"'{theme}' 표기 상품(상품명 기준)의 구성종목 중 코스닥(KSQ) 종목 비중 합계·종목 수 — "
                           "KRX 공시 비중이 '-'인 종목은 합계에서 빠짐")
-        plan.notes.append("구성종목 기준일 2026-07-10(직전 거래일)")
+        plan.notes.append("구성종목 기준일 2026-08-21")
         return done("theme_ksq_share")
 
     # ── 5.96 리츠 — ETF 와 개별 상장 리츠(구성종목 RT) 를 나눠 답한다 (H-07) ─────────
@@ -981,7 +981,7 @@ def route_stage_a(question, index, policy=None, today=None):
         plan.notes.append("① 리츠 ETF: 상품명에 '리츠'가 있는 상장중 ETF ② 개별 상장 리츠: ETF 구성종목 공시에 등장하는 "
                           "리츠 종목(SECUGRP_ID=RT — 편입 ETF 수 많은 순). 개별 리츠 자체는 제공 마스터에 없어 "
                           "구성종목 수집분에서 확인된 범위만 제시")
-        plan.notes.append("구성종목 기준일 2026-07-10(직전 거래일)")
+        plan.notes.append("구성종목 기준일 2026-08-21")
         return done("reit_breakdown", "partial")
 
     # ── 6.0 그룹·계열사 질의 (M-14/H-10/H-23) — 'X그룹주' 상품 우선 + 회사명 접두 후보 집계 ──
@@ -1005,7 +1005,7 @@ def route_stage_a(question, index, policy=None, today=None):
         plan.hints["skip_generation"] = True
         plan.notes.append(f"'{g} 계열사'는 법적 계열 관계 데이터가 없어 회사명이 '{g}'(으)로 시작하는 "
                           f"국내 상장 종목을 후보로 집계(회사명 접두 기준 — 실제 계열 여부와 다를 수 있음)")
-        plan.notes.append("구성종목 기준일 2026-07-10(직전 거래일) · 수집분 ETF 기준 · 비중은 각 ETF 안의 편입 비중(%)")
+        plan.notes.append("구성종목 기준일 2026-08-21 · 수집분 ETF 기준 · 비중은 각 ETF 안의 편입 비중(%)")
         return done("group_holdings", "partial")
 
     # ── 6.1 상품명 우선 grounding — 설명형·부분 상품명 + 구성·보유 질의 (M-19/H-20) ─────
@@ -1049,7 +1049,7 @@ def route_stage_a(question, index, policy=None, today=None):
             plan.hints["product_fragment"] = frag
             plan.hints["display_rows"] = 12
             plan.hints["skip_generation"] = True
-            plan.notes.append("구성종목 기준일 2026-07-10(직전 거래일) · 구성 공시가 빈 상품은 '구성 공시 없음'으로 표시 · KRX 공시가 수량만 있고 비중이 '-'인 종목은 비중 없이 표시")
+            plan.notes.append("구성종목 기준일 2026-08-21 · 구성 공시가 빈 상품은 '구성 공시 없음'으로 표시 · KRX 공시가 수량만 있고 비중이 '-'인 종목은 비중 없이 표시")
             return done("product_constituents_by_name", "partial" if len(refs) > 1 else "answer")
 
     # ── 6. 구성종목 역질의 (M-01~07/16/21/22, H-14, H-27) — 서로 다른 종목 2개(교집합)는 5.8/Stage B ──
@@ -1116,11 +1116,15 @@ def route_stage_a(question, index, policy=None, today=None):
             plan.hints["display_rows"] = top_n or 5
             plan.notes.append("편입 ETF 를 1년 수익률 내림차순으로 표시(값 0·결측 행 제외 — 8/26 주최 공지) · "
                               "위험등급 동반 표기")
+        if (by_aum or by_fee or by_return) and weight_th is None:
+            # 8/28 실측(M-02): 순위 목록을 생성기가 다듬다 1위 누락·엉뚱한 상품 삽입 —
+            # 순위형 이름 나열은 결정적으로 낸다(오늘 L-19·R2-18 과 같은 일반 정책).
+            plan.hints["skip_generation"] = True
         plan.hints["constituent"] = {"name": const_name, "key": const_ref.key, "keys": keys}
         if len(keys) > 1:
             plan.notes.append(f"'{const_name}'은(는) 복수 상장 종목 {len(keys)}건"
                               f"({' / '.join(r.display for r in const_groups[0][1][:3])})을 합쳐 조회")
-        plan.notes.append("구성종목 기준일 2026-07-10(직전 거래일) · 수집분 ETF 기준")
+        plan.notes.append("구성종목 기준일 2026-08-21 · 수집분 ETF 기준")
         return done("constituent_reverse", "partial" if by_fee else "answer")
 
     # ── 7. 상품 1종 상세·구성·페어 비교 (L-09/10/28, M-25, H-30) ─────────────
@@ -1142,7 +1146,7 @@ def route_stage_a(question, index, policy=None, today=None):
             if plan.hints.get("fuzzy_product_terms"):
                 plan.calls.append(ChannelCall("graph", "constituents_of",
                                               {"query": product_ref.display, "limit": top_n or 10}))
-            plan.notes.append("구성종목 기준일 2026-07-10")
+            plan.notes.append("구성종목 기준일 2026-08-21")
             return done("product_constituents")
         if "구성" not in q:
             second_ref = None
@@ -1280,7 +1284,7 @@ def route_stage_a(question, index, policy=None, today=None):
         plan.hints["skip_generation"] = True
         plan.notes.append(f"운용사 '{comp_ref.key}'(오염 정정값 기준) × 상품명에 '{' / '.join(variants[:3])}' 표기가 "
                           "있는 상장중 ETP 중 순자산 상위 3종의 구성 상위 종목")
-        plan.notes.append("구성종목 기준일 2026-07-10(직전 거래일) · 비중은 각 ETF 안의 편입 비중(%) — KRX 공시가 수량만 있고 비중이 '-'인 종목은 비중 없이 표시")
+        plan.notes.append("구성종목 기준일 2026-08-21 · 비중은 각 ETF 안의 편입 비중(%) — KRX 공시가 수량만 있고 비중이 '-'인 종목은 비중 없이 표시")
         return done("mgmt_theme_constituents")
 
     # ── 8.5 운용사 역질의 (M-09) ─────────────────────────────────────────────
@@ -1532,7 +1536,7 @@ def route_stage_a(question, index, policy=None, today=None):
                                                "status": "active", "limit": 5}))
                 plan.hints["skip_generation"] = True
                 plan.notes.append(f"상품명에 '{theme_t}' 표기가 있는 상장중 ETP 중 순자산 1위 상품의 구성 상위 종목")
-                plan.notes.append("구성종목 기준일 2026-07-10(직전 거래일)")
+                plan.notes.append("구성종목 기준일 2026-08-21")
                 return done("theme_top_constituents")
             if risk and risk[0] != "invalid" and not theme_t:
                 # 8/27 V3-C-11 실측: '위험등급 1등급인 ETF 중 순자산 1위' — 등급 필터를 버리고
@@ -1571,7 +1575,7 @@ def route_stage_a(question, index, policy=None, today=None):
                 plan.hints["display_rows"] = 10
                 plan.hints["skip_generation"] = True
                 plan.notes.append("공통 종목 = 수익률 상위 ETF 중 2개 이상이 구성종목 공시에 담은 종목(보유 ETF 수 많은 순) · "
-                                  "구성종목 기준일 2026-07-10 · 구성 공시가 빈 ETF 는 집계에서 빠짐")
+                                  "구성종목 기준일 2026-08-21 · 구성 공시가 빈 ETF 는 집계에서 빠짐")
                 return done("etp_ranking_common_holdings")
             return done("etp_ranking")
         if "보수" in q and re.search(r"이하|미만|낮|싼|저렴", q):    # L-26 · v3 H-04(위험등급 결합)
@@ -1899,6 +1903,15 @@ def route_stage_a(question, index, policy=None, today=None):
             plan.calls.append(ChannelCall("sql", "etp_name_search",
                                           {"pattern_raw": t, "limit": 10}))
             plan.calls.append(ChannelCall("keyword", "lookup", {"query": t, "limit": 5}))
+            if vec_market == "해외상장":
+                # 8/28 실측(M-11): 의미 검색의 임베딩 호출이 일시 실패하면 해외 근거가 통째로
+                # 비었다 — 테마 사전의 영문 anchor 로 전략 서술을 직접 검색하는 결정적 뒷받침.
+                for a in themes.get(t, [])[:2]:
+                    g_params = {"name_pattern_raw": a, "limit": 10}
+                    _rg = next((r for r in theme_hits if r in REGIONS), None)
+                    if _rg and REGION_INV_RGN_EN.get(_rg):
+                        g_params["region_pattern_raw"] = REGION_INV_RGN_EN[_rg]
+                    plan.calls.append(ChannelCall("sql", "global_etf_filter", g_params))
         plan.notes.append("테마 판정 기준: 상품명(국내)·전략 서술(해외) 매칭 — 의미 검색은 키워드 근거와 결합(RRF)")
         if "국내" in q and "해외" in q:                    # H-04: 국내/해외 비교는 위험등급 비대칭을 밝힌다
             plan.notes.append("국내 상장 ETF 는 위험등급(1=매우 높음~6=매우 낮음)이 있지만 해외 상장 ETF 원천에는 "

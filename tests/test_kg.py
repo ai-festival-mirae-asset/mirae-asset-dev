@@ -398,9 +398,9 @@ def test_build_constituents_e2e(tmp_path):
                  COMPST_ISU_NM="SK하이닉스", COMPST_RTO="30.02"),
             dict(CONST_ROW, COMPST_ISU_CD=None, COMPST_ISU_NM="원화현금")]
     df = pd.DataFrame(rows, dtype=str)
-    stats = bk.build_constituents(df, str(tmp_path), "constituents_20260710.csv")
+    stats = bk.build_constituents(df, str(tmp_path), "constituents_20260821.csv")
     assert stats["edges"] == 2 and stats["companies"] == 2 and stats["skipped_no_code"] == 1
-    assert stats["as_of"] == "2026-07-10"
+    assert stats["as_of"] == "2026-08-21"
     store = TripleStore().load(os.path.join(str(tmp_path), "constituents.nt"))
     samsung = bk.res("company", "krx-005930")[1:-1]
     etfs = store.subjects(FP + "holdsConstituent", samsung)

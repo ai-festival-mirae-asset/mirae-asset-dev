@@ -3,7 +3,7 @@
 전처리 CSV 4종(+구성종목 수집분) → 지식그래프(KG) 트리플 추출 파이프라인
 
 입력 : preprocessing/processed/<테이블ID>_<상품군>_processed.csv (preprocess.py 산출물)
-       external_data/constituents/constituents_20260710.csv (KRX 수집분 — 있으면 자동 포함)
+       external_data/constituents/constituents_20260821.csv (KRX 수집분 — 있으면 자동 포함)
 출력 : kg/output/kr_bond.nt · kr_etf.nt · global_etf.nt · public_fund.nt · constituents.nt
        kg/output/build_report.json (테이블별 노드·트리플 수 + 무결성 위반 집계)
 
@@ -78,8 +78,8 @@ TABLES = {
 # 기준일 주의: 마스터는 7/11 스냅샷, 구성종목은 7/10(직전 거래일) 조회분이다.
 CONSTITUENTS_SLUG = "constituents"
 CONSTITUENTS_CSV_DEFAULT = os.path.join(
-    ROOT, "external_data", "constituents", "constituents_20260710.csv")
-CONSTITUENTS_AS_OF = "2026-07-10"
+    ROOT, "external_data", "constituents", "constituents_20260821.csv")
+CONSTITUENTS_AS_OF = "2026-08-21"
 CONSTITUENTS_SOURCE = "KRX 정보데이터시스템 ETF PDF(구성종목)"
 
 # membership 대상 국내 증권군(SECUGRP_ID) — 통상 "종목"으로 질의되는 상장 증권.
@@ -698,7 +698,7 @@ def main(argv=None):
     os.makedirs(args.out, exist_ok=True)
     report = {"as_of": AS_OF, "ontology": list(ONTOLOGY_FILES), "schema_namespace": FP,
               "note": "결측은 트리플 미생성. risk_grade_dropped = 범위(1~6) 밖 값 적재 거부 집계. "
-                      "constituents 는 KRX 수집분(기준일 2026-07-10)이며 부분 수집일 수 있다(etf_nodes 로 확인).",
+                      "constituents 는 KRX 수집분(기준일 2026-08-21)이며 부분 수집일 수 있다(etf_nodes 로 확인).",
               "tables": {}}
     for t in targets:
         if t == CONSTITUENTS_SLUG:

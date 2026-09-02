@@ -43,9 +43,18 @@ def test_install_script_covers_data_build_and_health():
     for needle in ("requirements.txt", "storage/load_duckdb.py", "kg/build_kg.py",
                    "ai-festival-mirae-asset.github.io",                # 옛 어휘 그래프 재생성 판정
                    "/etc/mirae-api.env", "systemctl restart mirae-api", "/health",
-                   "mirae-healthcheck", "warmup.sh"):
+                   "mirae-healthcheck", "warmup.sh", "python3-venv", "cron",
+                   "systemctl enable --now cron", "systemctl stop mirae-api",
+                   "python -m pytest tests/ -q", "Python 3.12", "jq -e"):
         assert needle in sh, needle
     assert "CLOVASTUDIO_API_KEY=" in sh and "CLOVASTUDIO_API_KEY=\"" not in sh   # 키 값은 스크립트에 없다
+    assert "/usr/local/bin/mirae-healthcheck $PORT" in sh
+
+
+def test_healthcheck_receives_the_installed_port_and_warmup_fails_closed():
+    assert 'PORT="${1:-${PORT:-80}}"' in _read("healthcheck.sh")
+    warmup = _read("warmup.sh")
+    assert 'failures=0' in warmup and 'exit 1' in warmup
 
 
 @pytest.mark.skipif(shutil.which("bash") is None, reason="bash 없음")

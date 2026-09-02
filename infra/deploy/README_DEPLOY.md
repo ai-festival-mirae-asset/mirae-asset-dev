@@ -8,7 +8,7 @@
 
 | 파일 | 역할 |
 |---|---|
-| `install.sh` | 설치·갱신 한 방 스크립트 — 저장소 받기 → 가상환경·패키지 → 비밀값 파일 견본 → DuckDB·그래프 생성 → systemd 등록 → 상태 점검 cron → 예열. 여러 번 실행해도 안전 |
+| `install.sh` | 유일한 설치·갱신 진입점 — 시스템 패키지·Python 3.12+·cron → 저장소 → 가상환경·데이터 → 전체 테스트 → systemd·예열. 여러 번 실행해도 안전 |
 | `mirae-api.service` | systemd 서비스 정의 — 죽으면 5초 뒤 자동 재기동, 부팅 시 자동 시작, 메모리 상한 3.2GB |
 | `healthcheck.sh` | 5분마다 `/health` 확인, 실패 시 서비스 재기동(cron 이 부름). 로그 `/var/log/mirae-health.log` |
 | `warmup.sh` | 기동 직후 예열 호출 5건(첫 요청 지연 방지) |
@@ -16,12 +16,11 @@
 ## 1. 처음 배포 (서버 접속 후 root 로, 약 5분)
 
 ```bash
-apt-get update && apt-get install -y git
-git clone https://github.com/ai-festival-mirae-asset/mirae-asset-dev.git /opt/mirae-asset-dev
-bash /opt/mirae-asset-dev/infra/deploy/install.sh --branch main
+curl -fsSL https://raw.githubusercontent.com/ai-festival-mirae-asset/mirae-asset-dev/main/infra/deploy/install.sh | bash -s -- --branch main
 ```
 
-- 처음 실행하면 `/etc/mirae-api.env` 견본이 생긴다 → `nano /etc/mirae-api.env` 로 `CLOVASTUDIO_API_KEY=` 뒤에 키를 붙여 넣고 저장(파일 권한 600 — 저장소 밖, 절대 커밋 금지) → **`install.sh` 를 한 번 더 실행**(서비스 재기동).
+- Ubuntu 24.04에서 root로 실행한다. git·Python·cron·저장소 clone을 스크립트가 직접 준비하므로 사전 명령은 필요 없다.
+- 처음 실행하면 `/etc/mirae-api.env` 견본이 생긴다 → `nano /etc/mirae-api.env` 로 `CLOVASTUDIO_API_KEY=` 뒤에 키를 붙여 넣고 저장(파일 권한 600 — 저장소 밖, 절대 커밋 금지) → **`install.sh` 를 한 번 더 실행**(키 반영·전체 테스트·재기동).
 - 키 없이도 서버는 뜬다(규칙 엔진만, HCX 꺼짐) — `/health` 의 `hcx_router`/`hcx_generator` 가 `true` 여야 실전 구성이다.
 - 어느 브랜치를 올릴지: 최종 제출은 `main`. 리허설은 `--branch papuagigi` 처럼 개인 브랜치도 가능.
 
@@ -32,7 +31,7 @@ curl http://<공인IP>/health
 curl -G "http://<공인IP>/answer" --data-urlencode "question_id=Q-001" --data-urlencode "question=순자산총액 기준으로 국내 ETF 상위 5개 알려줘"
 ```
 
-`/health` 예: `{"status":"ok","db":true,"index_entries":…,"graph_triples":1128224,"vector":true,"hcx_router":true,"hcx_generator":true,"cache_size":…}` — `graph_triples` 가 0 이면 그래프가 안 올라온 것(설치 로그 확인), `vector:false` 면 인덱스 파일 누락, `hcx_*:false` 면 키 미설정.
+`/health` 예: `{"status":"ok","db":true,"index_entries":…,"graph_triples":양수,"vector":true,"hcx_router":true,"hcx_generator":true,"cache_size":…}`. 설치 스크립트가 DB·색인·그래프와, 키가 있을 때 벡터·HCX 구성까지 검증한다. 다만 `hcx_*:true`는 키 문자열이 있다는 뜻이므로 **실제 `/answer` 호출과 401/403 로그 부재로 키 유효성을 확정**한다.
 
 **원격 리허설(권장, 크레딧 소모)** — 내 PC 의 채점기를 서버로 겨눈다(모의고사 105문항, 약 10분):
 ```bash
@@ -59,6 +58,7 @@ bash /opt/mirae-asset-dev/infra/deploy/install.sh --branch main
 사람이 가끔 볼 것(하루 1번이면 충분):
 ```bash
 systemctl status mirae-api --no-pager | head -5      # active (running) 인지
+systemctl is-active cron                              # active 인지
 tail -n 3 /var/log/mirae-health.log                   # 최근 점검 결과(OK 만 있으면 정상)
 journalctl -u mirae-api --since "1 hour ago" | grep -c "응답 시간" # 최근 1시간 요청 수(0 이어도 정상 — 평가 전엔 요청 없음)
 df -h / | tail -1                                     # 디스크 여유

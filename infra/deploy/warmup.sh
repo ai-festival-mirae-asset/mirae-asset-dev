@@ -10,10 +10,17 @@ QS=(
   "반도체 산업에 집중 투자하는 해외 ETF는?"
 )
 i=0
+failures=0
 for q in "${QS[@]}"; do
   i=$((i+1))
   t0=$(date +%s.%N)
   code=$(curl -sS -o /dev/null -w '%{http_code}' -G "$BASE/answer" --data-urlencode "question_id=warm-$i" --data-urlencode "question=$q" --max-time 120 || echo "ERR")
   t1=$(date +%s.%N)
   printf 'warm-%d %s %.1fs %s\n' "$i" "$code" "$(echo "$t1 - $t0" | bc)" "$q"
+  [ "$code" = "200" ] || failures=$((failures+1))
 done
+
+if [ "$failures" -gt 0 ]; then
+  echo "예열 실패: $failures개 요청이 HTTP 200을 받지 못했습니다."
+  exit 1
+fi

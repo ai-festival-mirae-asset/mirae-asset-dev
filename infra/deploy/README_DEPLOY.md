@@ -8,7 +8,7 @@
 
 | 파일 | 역할 |
 |---|---|
-| `install.sh` | 설치·갱신 한 방 스크립트 — 저장소 받기 → 가상환경·패키지 → 비밀값 파일 견본 → DuckDB·그래프 생성 → systemd 등록 → 상태 점검 cron → 예열. 여러 번 실행해도 안전 |
+| `install.sh` | 유일한 설치·갱신 진입점 — 시스템 패키지·Python 3.12+·cron → 저장소 → 가상환경·데이터 → 전체 테스트 → systemd·예열. 여러 번 실행해도 안전 |
 | `mirae-api.service` | systemd 서비스 정의 — 죽으면 5초 뒤 자동 재기동, 부팅 시 자동 시작, 메모리 상한 3.2GB |
 | `healthcheck.sh` | 5분마다 `/health` 확인, 실패 시 서비스 재기동(cron이 부름). 로그 `/var/log/mirae-health.log` |
 | `warmup.sh` | 기동 직후 예열 호출 5건(첫 요청 지연 방지) |
@@ -23,9 +23,9 @@
 |---|---|---|
 | 1. VPC 생성 | Services > Networking > VPC > VPC Management | 이름 `mirae-vpc`, IP 범위 `10.0.0.0/16` |
 | 2. Subnet 생성 | 같은 화면 Subnet Management | 이름 `mirae-subnet-public`, VPC `mirae-vpc`, `10.0.1.0/24`, Zone 아무거나, **Internet Gateway 전용여부 = Public**(공인 IP를 붙이려면 필수), 용도 일반 |
-| 3. Server 생성 | Services > Compute > Server > 서버 생성 | 이미지 `Ubuntu Server 24.04 LTS`(또는 22.04) · VPC/Subnet 위 것 · 타입 Standard **2vCPU·4GB** · 시간 요금제 · 이름 `mirae-api-01` · 공인 IP "새로 할당"(안 보이면 4) · 스토리지 기본 SSD(데이터 1GB 미만) · **인증키 신규 생성 → `mirae-key.pem` 다운로드·보관**(분실 시 비밀번호 확인 불가) · ACG 기본 선택 |
+| 3. Server 생성 | Services > Compute > Server > 서버 생성 | 이미지 `Ubuntu Server 24.04 LTS`(설치 스크립트와 Python 3.12+ 기준을 이 환경으로 통일) · VPC/Subnet 위 것 · 타입 Standard **2vCPU·4GB** · 시간 요금제 · 이름 `mirae-api-01` · 공인 IP "새로 할당"(안 보이면 4) · 스토리지 기본 SSD(데이터 1GB 미만) · **인증키 신규 생성 → `mirae-key.pem` 다운로드·보관**(분실 시 비밀번호 확인 불가) · ACG 기본 선택 |
 | 4. 공인 IP | Server > Public IP > 공인 IP 신청 | 적용 서버 `mirae-api-01`. 이 IP가 제출할 End-point 주소 |
-| 5. ACG(방화벽) | Server > ACG > `mirae-vpc` 기본 ACG > ACG 설정 | 인바운드 TCP **22 — 내 IP/32**(SSH) · **80 — 0.0.0.0/0**(평가용 HTTP) · 443 — 0.0.0.0/0(선택) · 아웃바운드 TCP 0.0.0.0/0 1-65535(기본 유지) |
+| 5. ACG(방화벽) | Server > ACG > `mirae-vpc` 기본 ACG > ACG 설정 | 인바운드 TCP **22 — 내 IP/32**(SSH) · **80 — 0.0.0.0/0**(평가용 HTTP) · 443 — HTTPS를 직접 구성할 때만(기본 배포에서는 불필요) · 아웃바운드 TCP 0.0.0.0/0 1-65535(기본 유지) |
 | 6. 접속 | 서버 체크 > 서버 관리 및 설정 변경 > 관리자 비밀번호 확인 > `mirae-key.pem` 업로드 | root 비밀번호 표시 → PowerShell에서 `ssh root@<공인IP>` → 첫 접속 후 `passwd`로 변경 권장 |
 
 HTTPS·도메인·인증서는 **불필요 확정**(8/13 공식 규격) — 공인 IP를 그대로 제출한다. 주최 발신 IP 대역이 공지되면 80 포트를 그 대역만 허용하도록 좁혀도 된다(선택 — 공지 전엔 0.0.0.0/0 유지).
@@ -33,15 +33,14 @@ HTTPS·도메인·인증서는 **불필요 확정**(8/13 공식 규격) — 공�
 ## 2. 처음 배포 (서버 접속 후 root로, 약 5분)
 
 ```bash
-apt-get update && apt-get install -y git
-git clone https://github.com/ai-festival-mirae-asset/mirae-asset-dev.git /opt/mirae-asset-dev
-bash /opt/mirae-asset-dev/infra/deploy/install.sh --branch main
+curl -fsSL https://raw.githubusercontent.com/ai-festival-mirae-asset/mirae-asset-dev/main/infra/deploy/install.sh | bash -s -- --branch main
 ```
 
-- 처음 실행하면 `/etc/mirae-api.env` 견본이 생긴다 → `nano /etc/mirae-api.env`로 `CLOVASTUDIO_API_KEY=` 뒤에 키를 붙여 넣고 저장(파일 권한 600 — 저장소 밖, 절대 커밋 금지) → **`install.sh`를 한 번 더 실행**(서비스 재기동).
-- 스크립트가 하는 일: 저장소 받기/갱신 → 가상환경 + `requirements.txt` → DuckDB·그래프 생성(정제 CSV·벡터 인덱스는 저장소에 있음) → `mirae-api.service` 등록 → 5분마다 `/health` 점검 cron → 예열 호출.
-- 키 없이도 서버는 뜬다(규칙 엔진만, HCX 꺼짐) — `/health`의 `hcx_router`/`hcx_generator`가 `true`여야 실전 구성이다.
-- 최종 제출은 `main`. 리허설로 다른 브랜치를 올리려면 `--branch <이름>`.
+- Ubuntu 24.04에서 root로 실행한다. git·Python·cron·저장소 clone을 스크립트가 직접 준비하므로 사전 명령은 필요 없다.
+- 처음 실행하면 `/etc/mirae-api.env` 견본이 생긴다 → `nano /etc/mirae-api.env` 로 `CLOVASTUDIO_API_KEY=` 뒤에 키를 붙여 넣고 저장(파일 권한 600 — 저장소 밖, 절대 커밋 금지) → **`install.sh` 를 한 번 더 실행**(키 반영·전체 테스트·재기동).
+- 스크립트가 하는 일: 시스템 패키지·Python 3.12+·cron 설치 → 저장소 받기/갱신 → 가상환경 + `requirements.txt` → DuckDB·그래프 생성(정제 CSV·벡터 인덱스는 저장소에 있음) → 전체 자동 테스트 → `mirae-api.service` 등록 → 5분마다 `/health` 점검 cron → 예열 호출.
+- 키 없이도 서버는 뜬다(규칙 엔진만, HCX 꺼짐) — `/health` 의 `hcx_router`/`hcx_generator` 가 `true` 여야 실전 구성이다.
+- 어느 브랜치를 올릴지: 최종 제출은 `main`. 리허설은 `--branch papuagigi` 처럼 개인 브랜치도 가능.
 
 ## 3. 배포 직후 확인 (내 PC에서)
 
@@ -50,7 +49,7 @@ curl http://<공인IP>/health
 curl -G "http://<공인IP>/answer" --data-urlencode "question_id=Q-001" --data-urlencode "question=순자산총액 기준으로 국내 ETF 상위 5개 알려줘"
 ```
 
-`/health` 예: `{"status":"ok","db":true,"index_entries":…,"graph_triples":924327,"vector":true,"hcx_router":true,"hcx_generator":true,"cache_size":…}` — `graph_triples`가 0이면 그래프가 안 올라온 것(설치 로그 확인), `vector:false`면 인덱스 파일 누락, `hcx_*:false`면 키 미설정. 이게 되면 "외부에서 접근 가능한 서버"(M2) 완성.
+`/health` 예: `{"status":"ok","db":true,"index_entries":…,"graph_triples":양수,"vector":true,"hcx_router":true,"hcx_generator":true,"cache_size":…}`. 설치 스크립트가 DB·색인·그래프와, 키가 있을 때 벡터·HCX 구성까지 검증한다. 다만 `hcx_*:true`는 키 문자열이 있다는 뜻이므로 **실제 `/answer` 호출과 401/403 로그 부재로 키 유효성을 확정**한다. 이상 징후: `graph_triples`가 0이면 그래프가 안 올라온 것(설치 로그 확인), `vector:false`면 인덱스 파일 누락, `hcx_*:false`면 키 미설정. 이게 되면 "외부에서 접근 가능한 서버"(M2) 완성 — 9/2 실측 `graph_triples`=923,337.
 
 **원격 리허설(권장, 크레딧 소모)** — 내 PC의 채점기를 서버로 겨눈다(실전 미러 38문항, 약 5분):
 ```bash
@@ -83,6 +82,7 @@ systemctl stop mirae-api && rm -f /opt/mirae-asset-dev/storage/output/answer_cac
 사람이 가끔 볼 것(하루 1번이면 충분):
 ```bash
 systemctl status mirae-api --no-pager | head -5      # active (running) 인지
+systemctl is-active cron                              # active 인지
 tail -n 3 /var/log/mirae-health.log                   # 최근 점검 결과(OK 만 있으면 정상)
 journalctl -u mirae-api --since "1 hour ago" | grep -c "응답 시간" # 최근 1시간 요청 수(0 이어도 정상)
 df -h / | tail -1                                     # 디스크 여유
@@ -109,9 +109,9 @@ df -h / | tail -1                                     # 디스크 여유
 - [ ] VPC + Public Subnet 생성
 - [ ] 서버 생성(Ubuntu · 2vCPU/4GB · 시간제) + pem 보관
 - [ ] 공인 IP 할당
-- [ ] ACG: 22(내 IP), 80/443(전체), 아웃바운드 오픈
+- [ ] ACG: 22(내 IP), 80(전체), 아웃바운드 오픈 — 443은 HTTPS를 쓸 때만
 - [ ] SSH 접속 + 비밀번호 변경
-- [ ] `install.sh` 실행 + `/etc/mirae-api.env` 키 기입 + 재실행, 외부에서 `/health` 응답 확인(`hcx_router:true`)
+- [ ] `install.sh` 실행 + `/etc/mirae-api.env` 키 기입 + 재실행, 자동 테스트 통과, 외부에서 `/health`·`/answer` 확인(`hcx_router:true`)
 - [ ] 원격 리허설: 응답 시간 p95·최대 확인
 - [ ] 공인 IP를 `README.md` §5.5와 `API_SPEC.md` §1에 기입(제출 필수)
 - [ ] 2주 무인 운영 점검: `kill -9` 후 자동 복구 확인 · `/var/log/mirae-health.log` OK · 디스크 여유 · 크레딧 잔량

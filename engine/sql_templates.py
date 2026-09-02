@@ -398,6 +398,9 @@ TEMPLATES = {t.id: t for t in [
         Param("min_pay_cnt"), Param("min_listed_dt"), Param("limit", required=True)],
        source="PREF01N001", key_col="pd_itm_no"),
 
+    # 9/2: price(장내 종가 du_clpr)·mkt_cap(시가총액 = 종가×상장주식수 pd_lst_stk_cnt — 원천에 열 없음) 추가.
+    #      설명 문장은 일부러 그대로 둔다 — 이 문장은 AI 라우터(HCX)가 보는 조회문 목록에 그대로 실려, 문장을
+    #      바꾸면 경계 문항(v1 H-17)의 조회문 선택이 흔들린다(9/2 A/B 실측: 설명 추가 시 3/3 거절, 원복 시 통과).
     _t("etp_metric_rank",
        "국내 ETP 수치 항목(괴리율·추적오차율·변동성) 순위 — 8/26 재배포 신설 수치의 최대/최소·"
        "정렬 질의가 길이 없어 거절·이름검색으로 새던 공백(8/28 블라인드(claude) B-04/12/16). "
@@ -414,6 +417,8 @@ TEMPLATES = {t.id: t for t in [
                  TRY_CAST(du_vol_1d AS DOUBLE) AS du_vol_1d,
                  TRY_CAST(du_val_1d AS DOUBLE) AS du_val_1d,
                  TRY_CAST(du_last_nav AS DOUBLE) AS du_last_nav,
+                 TRY_CAST(du_clpr AS DOUBLE) AS du_clpr,
+                 TRY_CAST(du_clpr AS DOUBLE) * TRY_CAST(pd_lst_stk_cnt AS DOUBLE) AS mkt_cap,
                  cu_charge_rt, drv_risk_grade,
                  coalesce(cu_base_index, ref_base_index) AS base_index, du_last_aum
           FROM kr_etp
@@ -429,18 +434,24 @@ TEMPLATES = {t.id: t for t in [
                                       WHEN 'volume' THEN TRY_CAST(du_vol_1d AS DOUBLE)
                                       WHEN 'value' THEN TRY_CAST(du_val_1d AS DOUBLE)
                                       WHEN 'nav' THEN TRY_CAST(du_last_nav AS DOUBLE)
+                                      WHEN 'price' THEN TRY_CAST(du_clpr AS DOUBLE)
+                                      WHEN 'mkt_cap' THEN TRY_CAST(du_clpr AS DOUBLE) * TRY_CAST(pd_lst_stk_cnt AS DOUBLE)
                                       ELSE TRY_CAST(du_vlty_1y AS DOUBLE) END, 0) <> 0
             AND ($max_metric IS NULL OR CASE $metric WHEN 'diff' THEN TRY_CAST(du_diff_rt AS DOUBLE)
                                                      WHEN 'tracking' THEN TRY_CAST(du_chas_errt AS DOUBLE)
                                                      WHEN 'volume' THEN TRY_CAST(du_vol_1d AS DOUBLE)
                                                      WHEN 'value' THEN TRY_CAST(du_val_1d AS DOUBLE)
                                                      WHEN 'nav' THEN TRY_CAST(du_last_nav AS DOUBLE)
+                                                     WHEN 'price' THEN TRY_CAST(du_clpr AS DOUBLE)
+                                                     WHEN 'mkt_cap' THEN TRY_CAST(du_clpr AS DOUBLE) * TRY_CAST(pd_lst_stk_cnt AS DOUBLE)
                                                      ELSE TRY_CAST(du_vlty_1y AS DOUBLE) END < $max_metric)
             AND ($min_metric IS NULL OR CASE $metric WHEN 'diff' THEN TRY_CAST(du_diff_rt AS DOUBLE)
                                                      WHEN 'tracking' THEN TRY_CAST(du_chas_errt AS DOUBLE)
                                                      WHEN 'volume' THEN TRY_CAST(du_vol_1d AS DOUBLE)
                                                      WHEN 'value' THEN TRY_CAST(du_val_1d AS DOUBLE)
                                                      WHEN 'nav' THEN TRY_CAST(du_last_nav AS DOUBLE)
+                                                     WHEN 'price' THEN TRY_CAST(du_clpr AS DOUBLE)
+                                                     WHEN 'mkt_cap' THEN TRY_CAST(du_clpr AS DOUBLE) * TRY_CAST(pd_lst_stk_cnt AS DOUBLE)
                                                      ELSE TRY_CAST(du_vlty_1y AS DOUBLE) END > $min_metric)
           ORDER BY CASE WHEN $direction = 'asc' THEN
                           CASE $metric WHEN 'diff' THEN TRY_CAST(du_diff_rt AS DOUBLE)
@@ -451,6 +462,8 @@ TEMPLATES = {t.id: t for t in [
                                        WHEN 'volume' THEN TRY_CAST(du_vol_1d AS DOUBLE)
                                        WHEN 'value' THEN TRY_CAST(du_val_1d AS DOUBLE)
                                        WHEN 'nav' THEN TRY_CAST(du_last_nav AS DOUBLE)
+                                       WHEN 'price' THEN TRY_CAST(du_clpr AS DOUBLE)
+                                       WHEN 'mkt_cap' THEN TRY_CAST(du_clpr AS DOUBLE) * TRY_CAST(pd_lst_stk_cnt AS DOUBLE)
                                        ELSE TRY_CAST(du_vlty_1y AS DOUBLE) END END ASC NULLS LAST,
                    CASE WHEN $direction = 'desc' THEN
                           CASE $metric WHEN 'diff' THEN TRY_CAST(du_diff_rt AS DOUBLE)
@@ -461,11 +474,14 @@ TEMPLATES = {t.id: t for t in [
                                        WHEN 'volume' THEN TRY_CAST(du_vol_1d AS DOUBLE)
                                        WHEN 'value' THEN TRY_CAST(du_val_1d AS DOUBLE)
                                        WHEN 'nav' THEN TRY_CAST(du_last_nav AS DOUBLE)
+                                       WHEN 'price' THEN TRY_CAST(du_clpr AS DOUBLE)
+                                       WHEN 'mkt_cap' THEN TRY_CAST(du_clpr AS DOUBLE) * TRY_CAST(pd_lst_stk_cnt AS DOUBLE)
                                        ELSE TRY_CAST(du_vlty_1y AS DOUBLE) END END DESC NULLS LAST,
                    pd_itm_no
           LIMIT $limit""",
        [Param("metric", required=True,
-              enum=("diff", "tracking", "vol_1m", "vol_3m", "vol_6m", "vol_1y", "volume", "value", "nav")),
+              enum=("diff", "tracking", "vol_1m", "vol_3m", "vol_6m", "vol_1y", "volume", "value", "nav",
+                    "price", "mkt_cap")),
         Param("direction", required=True, enum=("asc", "desc")),
         Param("type", enum=("ETF", "ETN")), Param("index_pattern"),
         Param("max_metric"), Param("min_metric"),
@@ -767,13 +783,18 @@ TEMPLATES = {t.id: t for t in [
 
     # ---------------- 구성종목 (M-01~07/16/21/25, H-10/14/22 — 기준일 7/10!) ----------------
     _t("constituent_holders",
+       # 9/2: order='mkt_cap'(시가총액 = 종가×상장주식수, 그때만 mkt_cap 열이 채워짐) 추가. 설명 문장은 AI 라우터
+       #      목록에 실리므로 그대로 둔다(etp_metric_rank 의 9/2 주석 참조 — H-17 흔들림 실측).
        "특정 종목(코드/ISIN)을 편입한 ETF 목록 + 비중 — 기준일 2026-08-21 "
        "명시 필수. order='aum' 이면 순자산 큰 순(M-02 '순자산 큰 순서로'), 기본은 비중 큰 순. "
        "mgmt(운용사 복구값)를 주면 그 운용사 상품만(8/26 v2 H-08 '…중에 미래에셋자산운용이 운용하는'). "
        "상품명은 마스터 약칭(pd_abrv_nm)으로 표시. 대상: M-01/02/16/21, H-06/27.",
        """SELECT c.etf_isin, coalesce(e.pd_abrv_nm, c.etf_name) AS pd_abrv_nm, c.COMPST_ISU_NM,
                  TRY_CAST(replace(c.COMPST_RTO, ',', '') AS DOUBLE) AS weight_pct,
-                 e.pd_net_tamt, e.drv_risk_grade, e.cu_charge_rt,
+                 e.pd_net_tamt,
+                 CASE WHEN $order = 'mkt_cap'
+                      THEN TRY_CAST(e.du_clpr AS DOUBLE) * TRY_CAST(e.pd_lst_stk_cnt AS DOUBLE) END AS mkt_cap,
+                 e.drv_risk_grade, e.cu_charge_rt,
                  e.pd_lstg_dt, e.pd_dvid_yield, e.du_chas_errt,
                  coalesce(m.resolved, e.cu_fund_mgmt_co) AS mgmt
           FROM etf_constituent c LEFT JOIN kr_etp e ON c.etf_isin = e.pd_itm_no
@@ -784,9 +805,11 @@ TEMPLATES = {t.id: t for t in [
             AND (coalesce($order, '') <> 'fee' OR TRY_CAST(e.cu_charge_rt AS DOUBLE) > 0)
           ORDER BY CASE WHEN $order = 'fee' THEN TRY_CAST(e.cu_charge_rt AS DOUBLE) END ASC NULLS LAST,
                    CASE WHEN $order = 'aum' THEN TRY_CAST(e.pd_net_tamt AS DOUBLE) END DESC NULLS LAST,
+                   CASE WHEN $order = 'mkt_cap'
+                        THEN TRY_CAST(e.du_clpr AS DOUBLE) * TRY_CAST(e.pd_lst_stk_cnt AS DOUBLE) END DESC NULLS LAST,
                    weight_pct DESC NULLS LAST, c.etf_isin LIMIT $limit""",
        [Param("code", required=True), Param("limit", required=True),
-        Param("order", enum=("aum", "weight", "fee")), Param("mgmt"), Param("name_pattern")],
+        Param("order", enum=("aum", "weight", "fee", "mkt_cap")), Param("mgmt"), Param("name_pattern")],
        source="KRX-PDF", key_col="etf_isin", as_of=AS_OF_CONSTITUENTS),
 
     _t("constituent_holders_top_return",
@@ -1165,10 +1188,22 @@ def validate_params(template_id, params=None):
     return t, params
 
 
+# AI 라우터(HCX)에게 보여 주지 않는 허용값 — 규칙 라우터만 쓰는 값(9/2).
+# 왜: AI 라우터는 템플릿 목록(설명+파라미터 허용값)을 통째로 프롬프트에 싣는다. 여기에 값 하나만 늘어도
+#     경계 문항의 템플릿 선택이 흔들린다(9/2 A/B 실측 — v1 H-17: 수정 전 5/5 통과 → 'price'·'mkt_cap' 노출 시
+#     1/5). 종가·시가총액 질의는 규칙 7.4 가 AI 라우터 앞에서 잡으므로 AI 가 이 값을 알 필요가 없다.
+#     목록에서만 숨기고 validate_params 는 그대로 받는다(규칙 라우터 호출용). 새 지표를 등록할 때도 같은 원칙.
+LLM_HIDDEN_ENUM_VALUES = {
+    ("etp_metric_rank", "metric"): ("price", "mkt_cap"),
+    ("constituent_holders", "order"): ("mkt_cap",),
+}
+
+
 # 원화 금액 열 — 사람이 읽는 환산 표기(억원·조원)를 같은 행에 붙인다(8/19).
 # 생성기(HCX)가 원 단위 큰 수를 스스로 환산하다 단위를 틀리는 일(346,687,108,988원 → "약 346조",
 # M-03 실측)을 막는다: 환산값을 근거에 넣어 두면 그대로 옮겨 쓰고, 사후 대조도 그 숫자를 허용한다.
-KRW_AMOUNT_COLS = ("pd_net_tamt", "du_last_aum", "total_aum", "fd_nast_suma")
+KRW_AMOUNT_COLS = ("pd_net_tamt", "du_last_aum", "total_aum", "fd_nast_suma",
+                   "mkt_cap")                            # mkt_cap: 9/2 시가총액(종가×상장주식수 계산값)
 
 
 def krw_readable(value):

@@ -49,7 +49,9 @@ def _fmt_row(row, max_fields=4, focus=()):
     """
     name = next((str(row[c]) for c in _NAME_COLS if row.get(c)), None)
     parts = []
-    focus_present = [k for k in focus if k in row]
+    # focus 열에 환산 표기 짝(_krw)이 있으면 원값 대신 그 짝을 앞세운다 — 원값은 아래 규칙으로 숨겨지므로
+    # 짝을 앞세우지 않으면 정렬 기준 값이 답변에 안 실린다(9/2 시가총액 mkt_cap_krw 실측).
+    focus_present = [(k + "_krw") if (k + "_krw") in row else k for k in focus if k in row]
     ordered = focus_present + [k for k in row.keys() if k not in focus_present]
     for k in ordered:
         v = row[k]
@@ -76,14 +78,21 @@ def _focus_cols(question):
     return cols
 
 
-def _sort_rows_by_aum(rows):
-    def aum(row):
-        v = row.get("pd_net_tamt")
+_ORDER_HINT_COLS = {"aum": "pd_net_tamt", "mkt_cap": "mkt_cap"}   # plan.hints["order"] → 정렬 열(9/2 mkt_cap)
+
+
+def _sort_rows_by(rows, col):
+    def key(row):
+        v = row.get(col)
         try:
             return float(str(v).replace(",", ""))
         except (TypeError, ValueError):
             return -1.0
-    return sorted(rows, key=aum, reverse=True)
+    return sorted(rows, key=key, reverse=True)
+
+
+def _sort_rows_by_aum(rows):
+    return _sort_rows_by(rows, "pd_net_tamt")
 
 
 REFUSE_HEAD = "요청하신 내용은 보유 데이터 기준으로 확인할 수 없습니다"
@@ -189,8 +198,9 @@ def _draft_answer(plan, result, question=""):
             continue
         rows = o.rows
         if o.channel == "sql":
-            if plan.hints.get("order") == "aum" and rows and "pd_net_tamt" in rows[0]:
-                rows = _sort_rows_by_aum(rows)
+            _order_col = _ORDER_HINT_COLS.get(plan.hints.get("order"))
+            if _order_col and rows and _order_col in rows[0]:
+                rows = _sort_rows_by(rows, _order_col)
             head = f"[{o.op}] 결과 {len(rows):,}건"
             display_rows = int(plan.hints.get("display_rows", 5))
             focus = _focus_cols(question)                 # 질문이 콕 집은 속성 열은 잘리지 않게(B-15)
@@ -289,6 +299,10 @@ _ATTR_NOTES = [
     (r"보수", "ofwk_trus_rwrd_r", "사무관리 보수(%)", "text"),
     (r"거래량", "du_vol_1d", "1일 거래량", "text"),
     (r"퇴직연금|연금", "PD_PEN_TR_YN", "퇴직연금 편입 가능 여부", "text"),
+    # 9/2 종가·시가총액 순위(etp_metric_rank price/mkt_cap, constituent_holders order=mkt_cap) — 정렬 기준
+    # 값이 표시 상한(앞 4열)에 잘려 답변에 안 실리던 유형(기준가 NAV 실측과 같은 원인)의 종가·시가총액판.
+    (r"종가|가격", "du_clpr", "장내 종가(원)", "text"),
+    (r"시가총액|시총", "mkt_cap", "시가총액(종가×상장주식수 계산값)", "krw"),
 ]
 
 

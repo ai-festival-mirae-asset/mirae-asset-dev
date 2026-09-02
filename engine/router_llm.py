@@ -24,7 +24,7 @@ sys.path.insert(0, ROOT)
 
 from engine.channels import resolve_raw_params                # noqa: E402
 from engine.router import ChannelCall, RoutePlan              # noqa: E402
-from engine.sql_templates import TEMPLATES, validate_params   # noqa: E402
+from engine.sql_templates import LLM_HIDDEN_ENUM_VALUES, TEMPLATES, validate_params   # noqa: E402
 
 GRAPH_OPS = ("holding_etfs", "company_products", "product_info", "constituents_of")
 ROUTER_TEMPERATURE = 0.1          # 계획은 결정적일수록 좋다(8/19 ⑧-6)
@@ -151,14 +151,20 @@ def coerce_graph_query(op, query, partial_plan):
 # ---------------------------------------------------------------------------
 
 def _template_catalog_text():
-    """템플릿 카탈로그를 프롬프트용 텍스트로 — id·설명·파라미터(필수/enum)."""
+    """템플릿 카탈로그를 프롬프트용 텍스트로 — id·설명·파라미터(필수/enum).
+
+    규칙 라우터 전용 허용값(sql_templates.LLM_HIDDEN_ENUM_VALUES)은 목록에서 뺀다 — 이 텍스트는 HCX 프롬프트에
+    그대로 실려서 값 하나가 늘어도 경계 문항의 선택이 흔들린다(9/2 H-17 실측). 프롬프트를 검증된 상태로 고정.
+    """
     lines = []
     for t in TEMPLATES.values():
         ps = []
         for p in t.params:
             name = _LIKE_PARAMS.get(p.name, p.name)
             tag = "필수" if p.required else "선택"
-            enum = f" enum{list(p.enum)}" if p.enum else ""
+            hidden = LLM_HIDDEN_ENUM_VALUES.get((t.id, p.name), ())
+            shown = [v for v in p.enum if v not in hidden] if p.enum else []
+            enum = f" enum{shown}" if shown else ""
             ps.append(f"{name}({tag}{enum})")
         lines.append(f"- {t.id}: {t.description} 파라미터: {', '.join(ps) or '없음'}")
     return "\n".join(lines)

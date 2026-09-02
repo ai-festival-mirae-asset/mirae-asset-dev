@@ -1093,7 +1093,14 @@ def route_stage_a(question, index, policy=None, today=None):
         keys = [r.key for r in const_groups[0][1]][:3]      # 별칭의 복수 상장(A/C 종류주·ADR)은 합쳐 조회
         weight_th = next((v for v, k, d in percents
                           if k in ("weight", "unknown") and d in ("이상", "초과", "넘")), None)
-        by_aum = bool(re.search(r"순자산|규모|AUM", q, re.IGNORECASE))
+        # 9/2 사용자 실측: '…포함된 ETF 중 시가총액 가장 높은'·'가장 큰 ETF'·'자산이 가장 많은' 이 비중순
+        # 목록으로 새던 공백 — 규모 동의어를 넓히되, '비중이/보수가/수익률이 가장 큰'처럼 다른 지표가 앞에
+        # 붙은 표현은 지운 뒤 판정한다. 시가총액은 원천 열이 없어 종가×상장주식수 계산값으로 정렬(order='mkt_cap').
+        _size_q = re.sub(r"(비중|비율|보수|수익률|변동성|괴리율|추적\s*오차|거래량|거래대금|위험\s*등급|분배|배당)"
+                         r"\S{0,3}\s*(가장|제일)?\s*(큰|높은|많은|크)", "", q)
+        by_mktcap = bool(re.search(r"시가총액|시총", q))
+        by_aum = (not by_mktcap) and bool(re.search(
+            r"순자산|규모|AUM|(가장|제일)\s*(큰|크)|자산이?\s*(가장|제일)?\s*(많|큰|크)|덩치", _size_q, re.IGNORECASE))
         # 8/26 v3 C-03: '…담은 ETF 중 총보수가 가장 낮은' — 보수 오름차순(0 표기 제외) 정렬
         by_fee = bool("보수" in q and re.search(r"낮|저렴|싼|최저|적은", q))
         # 8/28 블라인드(claude) B-14: '…담고 있는 ETF들 중 1년수익률 1등' — 기본(비중순) 목록이
@@ -1125,6 +1132,8 @@ def route_stage_a(question, index, policy=None, today=None):
                 holder_params = {"code": key, "limit": max(limit, 30)}
                 if by_fee:                                # v3 C-03: 총보수 오름차순(값 보유분만)
                     holder_params["order"] = "fee"
+                elif by_mktcap:                           # 9/2: 시가총액(종가×상장주식수) 큰 순
+                    holder_params["order"] = "mkt_cap"
                 elif by_aum:                              # M-02: 순자산 큰 순은 SQL 이 전체에서 정렬
                     holder_params["order"] = "aum"
                 if mgmt_filter:
@@ -1146,6 +1155,10 @@ def route_stage_a(question, index, policy=None, today=None):
                               "순위에서 제외 — 커버리지 명시 필수")
         if by_aum:
             plan.hints["order"] = "aum"
+        if by_mktcap:
+            plan.hints["order"] = "mkt_cap"
+            plan.notes.append(f"시가총액은 원천에 없는 항목 — 종가({AS_OF_MASTER})×상장주식수로 계산한 값으로 정렬"
+                              "(순자산총액과 1~2% 내 차이) · 종가 0(거래종료) 상품은 뒤로")
         if by_return and weight_th is None:
             plan.hints["order"] = "return"
             plan.hints["display_rows"] = top_n or 5
@@ -1232,9 +1245,21 @@ def route_stage_a(question, index, policy=None, today=None):
     #        대용 오답(B-12)·이름검색 폴백(B-16)으로 새던 공백. 지수 추종 검색(7.5)보다 앞.
     _metric = next((m for w, m in (("추적오차", "tracking"), ("추적 오차", "tracking"),
                                    ("괴리율", "diff"), ("변동성", "volatility"),
+                                   ("시가총액", "mkt_cap"), ("시총", "mkt_cap"),
                                    ("거래대금", "value"), ("거래량", "volume"),
                                    ("기준가", "nav"), ("NAV", "nav"), ("nav", "nav"),
+                                   ("종가", "price"), ("가격", "price"),
                                    ) if w in q), None)   # volume r2 R2-01 · value/nav r3 R3-03/04
+    # 9/2 사용자 실측: '종가가 가장 높은 ETF' 가 규칙에 길이 없어 AI 라우터로 넘어가 수익률 템플릿을
+    # 고르던 오답(엔진 어디서도 du_clpr 를 안 쓰던 공백). '시가총액' 은 원천에 열이 없어 종가×상장주식수로
+    # 계산한다(사용자 결정). '기준가격' 은 튜플 순서상 기준가(nav)가 먼저 잡힌다. 종가·시가총액은 ETF/ETN
+    # 낱말이 있을 때만(개별 종목 시세·채권 가격은 원천에 없다), '가격이 가장 많이 오른' 류는 수익률
+    # 질의라 제외, 실시간·과거 시세는 앞의 시간 경계 거절이 맡는다.
+    if _metric in ("price", "mkt_cap") and (
+            not has_etf_word or is_bond_domain
+            or re.search(r"오르|오른|올라|올랐|상승|하락|떨어|내린|내렸|내리|수익", q)
+            or time_flags.get("realtime") or time_flags.get("history")):
+        _metric = None
     if _metric == "volatility":
         _vp = re.search(r"([136])\s*개월", q)
         _metric = f"vol_{_vp.group(1)}m" if _vp else "vol_1y"
@@ -1256,7 +1281,7 @@ def route_stage_a(question, index, policy=None, today=None):
             plan.notes.append("값 0·결측 제외 평균 — 레버리지·인버스형 포함 집계(제외 원하면 조건을 지정해 재질의)")
             plan.hints["skip_generation"] = True
             return done("etp_metric_avg", "partial")
-        direction = "asc" if re.search(r"낮|작|적|최소", q) else "desc"
+        direction = "asc" if re.search(r"낮|작|적|최소|저렴|(?<!비)싼", q) else "desc"   # 9/2: 저렴·싼(비싼 제외)
         _has_etn = bool(re.search(r"etn", q, re.IGNORECASE))
         _has_etf = bool(re.search(r"etf|이티에프", q, re.IGNORECASE))
         itype = "ETN" if _has_etn and not _has_etf else ("ETF" if _has_etf and not _has_etn else None)
@@ -1279,9 +1304,15 @@ def route_stage_a(question, index, policy=None, today=None):
                   "vol_1m": "1개월 변동성(du_vlty_1m)", "vol_3m": "3개월 변동성(du_vlty_3m)",
                   "vol_6m": "6개월 변동성(du_vlty_6m)", "vol_1y": "1년 변동성(du_vlty_1y)",
                   "volume": "1일 거래량(du_vol_1d)", "value": "1일 거래대금(du_val_1d)",
-                  "nav": "기준가 NAV(du_last_nav)"}[_metric]
+                  "nav": "기준가 NAV(du_last_nav)", "price": "장내 종가(du_clpr)",
+                  "mkt_cap": "시가총액(종가×상장주식수 계산값)"}[_metric]
         plan.notes.append(f"{_label} {'오름' if direction == 'asc' else '내림'}차순 — "
                           "값 0·결측 행 제외(8/26 주최 공지) · 상장중 상품 기준")
+        if _metric == "price":
+            plan.notes.append(f"종가는 마스터 기준일({AS_OF_MASTER}) 장내 종가(원) — 실시간 시세가 아님")
+        if _metric == "mkt_cap":
+            plan.notes.append(f"시가총액은 원천에 없는 항목 — 종가({AS_OF_MASTER})×상장주식수(pd_lst_stk_cnt)로 "
+                              "계산한 값(순자산총액과 1~2% 내 차이)")
         if _metric == "diff":
             plan.notes.append("괴리율은 부호 유지 값 기준(+는 시장가 할증, -는 할인) — 절댓값 순 아님")
         if _metric == "vol_1y" and "1년" not in q and not re.search(r"[136]\s*개월", q):
@@ -1584,7 +1615,11 @@ def route_stage_a(question, index, policy=None, today=None):
         _ast = next((en for ko, en in (("채권", "Bond"), ("주식", "Equity"), ("원자재", "Commodity"),
                                         ("대체", "Alternatives"), ("혼합", "Mixed Assets"))
                      if ko in q), None)                   # 8/28 r4 R4-05/07: 자산유형 축
-        if _ast and re.search(r"투자|상품|ETF|몇", q) and not is_fund_domain:   # 펀드 문맥 양보
+        # 9/2 회귀 복구(v1 H-25 '금이나 원자재 … 국내·해외에 각각 있어?'): r4 자산유형 축이 '국내'도 묻는
+        # 양쪽 시장 질문까지 해외 전용 필터로 낚아채 국내 상품이 0건이 되던 것 — '국내'가 함께 나오면 양보해
+        # 종전처럼 테마 검색(국내+해외 결합)으로 흐르게 한다. r3·r4 커밋 뒤 v1 전체 재채점이 없어 미탐지였음.
+        if _ast and re.search(r"투자|상품|ETF|몇", q) and not is_fund_domain \
+                and "국내" not in q:                       # 펀드 문맥·양쪽 시장 질문은 양보
             if any(w in q for w in COUNT_WORDS):
                 plan.calls.append(ChannelCall("sql", "global_etf_count", {"ast_type": _ast}))
                 plan.notes.append(f"자산유형(wu_inv_ast_type)='{_ast}' 기준 집계")

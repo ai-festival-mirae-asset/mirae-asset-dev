@@ -113,7 +113,7 @@ if [ "$NEED_KG" -eq 0 ] && head -1 kg/output/kr_etf.nt | grep -q 'ai-festival-mi
 fi
 if [ "$NEED_KG" -eq 0 ] && [ kg/build_kg.py -nt kg/output/kr_bond.nt ]; then NEED_KG=1; fi
 if [ "$NEED_KG" -eq 1 ]; then .venv/bin/python kg/build_kg.py; else log "   그래프 최신 — 건너뜀"; fi
-if [ ! -s vector/output/index_global_etf.npz ] || [ ! -s vector/output/index_meta_global_etf.json ]; then
+if [ ! -s vector/output/index_corpus.npz ] || [ ! -s vector/output/index_meta_corpus.json ]; then
   echo "배포 중단: 벡터 인덱스가 없거나 비어 있습니다. 저장소의 vector/output을 확인하세요."; exit 1
 fi
 

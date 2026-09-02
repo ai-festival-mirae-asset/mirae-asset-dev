@@ -45,8 +45,11 @@ def test_install_script_covers_data_build_and_health():
                    "/etc/mirae-api.env", "systemctl restart mirae-api", "/health",
                    "mirae-healthcheck", "warmup.sh", "python3-venv", "cron",
                    "systemctl enable --now cron", "systemctl stop mirae-api",
-                   "python -m pytest tests/ -q", "Python 3.12", "jq -e"):
+                   "python -m pytest tests/ -q", "Python 3.12", "jq -e",
+                   "vector/output/index_corpus.npz",
+                   "vector/output/index_meta_corpus.json"):
         assert needle in sh, needle
+    assert "index_global_etf" not in sh                       # 구형 해외 ETF 전용 인덱스를 검사하면 안 된다
     assert "CLOVASTUDIO_API_KEY=" in sh and "CLOVASTUDIO_API_KEY=\"" not in sh   # 키 값은 스크립트에 없다
     assert "/usr/local/bin/mirae-healthcheck $PORT" in sh
 

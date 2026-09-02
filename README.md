@@ -64,7 +64,7 @@
 
 ## 5. 실행 방법
 
-사전 준비: Python 3.13, `pip install -r requirements.txt` 수준의 표준 환경. 원본 엑셀 8개는 **1번(데이터 정제)을 직접 돌릴 때만** 필요합니다 — 정제 결과(`preprocessing/processed/`)가 저장소에 커밋돼 있어 팀원은 2번부터 시작하면 됩니다. 정제를 다시 할 때는 원본을 repo 루트 `datasets/`에 두거나 `.env`의 `MIRAE_DATASETS`로 위치를 지정합니다.
+사전 준비: Python 3.12 이상(NCP 기준 Ubuntu 24.04의 기본 Python), `pip install -r requirements.txt` 수준의 표준 환경. 원본 엑셀 8개는 **1번(데이터 정제)을 직접 돌릴 때만** 필요합니다 — 정제 결과(`preprocessing/processed/`)가 저장소에 커밋돼 있어 팀원은 2번부터 시작하면 됩니다. 정제를 다시 할 때는 원본을 repo 루트 `datasets/`에 두거나 `.env`의 `MIRAE_DATASETS`로 위치를 지정합니다.
 
 ### 처음 받았을 때 — 설정 파일(.env) 만들기
 

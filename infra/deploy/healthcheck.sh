@@ -3,7 +3,8 @@
 # /health 가 10초 안에 응답하지 않거나 status!=ok 이면 서비스를 재기동한다.
 # 규정: 장애로 인한 재기동은 실격이 아니다(8/13 확정) — 코드·데이터 변경은 하지 않는다.
 # 로그: /var/log/mirae-health.log (한 줄/회, 정상은 OK 한 줄만)
-PORT="${PORT:-80}"
+# install.sh가 cron에 포트를 첫 인자로 기록한다. 수동 실행은 환경변수도 호환한다.
+PORT="${1:-${PORT:-80}}"
 URL="http://127.0.0.1:${PORT}/health"
 STAMP="$(date '+%Y-%m-%d %H:%M:%S')"
 

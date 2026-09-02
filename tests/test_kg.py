@@ -408,7 +408,7 @@ def test_build_constituents_e2e(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# 별칭 통합 (8/22, KG_NEXT 1순위) — 병합 없이 skos:altLabel 이름표 + 검색 합집합
+# 별칭 통합 (8/22, KG_METHOD.md §7 1순위) — 병합 없이 skos:altLabel 이름표 + 검색 합집합
 # ---------------------------------------------------------------------------
 
 def test_company_alias_map_longest_prefix_wins():

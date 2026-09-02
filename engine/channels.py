@@ -211,7 +211,7 @@ def _exec_graph(ctx, call):
 def lexical_anchor_ids(con, anchors, per_term=40, market=None):
     """테마 anchor 들로 해외+국내 ETP 명칭·전략 서술을 ILIKE 검색 → 상품 id 순위 목록.
 
-    8/22(KG_NEXT 2순위): 해외 전용이던 anchor 검색을 국내(kr_etp)로 확장. 종전 결과의
+    8/22(KG_METHOD.md §7 2순위): 해외 전용이던 anchor 검색을 국내(kr_etp)로 확장. 종전 결과의
     순서를 보존하기 위해 해외를 먼저, 국내를 뒤에 잇는다. 세 번째 반환값은 {id: 시장}.
     market('국내상장'/'해외상장')을 주면 그 시장으로 후보를 제한한다 — 질문이 시장을
     명시한 경우('배당 해외 ETF')에 다른 시장 근거가 섞이는 것을 막는다(M-12 실측).

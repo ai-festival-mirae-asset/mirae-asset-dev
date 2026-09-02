@@ -5,10 +5,10 @@ KRX ETF 구성종목(PDF) 수집기 — 2026-07-11 이전 스냅샷 확보용 (�
 무엇: KRX 정보데이터시스템의 ETF 구성종목(PDF) 통계를 과거 일자 기준으로 수집해
       external_data/constituents/ 에 원시 JSON + 통합 CSV 로 저장한다.
 왜  : 출제 예고된 "구성 종목" 질의(예: 삼성전자 포함 ETF)의 답변 근거. 제공 RDB에 없다.
-      소스 실사 결과(external_data/CONSTITUENTS_PLAN.md 1장) KRX가 유일한
+      소스 실사 결과(external_data/COLLECTION_METHOD.md §3) KRX가 유일한
       전 종목 × 과거 일자 소스다.
 
-선행 조건 (CONSTITUENTS_PLAN.md 2~3장):
+선행 조건 (COLLECTION_METHOD.md §3):
   1. KRX 무료 회원 가입 + 로그인 — 2026년 개편으로 로그인제. 비로그인 호출은 'LOGOUT' 반환.
   2. 브라우저 개발자 도구에서 로그인 세션의 Cookie 값을 복사해
      external_data/collectors/krx_cookie.txt 에 저장 (비밀값 — .gitignore 등록됨).
@@ -118,7 +118,7 @@ def read_cookie(path):
     if os.environ.get("KRX_COOKIE"):
         return os.environ["KRX_COOKIE"].strip()
     if not os.path.exists(path):
-        sys.exit(f"쿠키 파일이 없다: {path}\n→ KRX 로그인 후 브라우저 Cookie 값을 저장할 것 (CONSTITUENTS_PLAN.md 3장)")
+        sys.exit(f"쿠키 파일이 없다: {path}\n→ KRX 로그인 후 브라우저 Cookie 값을 저장할 것 (COLLECTION_METHOD.md §3)")
     with io.open(path, "r", encoding="utf-8") as fh:
         raw = fh.read().strip()
     return raw[len("Cookie:"):].strip() if raw.lower().startswith("cookie:") else raw

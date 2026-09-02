@@ -3,7 +3,7 @@
 벡터 채널 인덱스 빌더 — 해외+국내 ETP 전략 서술(cu_strtegy) → CLOVA Embedding v2 → flat 인덱스.
 
 무엇: 해외ETF 전략 서술(cu_strtegy 5,638건) + 국내ETP 합성 문장(1,733건 — 8/22 확장,
-      KG_NEXT 2순위)을 임베딩해 vector/output/ 에 저장한다.
+      KG_METHOD.md §7 2순위)을 임베딩해 vector/output/ 에 저장한다.
       검색은 vector_store.py(numpy flat 코사인).
 왜  : 중-1("구조·전략 동향")·상-1("테마 연결") 유형의 의미 검색 기반. 국내 확장은
       테마 사전에 없는 새 주제가 실전에 나왔을 때 국내 상품 쪽 안전망이 된다.

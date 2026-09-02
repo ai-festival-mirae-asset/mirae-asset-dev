@@ -23,7 +23,7 @@ FPR = "http://mafest.ai/resource/"        # 인스턴스(상품·회사·지수 
 MF, MFR = FP, FPR                          # 옛 이름(8/11~8/18 코드) 호환용 별칭 — 새 코드는 FP/FPR 사용
 RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
 RDFS_LABEL = "http://www.w3.org/2000/01/rdf-schema#label"
-SKOS_ALT = "http://www.w3.org/2004/02/skos/core#altLabel"   # 별칭 이름표(8/22, KG_NEXT 1순위)
+SKOS_ALT = "http://www.w3.org/2004/02/skos/core#altLabel"   # 별칭 이름표(8/22, KG_METHOD.md §7 1순위)
 
 # 8/18 이전 그래프 파일의 스키마 네임스페이스 — 이 문자열이 보이면 재생성이 필요하다
 LEGACY_NS_MARKER = "ai-festival-mirae-asset.github.io/"

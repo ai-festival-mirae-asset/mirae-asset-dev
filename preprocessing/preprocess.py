@@ -27,8 +27,7 @@
            해당 검사는 전부 main() 실행 경로에서만 수행한다.
 
 근거 문서 : preprocessing/PREPROCESSING_METHOD.md (6장 = 8/5 교차검증 반영 명세)
-            external_data/COLLECTION_SUMMARY.md
-            (팀 공동 가이드 PROJECT_GUIDE.md는 main 브랜치에 있다)
+            external_data/COLLECTION_METHOD.md
 실행      : python preprocessing/preprocess.py  (repo 루트에서, 또는 preprocessing/ 안에서 python preprocess.py)
 """
 import os

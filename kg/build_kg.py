@@ -27,13 +27,13 @@
      같은 파일 안에 포함한다(단독 적재 가능). 파일 간 중복 트리플은 RDF 집합 의미상 무해.
 
 공모펀드 단순화: 동일 itm_no 그룹에서 달라지는 컬럼은 prfd_attr_cd 뿐임이 검증되어
-  있으므로(8/5 dev-kyung, memory.md) 마스터(itm_no) 단위 1노드로 적재하고
+  있으므로(8/5 dev-kyung, PLAN.md 부록 A) 마스터(itm_no) 단위 1노드로 적재하고
   fp:shareClassCount 로 클래스 행 수를 보존한다.
 
 구조 주의: 테스트(tests/test_kg.py)가 순수 함수를 import 한다 — import 시점 부작용 금지.
 
 실행 : python kg/build_kg.py [--tables kr_etf,global_etf] [--limit N] [--out DIR]
-근거 : ontology/*.ttl · ROADMAP.md §4(아키텍처)·§7.2 · kg/KG_METHOD.md
+근거 : ontology/*.ttl · ROADMAP.md §4(아키텍처) · kg/KG_METHOD.md
 """
 import argparse
 import io
@@ -60,7 +60,7 @@ ONTOLOGY_FILES = ("ontology/common.ttl", "ontology/bond_kr.ttl", "ontology/etf_k
                   "ontology/etf_gl.ttl", "ontology/fund_pub.ttl")
 RDF_TYPE = "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>"
 RDFS_LABEL = "<http://www.w3.org/2000/01/rdf-schema#label>"
-SKOS_ALT = "<http://www.w3.org/2004/02/skos/core#altLabel>"   # 별칭 이름표 (8/22, KG_NEXT 1순위)
+SKOS_ALT = "<http://www.w3.org/2004/02/skos/core#altLabel>"   # 별칭 이름표 (8/22, KG_METHOD.md §7 1순위)
 XSD = "http://www.w3.org/2001/XMLSchema#"
 
 ALIAS_DICT_CSV = os.path.join(ROOT, "external_data", "dictionaries", "alias_dictionary.csv")
@@ -219,7 +219,7 @@ def valid_risk_grade(s, violations):
 # ---------------------------------------------------------------------------
 # 트리플 방출기
 # ---------------------------------------------------------------------------
-# 별칭(altLabel) 재료 — 사전 파일 → 노드별 별칭 목록 (8/22, kg/KG_NEXT.md 1순위)
+# 별칭(altLabel) 재료 — 사전 파일 → 노드별 별칭 목록 (8/22, kg/KG_METHOD.md §7)
 # 원칙: 노드를 병합하지 않는다("삼성"≠"삼성액티브" — 별개 법인). 이름표만 추가한다.
 # ---------------------------------------------------------------------------
 
@@ -361,7 +361,7 @@ class TableEmitter:
     def aux_alt_label(self, kind, key, alt):
         """별칭 이름표(skos:altLabel) — 정식 라벨(rdfs:label)과 겹치면 쓰지 않는다.
 
-        8/22(KG_NEXT 1순위): 노드 병합 대신 별칭을 선언해 두고 검색이 정식명+별칭을
+        8/22(KG_METHOD.md §7 1순위): 노드 병합 대신 별칭을 선언해 두고 검색이 정식명+별칭을
         한 색인으로 본다. 같은 별칭이 여러 노드에 걸리면 검색 계층이 합집합으로 답한다.
         """
         if not alt or (kind, key, alt) in self._seen_labels:
@@ -657,7 +657,7 @@ def build_table(slug_name, df, out_dir):
             extractor = {"kr_bond": extract_bond_row,
                          "kr_etf": extract_kr_etf_row,
                          "global_etf": extract_global_etf_row}[slug_name]
-            if slug_name in ("kr_etf", "global_etf"):    # 별칭 이름표 재료(8/22, KG_NEXT 1순위)
+            if slug_name in ("kr_etf", "global_etf"):    # 별칭 이름표 재료(8/22, KG_METHOD.md §7 1순위)
                 market = "domestic" if slug_name == "kr_etf" else "foreign"
                 em.company_aliases = company_alias_map(df.get("cu_fund_mgmt_co", pd.Series(dtype=str)).dropna(), market)
                 em.index_aliases = index_alias_map(df.get("cu_base_index", pd.Series(dtype=str)).dropna())

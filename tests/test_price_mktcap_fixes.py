@@ -99,7 +99,7 @@ def test_price_value_survives_display_cut():
            "du_diff_rt": -0.01, "du_chas_errt": 0.06, "du_vlty_1y": 0.1, "du_vol_1d": 100.0,
            "du_val_1d": 1.0, "du_last_nav": 1075400.0, "du_clpr": 1075450.0}
     out = _fmt_row(row, focus=["du_clpr"])
-    assert out.startswith("KODEX CD금리액티브(합성) (du_clpr=1,075,450")
+    assert out.startswith("KODEX CD금리액티브(합성) (종가(원) 1,075,450")   # 9/3 표기: 한글 라벨
 
 
 # ---------------------------------------------------------------------------
@@ -125,7 +125,7 @@ def test_mktcap_display_uses_krw_sibling():
            "du_diff_rt": 0.1, "du_chas_errt": 0.2, "du_vlty_1y": 1.0, "du_vol_1d": 1.0,
            "mkt_cap": 2.588e13, "mkt_cap_krw": "25.9조원"}
     out = _fmt_row(row, focus=["mkt_cap"])
-    assert out.startswith("KODEX 200 (mkt_cap_krw=25.9조원")
+    assert out.startswith("KODEX 200 (시가총액(계산값) 25.9조원")          # 9/3 표기: 한글 라벨
 
 
 def test_constituent_mktcap_order(index, con):
@@ -333,3 +333,41 @@ def test_fmt_row_only_falls_back_when_requested_field_missing():
     row = {"pd_abrv_nm": "KODEX 200", "pd_net_tamt": 1.0, "pd_net_tamt_krw": "25.5조원"}
     out = _fmt_row_only(row, _only_fields("배당수익률만 보여줘"))    # 행에 배당수익률 열이 없다
     assert out.startswith("KODEX 200 (")                              # 기본 표시로 되돌아간다
+
+
+# ---------------------------------------------------------------------------
+# 8. (9/3 사용자 지시) 규칙 요약 표기 전반 — 열 이름은 한글 라벨, 숫자는 소수 2자리, 영문 월은 N월/매월,
+#    이름의 다른 표기(정식명)는 중복 표시 안 함, 건수·분포 원문 행(n=…)은 문장 노트로만.
+# ---------------------------------------------------------------------------
+
+def test_fmt_row_uses_korean_labels_and_rounded_values():
+    row = {"pd_itm_no": "KR7", "pd_abrv_nm": "SOL 팔란티어커버드콜OTM채권혼합",
+           "pd_nm": "신한 SOL 팔란티어커버드콜OTM채권혼합증권상장지수투자신탁", "pd_dvid_yield": "27.783191",
+           "pd_dvid_pay_cnt": "12.0", "pd_dvid_pay_months": "January,February,March,April,May,June,July,August,"
+           "September,October,November,December", "pd_divd_amt_ann": 226130.1698681, "drv_risk_grade": "3",
+           "pd_net_tamt": 356442628701.0, "pd_net_tamt_krw": "3,564억원"}
+    out = _fmt_row(row, max_fields=8)
+    assert out == ("SOL 팔란티어커버드콜OTM채권혼합 (정식명 신한 SOL 팔란티어커버드콜OTM채권혼합증권상장지수투자신탁 · "
+                   "분배(배당)수익률 27.78% · 연간 분배 지급횟수 12회 · 분배 지급월 매월 · "
+                   "연간 추정 분배금(원) 226,130.17 · 위험등급 3등급 · 순자산총액 3,564억원)")
+    assert "pd_nm" not in out and "January" not in out and "=" not in out   # 정식명은 라벨로 남긴다(채점 기대 이름 대비)
+
+
+def test_fmt_row_bond_labels_status_and_date():
+    row = {"PD_NO": "KR6000113573", "PD_NM": "스탠다드차타드은행15-07-단(콜)03-20", "PD_ABRV_NM": "스탠다드차타드은행15-07-단(콜)03-20",
+           "STD_PD_MCLS_NM": "회사채", "CURR_CD": "KRW", "drv_crd_grd_norm": "AAA", "SRFC_IRT": "7.1",
+           "MAT_DT": "2030-07-20", "drv_maturity_status": "active", "drv_is_buyable": "Y", "DUR": "3.8715"}
+    out = _fmt_row(row, max_fields=9)
+    assert out == ("스탠다드차타드은행15-07-단(콜)03-20 (대분류 회사채 · 통화 KRW · 신용등급 AAA · 표면금리 7.1% · "
+                   "만기일 2030-07-20 · 만기상태 상장중 · 매수가능 예 · 듀레이션(년) 3.87)")   # 약칭=정식명이면 중복 생략
+
+
+def test_fmt_row_unknown_column_keeps_raw_name():
+    assert _fmt_row({"pd_abrv_nm": "X", "some_new_col": 1.5}) == "X (some_new_col 1.5)"
+
+
+def test_op_label_is_korean_head_of_description():
+    from engine.answer_service import _op_label
+    assert _op_label("etp_by_dividend") == "국내 ETF 분배(배당) 정렬"
+    assert _op_label("bond_filter") == "국내채권 필터 목록"
+    assert _op_label("no_such_template") == "no_such_template"

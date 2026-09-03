@@ -735,7 +735,7 @@ def test_count_and_residual_maturity_are_data_notes(con, index):
     out = answer_question("신용등급이 BBB 이하인 회사채는 몇 개나 돼?", ctx, today=TODAY)
     assert "조건 일치 건수 — 건수 178건" in out["answer"]   # 8/27 재배포본 실측
     out2 = answer_question("잔존만기가 가장 긴 국고채 5개 알려줘", ctx, today=TODAY)
-    assert "residual_years=" in out2["answer"] and "2074" in out2["answer"]
+    assert "잔존만기(년)" in out2["answer"] and "2074" in out2["answer"]   # 9/3 표기: 한글 라벨
     from engine.answer_service import count_sentence
     assert count_sentence("fund_counts", [{"products": 11138, "share_classes": 95618}]) \
         == "조건 일치 건수 — 상품(마스터) 수 11,138건 · 판매 클래스 수 95,618건"

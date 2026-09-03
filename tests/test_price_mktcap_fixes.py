@@ -282,3 +282,54 @@ def test_bond_coupon_below_sql_never_returns_higher_rate(con, index):
     f = next(c for c in plan.calls if c.op == "bond_filter")
     rows = _rows(con, "bond_filter", dict(f.params))
     assert rows and all(float(r["SRFC_IRT"]) <= 3.0 for r in rows)    # 종전엔 7.1% 부터 나왔다
+
+
+# ---------------------------------------------------------------------------
+# 7. (9/3 사용자 실측) "배당수익률과 ETF이름만 보여주세요" — 표시 요청을 무시하고 필드 7개를 원문 그대로 쌓던 것
+#    '…만 보여/알려/출력…' 앞의 속성 낱말만 골라 상품명 + 그 항목을 한글 라벨로 표시한다. '5개만'·'AA급만'·
+#    '국내 ETF만' 같은 개수·범주 제한은 속성 낱말이 아니라 건드리지 않는다(기존 시험지 4문항 유지).
+# ---------------------------------------------------------------------------
+
+from engine.answer_service import _fmt_row_only, _only_fields   # noqa: E402
+
+
+@pytest.mark.parametrize("q, labels", [
+    ("배당수익률이 4% 이상인 고배당 ETF 상위 10개를 찾고 배당수익률과 ETF이름만 보여주세요.", ["분배(배당)수익률"]),
+    ("이름과 순자산만 알려줘", ["순자산총액"]),
+    ("상장일, 운용사 및 총보수만 정리해줘", ["상장일", "운용사", "총보수"]),
+    ("수익률만 보여줘", ["1년 수익률"]),
+    ("이름만 알려줘", []),                                       # 상품명만 — 속성 없이도 유효
+])
+def test_only_fields_parses_requested_attributes(q, labels):
+    got = _only_fields(q)
+    assert got is not None and [lab for _c, lab, _f in got] == labels
+
+
+@pytest.mark.parametrize("q", [
+    "위험등급 1등급(매우 위험)인 국내 ETF 아무거나 5개만 보여주세요",   # v1 B-03: 개수 제한
+    "듀레이션이 제일 짧은 채권 5개만 알려줘",                            # r4 R4-01: 개수 제한
+    "지금 살 수 있는 원화채권 중 AA급만 알려줘",                         # v3 P-07: 범주 제한
+    "국내 ETF만 보여줘",
+    "순자산총액 기준으로 국내 ETF 상위 5개 알려줘",                      # 표시 요청 없음
+])
+def test_only_fields_ignores_count_and_category_limits(q):
+    assert _only_fields(q) is None
+
+
+def test_fmt_row_only_shows_name_and_requested_fields_with_korean_labels():
+    row = {"pd_itm_no": "KR7", "pd_abrv_nm": "SOL 팔란티어커버드콜OTM채권혼합", "pd_dvid_yield": 27.783191,
+           "pd_dvid_pay_cnt": 12.0, "pd_dvid_pay_months": "January,February,March,April,May,June,July,August,"
+           "September,October,November,December", "pd_divd_amt_ann": 226130.17, "drv_risk_grade": 3,
+           "pd_net_tamt": 356400000000.0, "pd_net_tamt_krw": "3,564억원"}
+    only = _only_fields("배당수익률과 ETF이름만 보여주세요")
+    out = _fmt_row_only(row, only)
+    assert out == "SOL 팔란티어커버드콜OTM채권혼합 — 분배(배당)수익률 27.78%"
+    assert "pd_dvid_pay_months" not in out and "January" not in out and "drv_risk_grade" not in out
+    assert _fmt_row_only(row, _only_fields("지급월과 순자산만 알려줘")) == \
+        "SOL 팔란티어커버드콜OTM채권혼합 — 분배 지급월 매월 · 순자산총액 3,564억원"
+
+
+def test_fmt_row_only_falls_back_when_requested_field_missing():
+    row = {"pd_abrv_nm": "KODEX 200", "pd_net_tamt": 1.0, "pd_net_tamt_krw": "25.5조원"}
+    out = _fmt_row_only(row, _only_fields("배당수익률만 보여줘"))    # 행에 배당수익률 열이 없다
+    assert out.startswith("KODEX 200 (")                              # 기본 표시로 되돌아간다

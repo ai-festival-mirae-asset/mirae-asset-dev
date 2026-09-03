@@ -60,7 +60,9 @@ def build_generation_messages(question, plan, result, verdict):
     user = (f"질문: {question}\n\n"
             f"[검증 통과 근거]\n{context or '(근거 없음 — 결과 0건임을 안내)'}\n\n"
             f"[해석·한계 노트]\n{notes}\n\n"
-            "위 근거만으로 질문에 답하라.")
+            + (f"[표시 요청] 상품마다 {plan.hints['only_labels']}만 쓰고 다른 항목(순자산·위험등급·지급월 등)은 쓰지 않는다.\n\n"
+               if plan.hints.get("only_labels") else "")          # 9/3: "…만 보여줘" 표시 요청
+            + "위 근거만으로 질문에 답하라.")
     return [{"role": "system", "content": system}, {"role": "user", "content": user}]
 
 

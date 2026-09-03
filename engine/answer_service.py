@@ -204,7 +204,11 @@ def _draft_answer(plan, result, question=""):
             head = f"[{o.op}] 결과 {len(rows):,}건"
             display_rows = int(plan.hints.get("display_rows", 5))
             focus = _focus_cols(question)                 # 질문이 콕 집은 속성 열은 잘리지 않게(B-15)
-            body = [f"  {i}. {_fmt_row(r, focus=focus)}" for i, r in enumerate(rows[:display_rows], 1)]
+            only = _only_fields(question)                 # 9/3: "…만 보여줘" — 요청 항목만
+            if only:
+                body = [f"  {i}. {_fmt_row_only(r, only)}" for i, r in enumerate(rows[:display_rows], 1)]
+            else:
+                body = [f"  {i}. {_fmt_row(r, focus=focus)}" for i, r in enumerate(rows[:display_rows], 1)]
             lines.append("\n".join([head] + body))
         elif o.channel == "graph":
             for r in rows[:3]:
@@ -304,6 +308,116 @@ _ATTR_NOTES = [
     (r"종가|가격", "du_clpr", "장내 종가(원)", "text"),
     (r"시가총액|시총", "mkt_cap", "시가총액(종가×상장주식수 계산값)", "krw"),
 ]
+
+
+# ---------------------------------------------------------------------------
+# 요청 항목만 표시 — "배당수익률과 ETF이름만 보여주세요"(9/3 사용자 실측: 표시 요청을 무시하고 필드 7개를
+# 원문 그대로 쌓던 것). 질문이 '…만 보여/알려/출력…'로 항목을 고르면 상품명 + 그 항목만 한글 라벨로 적는다.
+# '5개만 보여주세요'·'AA급만 알려줘'처럼 개수·범주 제한은 속성 낱말이 아니라 여기 걸리지 않는다(기존 시험지 4문항).
+# 낱말→열 대응은 표(테이블)마다 열 이름이 달라 후보를 여러 개 두고 행에 있는 첫 열을 쓴다.
+# ---------------------------------------------------------------------------
+_ONLY_FIELDS = [                                          # (질문 낱말, 후보 열, 라벨, 형식) — 앞에서부터 매칭·소비
+    (r"배당\s*수익률|분배\s*수익률|분배율", ("pd_dvid_yield", "fd_last_dstb_r"), "분배(배당)수익률", "pct"),
+    (r"배당금|분배금", ("pd_divd_amt_ann",), "연간 추정 분배금(원)", "num"),
+    (r"지급\s*월|배당\s*월|분배\s*월", ("pd_dvid_pay_months",), "분배 지급월", "months"),
+    (r"지급\s*횟수", ("pd_dvid_pay_cnt",), "연간 분배 지급횟수", "int"),
+    (r"세후\s*수익률", ("AFTER_TAX_YIELD",), "세후수익률", "pct"),
+    (r"연초\s*이후\s*수익률|YTD", ("du_er_ytd",), "연초 이후 수익률", "pct"),
+    (r"수익률", ("du_er_1y", "fd_yr1_ern_r", "du_er_ytd"), "1년 수익률", "pct"),
+    (r"순자산|규모|AUM", ("pd_net_tamt", "fd_nast_suma", "du_last_aum", "total_aum"), "순자산총액", "krw"),
+    (r"시가총액|시총", ("mkt_cap",), "시가총액(계산값)", "krw"),
+    (r"종가|가격", ("du_clpr",), "장내 종가(원)", "num"),
+    (r"총\s*보수|보수", ("cu_charge_rt", "total_fee_pct"), "총보수", "pct"),
+    (r"표면\s*금리|금리|쿠폰|이자율", ("SRFC_IRT",), "표면금리", "pct"),
+    (r"만기일|만기", ("MAT_DT", "maturity_yyyymm"), "만기일", "date"),
+    (r"발행일", ("ISU_DT",), "발행일", "date"),
+    (r"상장일", ("pd_lstg_dt",), "상장일", "date"),
+    (r"신용\s*등급", ("drv_crd_grd_norm", "CRD_GRD"), "신용등급", "text"),
+    (r"위험\s*등급", ("drv_risk_grade", "PD_RISK_NM", "zrin_fd_ivst_risk_grd_nm"), "위험등급", "text"),
+    (r"운용사|운용\s*회사", ("mgmt", "cu_fund_mgmt_co", "mgmt_co"), "운용사", "text"),
+    (r"기초\s*지수", ("cu_base_index", "base_index"), "기초지수", "text"),
+    (r"듀레이션", ("DUR",), "듀레이션", "num"),
+    (r"괴리율", ("du_diff_rt",), "괴리율", "pct"),
+    (r"추적\s*오차", ("du_chas_errt",), "추적오차율", "pct"),
+    (r"변동성", ("du_vlty_1y",), "1년 변동성", "pct"),
+    (r"거래량", ("du_vol_1d",), "1일 거래량", "int"),
+    (r"거래대금", ("du_val_1d",), "1일 거래대금(원)", "num"),
+    (r"기준가|NAV", ("du_last_nav",), "기준가(NAV)", "num"),
+    (r"비중|편입\s*비율", ("weight_pct",), "편입 비중", "pct"),
+    (r"통화", ("CURR_CD", "pd_curr_cd", "pd_trd_ccy"), "통화", "text"),
+    (r"코드|ISIN|종목\s*번호|티커", ("pd_itm_no", "PD_NO", "pd_isin_cd", "pd_ticker", "etf_isin"), "코드", "text"),
+    (r"유형|종류|분류", ("drv_instrument_type", "STD_PD_MCLS_NM", "zrin_btyp_nm"), "유형·분류", "text"),
+]
+_ONLY_NAME_RE = re.compile(r"이름|명칭|상품명|종목명|펀드명|채권명|ETF명|ETN명")
+_ONLY_TOKEN = r"[가-힣A-Za-z0-9_()%·]+"
+_ONLY_RE = re.compile(
+    rf"((?:{_ONLY_TOKEN}\s*(?:와|과|이랑|하고|랑)(?=\s)\s*|{_ONLY_TOKEN}\s*(?:,|및)\s*)*{_ONLY_TOKEN})"
+    r"만(?:을|은|이라도)?\s*(?:을|를)?\s*(?:보여|알려|출력|표시|정리|나열|뽑아|추려|골라|말해|적어)")
+_EN_MONTH_NUM = {m: i for i, m in enumerate(("January", "February", "March", "April", "May", "June", "July",
+                                              "August", "September", "October", "November", "December"), 1)}
+
+
+def _only_fields(question):
+    """질문의 '…만 보여줘' 항목 선택 → [(후보 열, 라벨, 형식)] (상품명은 항상 함께 표시).
+    속성 낱말이 하나도 없으면 None(개수·범주 제한 표현은 여기 걸리지 않는다). 순수 함수."""
+    m = _ONLY_RE.search(question or "")
+    if not m:
+        return None
+    phrase = m.group(1)
+    tokens = re.split(r"\s*(?:와|과|이랑|하고|랑)(?=\s)\s*|\s*(?:,|및)\s*", phrase)
+    out, name_asked = [], False
+    for tok in tokens:
+        rest = tok
+        if _ONLY_NAME_RE.search(rest):
+            name_asked = True
+            rest = _ONLY_NAME_RE.sub("", rest)
+        for rx, cols, label, fmt in _ONLY_FIELDS:
+            hit = re.search(rx, rest)
+            if hit and (cols, label, fmt) not in out:
+                out.append((cols, label, fmt))
+                rest = rest[:hit.start()] + rest[hit.end():]
+    if not out and not name_asked:
+        return None
+    return out
+
+
+def _fmt_only_value(row, cols, fmt):
+    col = next((c for c in cols if row.get(c) not in (None, "")), None)
+    if col is None:
+        return None
+    v = row[col]
+    if fmt == "krw":
+        return row.get(col + "_krw") or _fmt_value(v)
+    if fmt == "date":
+        return _fmt_attr(row, col, "date")
+    if fmt == "months":
+        names = [x.strip() for x in str(v).split(",") if x.strip()]
+        nums = [_EN_MONTH_NUM.get(x) for x in names]
+        if nums and all(nums):
+            return "매월" if len(set(nums)) == 12 else "·".join(f"{n}월" for n in nums)
+        return str(v)
+    try:
+        f = float(str(v).replace(",", ""))
+    except (TypeError, ValueError):
+        return str(v)
+    if fmt == "pct":
+        return f"{f:,.2f}".rstrip("0").rstrip(".") + "%"
+    if fmt == "int" or f.is_integer():
+        return f"{f:,.0f}"
+    return f"{f:,.2f}".rstrip("0").rstrip(".")
+
+
+def _fmt_row_only(row, fields):
+    """행 1개 → '이름 — 라벨 값 · 라벨 값' (요청한 항목만). 요청 항목이 행에 하나도 없으면 기본 표시로."""
+    name = next((str(row[c]) for c in _NAME_COLS if row.get(c)), None)
+    parts = []
+    for cols, label, fmt in fields:
+        val = _fmt_only_value(row, cols, fmt)
+        if val is not None:
+            parts.append(f"{label} {val}")
+    if not parts and fields:
+        return _fmt_row(row)
+    return f"{name} — {' · '.join(parts)}" if (name and parts) else (name or " · ".join(parts))
 
 
 def _fmt_attr(row, col, fmt):
@@ -604,6 +718,11 @@ def answer_question(question, ctx, question_id="", today=None,
     검증은 라우터 판정을 신뢰하지 않고 질문 원문에서 독립 재검사한다(이중 방어).
     """
     plan = route(question, ctx.index, policy=ctx.policy, today=today, llm_router=llm_router)
+    _only = _only_fields(question)                    # 9/3: 표시 요청("…만 보여줘") — 규칙 요약·생성기 모두 준수
+    if _only:
+        _labels = "·".join(["상품명"] + [lab for _c, lab, _f in _only])
+        plan.hints["only_labels"] = _labels
+        plan.notes.append(f"표시 요청에 따라 {_labels}만 적음(다른 항목은 근거에만 있음)")
     intent_line = ""
     if intent_checker is not None:
         label = intent_checker(question)

@@ -1440,6 +1440,26 @@ def route_stage_a(question, index, policy=None, today=None):
         issue_year = (m_issue.group(1) or m_issue.group(2)) if m_issue else None   # 8/28 r3 R3-01
         coupon_min = next((v for v, k, d in percents if k == "coupon" and d in ("이상", "초과", "넘")), None)
         coupon_band = next((v for v, k, d in percents if k == "coupon" and d == "대"), None)
+        # 9/3 사용자 실측('이자율이 3.5%인 채권을 하나 보여줘'): 방향 낱말이 이상·초과·넘·대 가 아니면 금리 조건이
+        # 조용히 버려져 조건 없는 전체 목록(7.1% 부터)이 나가던 공백 — '이하·미만' 은 상한, 방향 없음('~인/짜리/의')은
+        # 정확 일치로 해석한다(PLAN §5 9/3). 조회문의 상한 비교는 미만(<)이라 이하·정확 일치는 아주 작은 여유(1e-6)를
+        # 더해 경계값을 포함시킨다. 건수 조회(bond_count)에도 같은 조건을 넘긴다(목록만 걸리고 건수는 전체이던 불일치).
+        coupon_max = next((v for v, k, d in percents if k == "coupon" and d in ("이하", "미만")), None)
+        coupon_max_incl = any(d == "이하" for _v, k, d in percents if k == "coupon")
+        coupon_exact = (next((v for v, k, d in percents if k == "coupon" and d == ""), None)
+                        if coupon_min is None and coupon_max is None and coupon_band is None else None)
+        if coupon_band is not None:
+            coupon_lo, coupon_hi = coupon_band, coupon_band + 1
+            coupon_note = f"표면금리(SRFC_IRT) {coupon_band:g}%대 = {coupon_band:g}% 이상 {coupon_band + 1:g}% 미만 조건"
+        elif coupon_exact is not None:
+            coupon_lo, coupon_hi = coupon_exact, coupon_exact + 1e-6
+            coupon_note = f"표면금리(SRFC_IRT)가 정확히 {coupon_exact:g}%인 종목만(근사 아님 — 근처 값을 보려면 '{coupon_exact:g}%대'로 질문)"
+        else:
+            coupon_lo = coupon_min
+            coupon_hi = ((coupon_max + 1e-6 if coupon_max_incl else coupon_max) if coupon_max is not None else None)
+            _parts = ([f"{coupon_min:g}% 이상"] if coupon_min is not None else []) + \
+                     ([f"{coupon_max:g}% {'이하' if coupon_max_incl else '미만'}"] if coupon_max is not None else [])
+            coupon_note = ("표면금리(SRFC_IRT) " + " · ".join(_parts) + " 조건") if _parts else None
 
         if "영구채" in q:                                # L-06
             plan.calls.append(ChannelCall("sql", "bond_perpetual_list", {}))
@@ -1473,9 +1493,10 @@ def route_stage_a(question, index, policy=None, today=None):
             params = {"as_of_date": today.isoformat(), "until": until.isoformat(),
                       "currency": currency if not ccy_exclude else None,
                       "bond_class": bond_class,
-                      "min_coupon": coupon_min if coupon_band is None else coupon_band,
-                      "max_coupon": coupon_band + 1 if coupon_band is not None else None,
+                      "min_coupon": coupon_lo, "max_coupon": coupon_hi,
                       "limit": max(limit, 20)}
+            if coupon_note:
+                plan.notes.append(coupon_note)
             if re.search(r"표면\s*금리|금리|쿠폰", q) and (any(w in q for w in TOP_WORDS)
                                                        or re.search(r"높|낮", q)):
                 # 8/28 사용자 실측: 구간 안에서 '금리 가장 높은/낮은' 정렬 요청
@@ -1556,10 +1577,11 @@ def route_stage_a(question, index, policy=None, today=None):
                   "max_issue_dt": f"{issue_year}-12-31" if issue_year else None,
                   "maturity_status": "active" if wants_active else None,
                   "order": coupon_order,
-                  "min_coupon": coupon_min if coupon_band is None else coupon_band,
-                  "max_coupon": coupon_band + 1 if coupon_band is not None else None}
+                  "min_coupon": coupon_lo, "max_coupon": coupon_hi}
         params.update(cond)
         params = {k: v for k, v in params.items() if v is not None}
+        if coupon_note:
+            plan.notes.append(coupon_note)
         if buyable:
             plan.notes.append("매수가능 판정 기준: 8/26 주최 공지 확정 규칙 — 만기 도래(리스팅 종료) 제외 "
                               "전 종목 구매가능 가정(원천 BUYABLE_QUANTITY 컬럼은 주최 공지로 값 무효)")
@@ -1570,7 +1592,7 @@ def route_stage_a(question, index, policy=None, today=None):
         if any(w in q for w in COUNT_WORDS):             # L-02/05
             count_keys = ("currency", "max_rating_rank", "min_rating_rank",
                           "maturity_status", "buyable_only", "bond_class", "pension_only",
-                          "min_issue_dt", "max_issue_dt")
+                          "min_issue_dt", "max_issue_dt", "min_coupon", "max_coupon")   # 9/3: 금리 조건도 건수에
             plan.notes.extend(notes)
             plan.calls.append(ChannelCall("sql", "bond_count",
                                           {k: v for k, v in params.items() if k in count_keys}))
@@ -1582,7 +1604,7 @@ def route_stage_a(question, index, policy=None, today=None):
             plan.calls.append(ChannelCall("sql", "bond_filter", filter_params))
             count_keys = ("currency", "max_rating_rank", "min_rating_rank",
                           "maturity_status", "buyable_only", "bond_class", "pension_only",
-                          "min_issue_dt", "max_issue_dt")
+                          "min_issue_dt", "max_issue_dt", "min_coupon", "max_coupon")   # 9/3: 금리 조건도 건수에
             plan.calls.append(ChannelCall("sql", "bond_count",
                                           {k: v for k, v in params.items() if k in count_keys}))
             return done("bond_filter")

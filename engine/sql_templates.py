@@ -125,10 +125,14 @@ TEMPLATES = {t.id: t for t in [
             AND ($bond_class IS NULL OR STD_PD_MCLS_NM = $bond_class)
             AND ($pension_only IS NULL OR upper(trim(coalesce(PD_PEN_TR_YN,''))) IN ('Y','TRUE','1'))
             AND ($min_issue_dt IS NULL OR ISU_DT >= $min_issue_dt)
-            AND ($max_issue_dt IS NULL OR ISU_DT <= $max_issue_dt)""",
+            AND ($max_issue_dt IS NULL OR ISU_DT <= $max_issue_dt)
+            AND ($min_coupon IS NULL OR TRY_CAST(SRFC_IRT AS DOUBLE) >= $min_coupon)
+            AND ($max_coupon IS NULL OR TRY_CAST(SRFC_IRT AS DOUBLE) < $max_coupon)""",
        [Param("currency"), Param("max_rating_rank"), Param("min_rating_rank"),
         Param("maturity_status"), Param("buyable_only"), Param("bond_class"),
-        Param("pension_only"), Param("min_issue_dt"), Param("max_issue_dt")],
+        Param("pension_only"), Param("min_issue_dt"), Param("max_issue_dt"),
+        # 9/3: 표면금리 조건을 목록(bond_filter)과 건수가 같은 기준으로 세도록 — AI 라우터 목록에는 숨김(LLM_HIDDEN_PARAMS)
+        Param("min_coupon"), Param("max_coupon")],
        source="PRBD01N001"),
 
     _t("bond_class_dist",
@@ -1196,6 +1200,10 @@ def validate_params(template_id, params=None):
 LLM_HIDDEN_ENUM_VALUES = {
     ("etp_metric_rank", "metric"): ("price", "mkt_cap"),
     ("constituent_holders", "order"): ("mkt_cap",),
+}
+# 같은 원칙의 파라미터판 — 규칙 라우터만 넘기는 파라미터는 AI 라우터 목록에서 통째로 뺀다(9/3 bond_count 금리 조건).
+LLM_HIDDEN_PARAMS = {
+    ("bond_count", "min_coupon"), ("bond_count", "max_coupon"),
 }
 
 

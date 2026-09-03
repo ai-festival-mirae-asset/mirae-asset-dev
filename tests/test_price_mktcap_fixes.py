@@ -218,8 +218,12 @@ _CATALOG_SHA256_FROZEN = "a3f8e65498b70ed5264da3fcf84f5336b52cb4b6448e483b0c9bce
 def test_llm_catalog_hides_rule_only_enum_values():
     import hashlib
     from engine.router_llm import _template_catalog_text
-    from engine.sql_templates import LLM_HIDDEN_ENUM_VALUES, TEMPLATES
+    from engine.sql_templates import LLM_HIDDEN_ENUM_VALUES, LLM_HIDDEN_PARAMS, TEMPLATES
     text = _template_catalog_text()
+    for tid, pname in LLM_HIDDEN_PARAMS:                      # 9/3: 규칙 전용 파라미터는 통째로 숨긴다
+        assert any(p.name == pname for p in TEMPLATES[tid].params)   # 템플릿에는 존재(규칙 라우터 호출용)
+        line = next(l for l in text.splitlines() if l.startswith(f"- {tid}:"))
+        assert pname not in line, line
     for (tid, pname), hidden in LLM_HIDDEN_ENUM_VALUES.items():
         enum = next(p.enum for p in TEMPLATES[tid].params if p.name == pname)
         assert all(v in enum for v in hidden)                 # 숨긴 값은 여전히 유효(규칙 라우터 호출용)
@@ -227,3 +231,54 @@ def test_llm_catalog_hides_rule_only_enum_values():
         assert all(f"'{v}'" not in line for v in hidden), line
     assert hashlib.sha256(text.encode("utf-8")).hexdigest() == _CATALOG_SHA256_FROZEN, (
         "AI 라우터 목록(프롬프트)이 바뀌었다 — 위 주석대로 H-17·T-09 를 HCX 로 재검한 뒤 해시를 갱신할 것")
+
+
+# ---------------------------------------------------------------------------
+# 6. (9/3 사용자 실측) 채권 표면금리 조건 — '이자율이 3.5%인 채권'의 3.5% 가 조용히 버려지던 공백
+#    방향 낱말이 이상·초과·넘·대 일 때만 조건이 되고, '이하·미만'과 방향 없음('~인/짜리')은 무시돼 조건 없는
+#    전체 목록(7.1% 부터)이 나가던 것. 건수 조회도 금리 조건 없이 전체 건수를 내던 불일치 포함.
+# ---------------------------------------------------------------------------
+
+def _coupon(plan, op):
+    c = next((c for c in plan.calls if c.op == op), None)
+    assert c is not None, (op, plan.intent, [x.op for x in plan.calls])
+    return c.params.get("min_coupon"), c.params.get("max_coupon")
+
+
+@pytest.mark.parametrize("q, lo, hi", [
+    ("이자율이 3.5%인 채권을 하나 보여줘", 3.5, 3.5 + 1e-6),       # 9/3 실측 원문 — 정확 일치
+    ("표면금리 3.5%짜리 채권 알려줘", 3.5, 3.5 + 1e-6),
+    ("표면금리 3% 이하인 채권 알려줘", None, 3.0 + 1e-6),          # 이하 = 경계 포함
+    ("금리 3% 미만 채권 있어?", None, 3.0),                         # 미만 = 경계 제외
+    ("표면금리 3% 이상 채권 알려줘", 3.0, None),                    # 종전에도 되던 것 — 회귀 방어
+    ("금리 3%대 채권 보여줘", 3.0, 4.0),
+    ("표면금리 3% 이상 4% 이하 채권 몇 개야?", 3.0, 4.0 + 1e-6),  # 하한+상한 결합
+])
+def test_bond_coupon_condition_variants(index, q, lo, hi):
+    plan = _route(index, q)
+    op = "bond_count" if "몇 개" in q else "bond_filter"
+    got_lo, got_hi = _coupon(plan, op)
+    assert (got_lo is None) == (lo is None) and (got_hi is None) == (hi is None), (q, got_lo, got_hi)
+    if lo is not None:
+        assert abs(got_lo - lo) < 1e-9
+    if hi is not None:
+        assert abs(got_hi - hi) < 1e-9
+    assert any("표면금리(SRFC_IRT)" in n for n in plan.notes)            # 채택한 해석을 답변에 명시
+    if op == "bond_filter":                                             # 건수 조회에도 같은 조건
+        assert _coupon(plan, "bond_count") == (got_lo, got_hi)
+
+
+def test_bond_coupon_exact_sql_matches_only_that_rate(con, index):
+    plan = _route(index, "이자율이 3.5%인 채권을 하나 보여줘")
+    f = next(c for c in plan.calls if c.op == "bond_filter")
+    rows = _rows(con, "bond_filter", dict(f.params))
+    assert rows and all(float(r["SRFC_IRT"]) == 3.5 for r in rows)
+    n = next(c for c in plan.calls if c.op == "bond_count")
+    assert _rows(con, "bond_count", dict(n.params))[0]["n"] == 67    # 9/3 DuckDB 직접 계산(만기 미경과·정확히 3.5%)
+
+
+def test_bond_coupon_below_sql_never_returns_higher_rate(con, index):
+    plan = _route(index, "표면금리 3% 이하인 채권 알려줘")
+    f = next(c for c in plan.calls if c.op == "bond_filter")
+    rows = _rows(con, "bond_filter", dict(f.params))
+    assert rows and all(float(r["SRFC_IRT"]) <= 3.0 for r in rows)    # 종전엔 7.1% 부터 나왔다

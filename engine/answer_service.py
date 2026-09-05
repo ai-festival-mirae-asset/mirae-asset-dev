@@ -356,6 +356,9 @@ def _draft_answer(plan, result, question=""):
                 if _sent:
                     lines.append(_sent)
                 continue
+            if o.op.endswith("_metric_avg"):              # 9/6 6바퀴: 'avg_value 4.1 · 건수 94'(원문 열 이름) 대신 문장으로
+                lines.append(avg_sentence(o.op, rows, plan.hints.get("avg_label")))
+                continue
             _order_col = _ORDER_HINT_COLS.get(plan.hints.get("order"))
             if _order_col and rows and _order_col in rows[0]:
                 rows = _sort_rows_by(rows, _order_col)
@@ -421,6 +424,31 @@ def dist_sentence(op, rows):
     parts = ", ".join(f"{v} {n:,}건({n / total * 100:.1f}%)" for v, n in buckets[:5])
     more = f" 외 {len(buckets) - 5}종" if len(buckets) > 5 else ""
     return f"{label} 분포: {parts}{more} — 총 {total:,}건, 이 밖의 {label} 없음"
+
+
+def avg_sentence(op, rows, label=None):
+    """평균 집계 결과 → 결론 문장(9/6 6바퀴). label=(항목 이름, 단위). 순수 함수(테스트 대상)."""
+    if isinstance(label, (tuple, list)) and len(label) == 2:
+        name, unit = label
+    else:
+        name, unit = (label or "평균값"), ""
+    r0 = rows[0] if rows else {}
+    av, n = r0.get("avg_value"), r0.get("n")
+    try:
+        n = int(n or 0)
+    except (TypeError, ValueError):
+        n = 0
+    if av is None or n == 0:
+        return f"[{_op_label(op)}] {name} 값을 가진 상품이 조건 안에 없어 평균을 낼 수 없음(0건)"
+    try:
+        if unit.strip().upper() == "USD":                 # 달러 금액은 억·조 단위로(krw_readable 재사용 — '66억 USD')
+            r = krw_readable(av)
+            num, unit = ((r[:-1] + " USD") if (r and r.endswith("원")) else f"{float(av):,.0f} USD"), ""
+        else:
+            num = f"{float(av):,.2f}".rstrip("0").rstrip(".") or "0"
+    except (TypeError, ValueError):
+        num = str(av)
+    return f"[{_op_label(op)}] {name} 평균 {num}{unit} — 값 보유 {n:,}건의 단순 평균"
 
 
 # 건수 템플릿 — 숫자 한 개짜리 결과는 생성기가 "정보 없음"으로 오독하기 쉬워(L-05 실측) 문장으로 승격한다

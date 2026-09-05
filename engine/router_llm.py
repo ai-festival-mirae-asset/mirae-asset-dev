@@ -24,7 +24,7 @@ sys.path.insert(0, ROOT)
 
 from engine.channels import resolve_raw_params                # noqa: E402
 from engine.router import ChannelCall, RoutePlan              # noqa: E402
-from engine.sql_templates import LLM_HIDDEN_ENUM_VALUES, LLM_HIDDEN_PARAMS, TEMPLATES, validate_params   # noqa: E402
+from engine.sql_templates import LLM_HIDDEN_ENUM_VALUES, LLM_HIDDEN_PARAMS, LLM_HIDDEN_TEMPLATES, TEMPLATES, validate_params   # noqa: E402
 
 GRAPH_OPS = ("holding_etfs", "company_products", "product_info", "constituents_of")
 ROUTER_TEMPERATURE = 0.1          # 계획은 결정적일수록 좋다(8/19 ⑧-6)
@@ -158,6 +158,8 @@ def _template_catalog_text():
     """
     lines = []
     for t in TEMPLATES.values():
+        if t.id in LLM_HIDDEN_TEMPLATES:              # 규칙 전용 조회문(9/6 6바퀴) — 목록 불변
+            continue
         ps = []
         for p in t.params:
             if (t.id, p.name) in LLM_HIDDEN_PARAMS:      # 규칙 라우터 전용 파라미터(9/3) — 목록 불변
@@ -192,7 +194,7 @@ def build_router_tool():
                             "type": "object",
                             "properties": {
                                 "template_id": {"type": "string",
-                                                "enum": sorted(TEMPLATES)},
+                                                "enum": sorted(t for t in TEMPLATES if t not in LLM_HIDDEN_TEMPLATES)},
                                 "params": {"type": "object",
                                            "description": "템플릿 파라미터. *_raw 는 원문 텍스트(와일드카드 금지)"},
                             },

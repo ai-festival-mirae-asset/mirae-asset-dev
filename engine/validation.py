@@ -161,8 +161,9 @@ def gate_existence(question, index, policy):
             return (GateResult("existence", "refuse",
                                f"'{target}' 명칭의 상품이 기준일 상품 목록에 없음"), [])
     if brand and asks and not has_product and not reverse_holding \
-            and not re.search(r"몇\s*개|몇개|몇\s*종|개수|총\s*몇|얼마나\s*(되|돼)", normalized_question):
+            and not re.search(r"몇\s*개|몇개|몇\s*종|개수|총\s*몇|얼마나\s*(되|돼)|평균|합계|합쳐|분포", normalized_question):
         # 9/6: 'TIGER ETF 총 몇 종목?'은 상품 존재 질의가 아니라 브랜드 건수 질의 — 라우터가 건수로 답한다
+        # 9/6 6바퀴: 'TIGER ETF 총보수 평균'도 브랜드 집계 질의 — 라우터가 평균으로 답한다
         phrase = re.sub(r"정보|알려줘|알려|수익률|어때|찾아줘|있어|\?", " ",
                         normalized_question).strip()
         if not index.exact(phrase) and not index.search(phrase, limit=1):
@@ -207,7 +208,7 @@ def gate_time_boundary(question):
         return GateResult("time", "refuse",
                           f"기준일({AS_OF_MASTER}) 이후({flags['post_snapshot']}) 정보는 보유하지 않음")
     if flags.get("future") and re.search(
-            r"추천|골라|알려|찍어|오를|내릴|상승|하락|수익률", question):
+            r"추천|골라|알려|찍어|오를|내릴|상승|하락|수익률|줄까|받을|예상|전망|얼마나\s*줄", question):   # 9/6 라우터와 동일
         return GateResult("time", "refuse",
                           "미래 전망·시장 예측은 제공 불가(단정 추천 금지) — 조건 기반 사실 조회로 전환 가능")
     return GateResult("time", "pass")

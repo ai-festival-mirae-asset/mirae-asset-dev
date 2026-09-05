@@ -168,7 +168,8 @@ def test_router_tool_schema_and_plan_validation():
     tool = build_router_tool()
     enum = tool["function"]["parameters"]["properties"]["sql_calls"]["items"][
         "properties"]["template_id"]["enum"]
-    assert set(enum) == set(TEMPLATES)
+    from engine.sql_templates import LLM_HIDDEN_TEMPLATES
+    assert set(enum) == set(TEMPLATES) - set(LLM_HIDDEN_TEMPLATES)   # 9/6 6바퀴: 규칙 전용 조회문(평균 집계)은 도구 스키마에서도 숨김
     partial = RoutePlan(intent="unresolved")
     plan = args_to_plan({"intent": "테스트",
                          "sql_calls": [{"template_id": "etp_top_aum",

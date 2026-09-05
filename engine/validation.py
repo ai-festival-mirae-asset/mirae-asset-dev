@@ -160,7 +160,9 @@ def gate_existence(question, index, policy):
         if not index.exact(target) and not token_matches(index, stem, limit=1):
             return (GateResult("existence", "refuse",
                                f"'{target}' 명칭의 상품이 기준일 상품 목록에 없음"), [])
-    if brand and asks and not has_product and not reverse_holding:
+    if brand and asks and not has_product and not reverse_holding \
+            and not re.search(r"몇\s*개|몇개|몇\s*종|개수|총\s*몇|얼마나\s*(되|돼)", normalized_question):
+        # 9/6: 'TIGER ETF 총 몇 종목?'은 상품 존재 질의가 아니라 브랜드 건수 질의 — 라우터가 건수로 답한다
         phrase = re.sub(r"정보|알려줘|알려|수익률|어때|찾아줘|있어|\?", " ",
                         normalized_question).strip()
         if not index.exact(phrase) and not index.search(phrase, limit=1):

@@ -19,6 +19,10 @@ THEMES_PATH_DEFAULT = os.path.join(ROOT, "external_data", "dictionaries", "theme
 # 지역 성격 테마 — "미국 소형주"처럼 지역+주제가 함께 오면 주제가 라우팅을 주도한다
 REGIONS = frozenset({"미국", "중국", "일본", "인도", "유럽", "신흥국", "베트남", "브라질"})
 
+# 어순·표기 변형 → 사전의 대표 표기 (9/6 표현 변형 점검: '항공우주 테마 ETF'가 상품명 검색 0건 — 사전 키는 '우주항공')
+THEME_ALIASES = {"항공우주": "우주항공", "이차전지": "2차전지", "이차 전지": "2차전지", "2차 전지": "2차전지",
+                 "바이오테크": "바이오"}
+
 
 def load_themes(path=THEMES_PATH_DEFAULT):
     """{한글 테마: [영문 anchor, ...]} — 파일 없으면 빈 dict(기능 자동 비활성)."""
@@ -45,6 +49,9 @@ def detect_theme_terms(question, themes=None):
         elif ko not in question:
             continue
         hits.append((question.find(ko), ko))
+    for alias, canon in THEME_ALIASES.items():           # 9/6: 어순·표기 변형은 대표 표기로(사전에 있는 것만)
+        if alias in question and canon in themes and all(k != canon for _p, k in hits):
+            hits.append((question.find(alias), canon))
     hits.sort()
     return [ko for _pos, ko in hits]
 

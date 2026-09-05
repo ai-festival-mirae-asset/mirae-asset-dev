@@ -74,6 +74,10 @@ def _boundary_ok(text, omap, start, end):
     s, e = omap[start], omap[end - 1]
     if s > 0 and text[s - 1].isascii() and text[s - 1].isalnum():
         return False                                  # 'OKBSTAR' 속 'KBSTAR' — 다른 토큰의 일부
+    if end - start <= 2 and s > 0 and "가" <= text[s - 1] <= "힣":
+        # 9/6 표현 변형 점검: '합쳐서 연수익률'의 '서 연'이 종목 '서연'(2글자)으로 잡혀 교집합 질의로 새던 것 —
+        # 두 글자 이름은 원문에서 앞에 한글이 바로 붙어 있으면 다른 낱말의 일부로 본다(띄어쓰기·문장 처음이면 인정).
+        return False
     if e + 1 >= len(text):
         return True
     nxt = text[e + 1]

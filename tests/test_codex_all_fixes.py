@@ -155,13 +155,25 @@ def test_maturity_filter_can_show_duration(index, con, question):
     assert rows and all("DUR" in r for r in rows)
 
 
-@pytest.mark.parametrize("question", ["ACCENTURE 들어 있는 ETF 순자산 상위 3개", "ACCENTURE를 편입한 ETF 찾아줘", "ACCENTURE 담은 ETF 보여줘"])
+# 9/6 리더 세션 정정([구역 침범] 구성종목 구역): 부분 일치 토큰이 여러 종목에 걸리면 후보 안내(종전대로),
+# 한 종목으로만 이어지면('ACCENTURE' → ACCENTURE PLC-CL A 하나) 그 종목의 편입 역질의로 답한다 — PLAN §5 9/6.
+@pytest.mark.parametrize("question", ["MOTOR 담은 ETF 보여줘", "MOTOR를 편입한 ETF 찾아줘"])
 def test_partial_constituent_name_only_offers_candidates(index, con, question):
     plan, _ = call(index, question, "lookup")
     assert plan.intent == "constituent_name_candidates" and plan.behavior_hint == "partial"
     assert all(c.channel == "keyword" for c in plan.calls)
     answer = _draft_answer(plan, execute_plan(plan, RuntimeContext(con=con,index=index)), question)
-    assert "ACCENTURE" in answer.upper() and "존재 근거 아님" in answer
+    assert "MOTOR" in answer.upper() and "존재 근거 아님" in answer
+
+
+@pytest.mark.parametrize("question", ["ACCENTURE 들어 있는 ETF 순자산 상위 3개", "ACCENTURE를 편입한 ETF 찾아줘", "ACCENTURE 담은 ETF 보여줘"])
+def test_unique_partial_constituent_name_resolves_to_holders(index, con, question):
+    plan, c = call(index, question, "constituent_holders")
+    assert plan.intent == "constituent_reverse"
+    assert c.params["code"] == "IE00B4BNMY34"
+    rows = run_template(con, c.op, resolve_raw_params(c.params)).rows
+    assert rows and all("ACCENTURE" in str(r.get("COMPST_ISU_NM", r)).upper() for r in rows)
+    assert any("부분 일치" in n for n in plan.notes)
 
 
 @pytest.mark.parametrize("question", ["무지개바다여행 2041 ETF 상품 정보 알려줘", "초록구름정거장 2043 ETN 상세 알려줘", "보랏빛종이우주 2047 펀드 정보 부탁해"])

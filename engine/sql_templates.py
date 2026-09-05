@@ -301,6 +301,7 @@ TEMPLATES = {t.id: t for t in [
             AND ($max_return IS NULL OR CASE $metric WHEN 'ytd' THEN TRY_CAST(du_er_ytd AS DOUBLE) WHEN '1m' THEN TRY_CAST(du_er_1m AS DOUBLE) WHEN '3m' THEN TRY_CAST(du_er_3m AS DOUBLE) WHEN '6m' THEN TRY_CAST(du_er_6m AS DOUBLE) ELSE TRY_CAST(du_er_1y AS DOUBLE) END < $max_return)
             AND ($min_listed_dt IS NULL OR replace(coalesce(pd_lstg_dt,''),'-','') >= replace($min_listed_dt,'-',''))
             AND ($max_listed_dt IS NULL OR nullif(replace(coalesce(pd_lstg_dt,''),'-',''),'') <= replace($max_listed_dt,'-',''))
+            AND ($name_pattern IS NULL OR pd_nm ILIKE $name_pattern ESCAPE '\\' OR pd_abrv_nm ILIKE $name_pattern ESCAPE '\\')   -- 9/6 테마(숨김)
           ORDER BY CASE $metric WHEN 'ytd' THEN TRY_CAST(du_er_ytd AS DOUBLE)
                                 WHEN '1m' THEN TRY_CAST(du_er_1m AS DOUBLE)
                                 WHEN '3m' THEN TRY_CAST(du_er_3m AS DOUBLE)
@@ -308,7 +309,7 @@ TEMPLATES = {t.id: t for t in [
                                 ELSE TRY_CAST(du_er_1y AS DOUBLE) END DESC NULLS LAST
           LIMIT $limit""",
        [Param("metric", required=True, enum=("ytd", "1y", "1m", "3m", "6m")),
-        Param("min_risk"), Param("max_risk"), Param("limit", required=True), Param("min_return"), Param("max_return"), Param("min_listed_dt"), Param("max_listed_dt")],
+        Param("min_risk"), Param("max_risk"), Param("limit", required=True), Param("min_return"), Param("max_return"), Param("min_listed_dt"), Param("max_listed_dt"), Param("name_pattern")],
        source="PREF01N001", key_col="pd_itm_no"),
 
     _t("etp_filter_risk",
@@ -408,6 +409,7 @@ TEMPLATES = {t.id: t for t in [
                               ELSE TRY_CAST(pd_dvid_yield AS DOUBLE) END, 0) <> 0
             AND ($month_pattern IS NULL OR pd_dvid_pay_months ILIKE $month_pattern ESCAPE '\\')
             AND ($min_pay_cnt IS NULL OR TRY_CAST(pd_dvid_pay_cnt AS INT) >= $min_pay_cnt)
+            AND ($max_pay_cnt IS NULL OR TRY_CAST(pd_dvid_pay_cnt AS INT) <= $max_pay_cnt)   -- 9/6 정확 일치(숨김)
             AND ($min_listed_dt IS NULL OR replace(coalesce(pd_lstg_dt,''),'-','') >= replace($min_listed_dt,'-',''))   -- 9/3: 형식 정규화
             AND ($min_yield IS NULL OR TRY_CAST(pd_dvid_yield AS DOUBLE) >= $min_yield)   -- 9/3 문턱(숨김)
             AND ($max_yield IS NULL OR TRY_CAST(pd_dvid_yield AS DOUBLE) < $max_yield)
@@ -415,7 +417,7 @@ TEMPLATES = {t.id: t for t in [
                         ELSE TRY_CAST(pd_dvid_yield AS DOUBLE) END DESC NULLS LAST,
                    pd_itm_no LIMIT $limit""",
        [Param("metric", required=True, enum=("yield", "amount")), Param("month_pattern"),
-        Param("min_pay_cnt"), Param("min_listed_dt"), Param("limit", required=True), Param("min_yield"), Param("max_yield")],
+        Param("min_pay_cnt"), Param("min_listed_dt"), Param("limit", required=True), Param("min_yield"), Param("max_yield"), Param("max_pay_cnt")],
        source="PREF01N001", key_col="pd_itm_no"),
 
     # 9/2: price(장내 종가 du_clpr)·mkt_cap(시가총액 = 종가×상장주식수 pd_lst_stk_cnt — 원천에 열 없음) 추가.
@@ -556,6 +558,7 @@ TEMPLATES = {t.id: t for t in [
             AND ($exclude_ccy IS NULL OR pd_trd_ccy <> $exclude_ccy)
             AND ($order IS NULL OR $order NOT IN ('fee_asc', 'fee_desc', 'fee_aum') OR coalesce(TRY_CAST(cu_charge_rt AS DOUBLE), 0) > 0)   -- 9/3(숨김)
             AND ($order IS NULL OR $order <> 'fee_aum' OR coalesce(TRY_CAST(du_last_aum AS DOUBLE), 0) > 0)   -- 9/6 순위 합(숨김)
+            AND ($order IS NULL OR $order <> 'aum_asc' OR coalesce(TRY_CAST(du_last_aum AS DOUBLE), 0) > 0)   -- 9/6 작은 순(숨김)
             AND ($min_aum_gt IS NULL OR TRY_CAST(du_last_aum AS DOUBLE) > $min_aum_gt)   -- 9/3 달러 범위(숨김)
             AND ($min_aum_ge IS NULL OR TRY_CAST(du_last_aum AS DOUBLE) >= $min_aum_ge)
             AND ($max_aum_lt IS NULL OR TRY_CAST(du_last_aum AS DOUBLE) < $max_aum_lt)
@@ -568,10 +571,11 @@ TEMPLATES = {t.id: t for t in [
                                                     + RANK() OVER (ORDER BY TRY_CAST(du_last_aum AS DOUBLE) DESC NULLS LAST)) END ASC NULLS LAST,   -- 9/6 '보수 낮고 규모 큰' 순위 합(숨김)
                    CASE WHEN $order = 'fee_asc' THEN TRY_CAST(cu_charge_rt AS DOUBLE) END ASC NULLS LAST,
                    CASE WHEN $order = 'fee_desc' THEN TRY_CAST(cu_charge_rt AS DOUBLE) END DESC NULLS LAST,
+                   CASE WHEN $order = 'aum_asc' THEN TRY_CAST(du_last_aum AS DOUBLE) END ASC NULLS LAST,   -- 9/6 순자산 작은 순(숨김)
                    TRY_CAST(du_last_aum AS DOUBLE) DESC NULLS LAST, pd_itm_no LIMIT $limit""",
        [Param("region_pattern"), Param("exclude_region_pattern"), Param("name_pattern"),
         Param("inverse_only"), Param("etn_only"), Param("ast_type"), Param("ccy"),
-        Param("exclude_ccy"), Param("min_fee_gt"), Param("min_fee_ge"), Param("max_fee_lt"), Param("max_fee_le"), Param("limit", required=True), Param("order", enum=("fee_asc", "fee_desc", "fee_aum")), Param("min_aum_gt"), Param("min_aum_ge"), Param("max_aum_lt"), Param("max_aum_le")],
+        Param("exclude_ccy"), Param("min_fee_gt"), Param("min_fee_ge"), Param("max_fee_lt"), Param("max_fee_le"), Param("limit", required=True), Param("order", enum=("fee_asc", "fee_desc", "fee_aum", "aum_asc")), Param("min_aum_gt"), Param("min_aum_ge"), Param("max_aum_lt"), Param("max_aum_le")],
        source="PREF02N001", key_col="pd_itm_no", as_of=AS_OF_MASTER_GL),
 
     _t("global_etf_count",
@@ -621,6 +625,7 @@ TEMPLATES = {t.id: t for t in [
             AND ($min_risk IS NULL OR TRY_CAST(drv_risk_grade AS INT) >= $min_risk)
             AND ($max_risk IS NULL OR TRY_CAST(drv_risk_grade AS INT) <= $max_risk)
             AND ($region IS NULL OR ovrs_fd_desc = $region)
+            AND ($name_pattern IS NULL OR itm_nm ILIKE $name_pattern ESCAPE '\\' OR itm_abrv_nm ILIKE $name_pattern ESCAPE '\\')   -- 9/6 이름 표기(숨김)
           ORDER BY CASE WHEN $order = 'aum' THEN TRY_CAST(fd_nast_suma AS DOUBLE) END DESC NULLS LAST,
                    CASE WHEN $order IS NULL AND $on_sale_only IS NULL
                              AND replace(trim(coalesce(sale_yn,'')), ' ', '') = '판매중' THEN 0
@@ -629,7 +634,7 @@ TEMPLATES = {t.id: t for t in [
                    itm_no LIMIT $limit""",
        [Param("on_sale_only"), Param("thco_sale_only"), Param("attr_pattern"),
         Param("btyp_pattern"), Param("min_risk"),
-        Param("max_risk"), Param("region"), Param("order"), Param("limit", required=True)],
+        Param("max_risk"), Param("region"), Param("order"), Param("limit", required=True), Param("name_pattern")],
        source="PRFD01N001", key_col="itm_no"),
 
     _t("fund_by_fee",
@@ -1031,7 +1036,8 @@ _t("etp_pattern_top_constituents",
        """WITH t AS (
               SELECT e.pd_itm_no, e.pd_abrv_nm, TRY_CAST(e.pd_net_tamt AS DOUBLE) AS aum
               FROM kr_etp e LEFT JOIN mgmt_resolved m ON e.pd_itm_no = m.pd_itm_no
-              WHERE (e.pd_nm ILIKE $pattern ESCAPE '\\' OR e.pd_abrv_nm ILIKE $pattern ESCAPE '\\')
+              WHERE ((e.pd_nm ILIKE $pattern ESCAPE '\\' OR e.pd_abrv_nm ILIKE $pattern ESCAPE '\\')
+                     OR ($index_pattern IS NOT NULL AND coalesce(e.cu_base_index, e.ref_base_index) ILIKE $index_pattern ESCAPE '\\'))   -- 9/6 지수 표기(숨김)
                 AND e.drv_listing_status = 'active'
                 AND ($mgmt IS NULL OR m.resolved = $mgmt OR e.cu_fund_mgmt_co = $mgmt)
               ORDER BY aum DESC NULLS LAST, e.pd_itm_no LIMIT $top_etfs
@@ -1049,7 +1055,7 @@ _t("etp_pattern_top_constituents",
           FROM c WHERE rn <= $per_etf
           ORDER BY aum DESC NULLS LAST, pd_itm_no, rn""",
        [Param("pattern", required=True), Param("mgmt"),
-        Param("top_etfs", required=True), Param("per_etf", required=True)],
+        Param("top_etfs", required=True), Param("per_etf", required=True), Param("index_pattern")],
        source="KRX-PDF·PREF01N001", key_col="pd_itm_no", as_of=AS_OF_CONSTITUENTS),
 
     _t("constituent_group_holders",
@@ -1295,6 +1301,11 @@ LLM_HIDDEN_PARAMS = {
     ("fund_by_fee", "fee_type"),
     ("fund_by_fee", "channel_pattern"),
     ("fund_by_fee", "class_only"),
+    # 9/6 리더 5바퀴: 테마·이름 표기·지급횟수 조건은 규칙 전용
+    ("etp_top_return", "name_pattern"),
+    ("fund_filter", "name_pattern"),
+    ("etp_by_dividend", "max_pay_cnt"),
+    ("etp_pattern_top_constituents", "index_pattern"),
 
 }
 

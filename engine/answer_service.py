@@ -362,6 +362,9 @@ def _draft_answer(plan, result, question=""):
             _order_col = _ORDER_HINT_COLS.get(plan.hints.get("order"))
             if _order_col and rows and _order_col in rows[0]:
                 rows = _sort_rows_by(rows, _order_col)
+            if o.op == "constituent_top_weights" and all(r.get("weight_pct") is None for r in rows):
+                # 9/6 7바퀴: TIGER 미국S&P500 처럼 KRX 공시가 수량만 있는 상품 — 비중 순위를 매길 수 없음을 밝힌다
+                lines.append("※ 이 상품의 구성종목 공시에는 편입 비중 값이 없어(수량만 제공) 비중 순위를 매길 수 없음 — 아래는 공시 순서")
             head = f"[{_op_label(o.op)}] 결과 {len(rows):,}건"   # 9/3: 조회문 이름 대신 한글 머리글
             display_rows = int(plan.hints.get("display_rows", 5))
             focus = _focus_cols(question)                 # 질문이 콕 집은 속성 열은 잘리지 않게(B-15)

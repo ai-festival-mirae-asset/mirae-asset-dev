@@ -736,7 +736,10 @@ def route_stage_a(question, index, policy=None, today=None):
         plan.notes.append("개인별 세금 계산은 수행 불가 — 세율·과세 조건 데이터도 제공 범위 밖")
         plan.hints["unsupported_request"] = "tax_calc"
         return done("action_request", "refuse")
-    if re.search(r"환불해|환불\s*해\s*줘|무르고 싶|물러\s*줘|취소해\s*줘|취소해줘", q):
+    # 9/6 Codex 바퀴 CA-27 "내가 산 펀드 지금 환불 처리해줘요" 실측: '환불해'만 보던 규칙이 '환불 처리'를 놓쳐
+    # 키워드 폴백 → HCX 자유 거절문에 기대다가 한 번은 함정 오답. 펀드·ETF 데이터에 '환불' 낱말은 없으므로
+    # (환매가 정식 용어) '환불'이 나오면 요청 어미와 무관하게 행위 요청으로 본다.
+    if re.search(r"환불|무르고 싶|물러\s*줘|취소해\s*줘|취소해줘", q):
         plan.notes.append("매매 취소·환불은 수행 불가(정보 조회 전용 서비스)")
         plan.hints["unsupported_request"] = "refund"
         return done("action_request", "refuse")

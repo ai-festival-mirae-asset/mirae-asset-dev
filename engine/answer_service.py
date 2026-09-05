@@ -81,6 +81,7 @@ _COL_DISPLAY = {
     "zrin_ptn_nm": ("세부 유형", "text"), "zrin_fd_ivst_risk_grd_nm": ("위험등급명", "text"),
     "sale_yn": ("판매 여부", "yn"), "thco_sale_yn": ("당사 판매 여부", "yn"), "han_clas_nm": ("클래스", "text"),
     "han_clas_fee_type": ("수수료 유형", "text"), "han_clas_sales_channel": ("판매채널", "text"),
+    "prvo_pbff_desc": ("공모/사모", "text"),
     "sale_co_rwrd_r": ("판매보수", "pct"), "or_co_rwrd_r": ("운용보수", "pct"), "trusc_rwrd_r": ("수탁보수", "pct"),
     "ofwk_trus_rwrd_r": ("사무관리보수", "pct"), "total_fee_pct": ("총보수(4종 합)", "pct"),
     "fd_last_dstb_r": ("최근 분배율", "pct"), "zrin_dmst_stk_cmst_rt": ("국내주식 비율", "pct"),
@@ -261,7 +262,9 @@ def _looks_like_free_refusal(text):
     head = (text or "").strip()[:160]
     if not head or head.startswith(REFUSE_HEAD):
         return False
-    if len(_NUMBERED_LINE_RE.findall(text or "")) >= 2 or re.search(r"결과\s*\d+\s*건", text or ""):
+    # '결과 0건'은 목록이 아니다 — 9/6 실측(Codex 바퀴 CA-27): HCX 가 근거 줄의 "결과 0건"을 답에 그대로 옮겨 쓰자
+    # 이 예외에 걸려 자유 거절문이 정해진 거절문으로 통일되지 않았고, 채점상 함정 오답이 됐다.
+    if len(_NUMBERED_LINE_RE.findall(text or "")) >= 2 or re.search(r"결과\s*[1-9]\d*\s*건", text or ""):
         return False                                  # 목록이 있는 답은 거절이 아니다
     return bool(_FREE_REFUSAL_RE.search(head))
 
@@ -923,6 +926,19 @@ def answer_question(question, ctx, question_id="", today=None,
             plan.notes.append(zero_note)
 
     evidences = list(result.evidences) + list(verdict.evidences)
+    # 9/6 (Codex PR #5 후속): 조회문이 남기는 '(0건)' 표식 근거는 다른 조회가 실제 행을 냈으면 뺀다 —
+    # 생성기 입력이 종전과 같아야 문장이 흔들리지 않는다(v1 L-25 실측: 벤치마크 표기 변형 4회 조회 중
+    # 0건인 2개의 표식이 근거1로 앞서자 HCX 가 상품명을 띄어 쓰고 줄여 검사표와 어긋남, 3회 연속).
+    # 모든 조회가 0건이면 표식을 남겨 "어느 원천을 찾아봤는지"를 근거로 밝힌다(Codex 의도 유지).
+    if any(e.source_id != "(0건)" and e.channel != "validation" for e in evidences):
+        evidences = [e for e in evidences if e.source_id != "(0건)"]
+        for _o in result.outcomes:                          # 생성기는 result.evidences(outcome 합)를 직접 읽는다
+            _kept = [e for e in (getattr(_o, "evidences", None) or []) if e.source_id != "(0건)"]
+            if len(_kept) != len(_o.evidences):
+                try:
+                    _o.evidences[:] = _kept
+                except TypeError:
+                    _o.evidences = _kept
     # 근거 0개 방지망(8/22 H-17 실측): HCX 계획이 0건으로 끝나면 근거 블록 없이 답이 나가
     # 채점 근거 축을 잃는다. 어떤 경로든 근거가 비면 "무엇을 어떤 조회로 찾아봤는지"를
     # validation 근거로 남긴다 — 0건·실패도 확인 과정의 근거다(거절 경로와 같은 원칙).
@@ -938,6 +954,15 @@ def answer_question(question, ctx, question_id="", today=None,
             evidences.append(Evidence(source="조회 기록", source_id="실행 없음",
                                       channel="validation", as_of=AS_OF_MASTER,
                                       fields={"실행": "조회 없음", "결과": "검증 판정만으로 답변"}))
+    # 9/6: 규칙 경로 + 미등록 이름 없음 + 실행한 조회가 전부 0건이면 HCX 생성을 생략하고 규칙 요약
+    # ("조건 일치 결과 0건" + 노트)을 그대로 쓴다 — 8/27 L-06 결정("'없음'은 사실 답변")의 확정판.
+    # 종전엔 생성 뒤 자유 거절문을 되돌리는 안전망에 의존했는데, HCX 가 번호 목록 형태로 거절하면
+    # 안전망이 목록으로 오인해 과잉 거절이 났다(v1 L-06 실측 3회 중 2회). 행이 없으면 HCX 가 더할 사실도 없다.
+    _ran = [o for o in result.outcomes if o.channel != "validation"]
+    if _ran and all(o.ok and not o.rows for o in _ran) and plan.stage == "rule" \
+            and not plan.unknown_terms and verdict.behavior in ("answer", "partial"):
+        plan.hints["skip_generation"] = True
+        plan.hints.setdefault("zero_rows_deterministic", True)
     gen_note = ""
     if generator is not None and deadline is not None and deadline.over(deadline.generation_cutoff):
         generator = None

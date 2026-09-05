@@ -105,6 +105,7 @@ _COL_DISPLAY = {
     "matched_candidates": ("일치 후보", "text"), "max_weight_pct": ("최대 편입 비중", "pct"),
     "n_etfs_holding": ("편입 ETF 수", "int"), "avg_weight_pct": ("평균 편입 비중", "pct"), "held_by": ("편입 ETF", "text"),
     "ksq_weight_pct": ("코스닥 비중 합계", "pct"), "n": ("건수", "int"), "n_etf": ("ETF 수", "int"),
+    "product_group": ("상품군", "text"), "grade": ("위험등급", "risk"),   # 9/6 9바퀴 risk_grade_dist
     "share_pct": ("점유율", "pct"), "cnt": ("건수", "int"),
 }
 # 이름의 다른 표기(정식명·약칭·영문명)는 숨기지 않고 라벨로 보인다 — 9/3 실측: 숨겼더니 채점표·시험 5건이
@@ -412,7 +413,8 @@ def _draft_answer(plan, result, question=""):
 
 # 분포형 템플릿 — (첫 열 이름, 우리말 라벨). 한 갈래뿐이면 "전부 X — 다른 것 없음"을 명시한다 (L-20/L-30)
 _DIST_OPS = {"global_ccy_dist": ("pd_trd_ccy", "거래통화"), "etp_currency_dist": ("drv_curr_cd", "거래통화"),
-             "bond_currency_dist": ("CURR_CD", "통화"), "bond_class_dist": ("STD_PD_MCLS_NM", "대분류")}
+             "bond_currency_dist": ("CURR_CD", "통화"), "bond_class_dist": ("STD_PD_MCLS_NM", "대분류"),
+             "bond_rating_dist": ("drv_crd_grd_norm", "신용등급")}   # 9/6 9바퀴
 
 
 def dist_sentence(op, rows):

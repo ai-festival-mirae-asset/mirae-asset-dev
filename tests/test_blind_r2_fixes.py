@@ -207,7 +207,7 @@ def test_eur_currency_global(index):
 
 def test_grade_wise_counts(index):
     plan = _route(index, "위험등급별로 상품이 각각 몇 개씩 있는지 알려줘")
-    assert _call(plan, "risk_grade_product_counts") is not None
+    assert _call(plan, "risk_grade_dist") is not None      # 9/6 9바퀴: 등급 필수 조회문(risk_grade_product_counts {})은 항상 오류였다
 
 
 def test_class_dictionary_wording(index):

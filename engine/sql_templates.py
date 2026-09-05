@@ -89,6 +89,7 @@ TEMPLATES = {t.id: t for t in [
             AND ($bond_class IS NULL OR STD_PD_MCLS_NM = $bond_class)
             AND ($int_type IS NULL OR BD_INTP_TCD = $int_type)      -- 9/6 8바퀴 이자 유형(이표채·복리채·할인채·단리채, 숨김)
             AND ($rate_type IS NULL OR BD_INRT_TCD = $rate_type)    -- 금리 유형(고정·변동, 숨김)
+            AND ($unrated_only IS NULL OR drv_crd_grd_rank IS NULL OR trim(coalesce(drv_crd_grd_norm,'')) = '')   -- 9/6 9바퀴 무등급(숨김)
             AND ($pension_only IS NULL OR upper(trim(coalesce(PD_PEN_TR_YN,''))) IN ('Y','TRUE','1'))
             AND ($min_issue_dt IS NULL OR ISU_DT >= $min_issue_dt)
             AND ($max_issue_dt IS NULL OR ISU_DT <= $max_issue_dt)
@@ -115,7 +116,7 @@ TEMPLATES = {t.id: t for t in [
           LIMIT $limit""",
        [Param("currency"), Param("max_rating_rank"), Param("min_rating_rank"),
         Param("maturity_status"), Param("buyable_only"), Param("min_coupon"),
-        Param("max_coupon"), Param("bond_class"), Param("int_type"), Param("rate_type"), Param("order", enum=("coupon", "coupon_asc", "after_tax", "after_tax_asc", "dur", "dur_asc", "mat_asc", "mat_desc", "issue_desc", "issue_asc")),
+        Param("max_coupon"), Param("bond_class"), Param("int_type"), Param("rate_type"), Param("unrated_only"), Param("order", enum=("coupon", "coupon_asc", "after_tax", "after_tax_asc", "dur", "dur_asc", "mat_asc", "mat_desc", "issue_desc", "issue_asc")),
         Param("pension_only"), Param("min_issue_dt"), Param("max_issue_dt"),
         Param("min_dur"), Param("max_dur"),
         Param("limit", required=True), Param("min_after_tax"), Param("max_after_tax")],
@@ -133,6 +134,7 @@ TEMPLATES = {t.id: t for t in [
             AND ($bond_class IS NULL OR STD_PD_MCLS_NM = $bond_class)
             AND ($int_type IS NULL OR BD_INTP_TCD = $int_type)      -- 9/6 8바퀴 이자 유형(이표채·복리채·할인채·단리채, 숨김)
             AND ($rate_type IS NULL OR BD_INRT_TCD = $rate_type)    -- 금리 유형(고정·변동, 숨김)
+            AND ($unrated_only IS NULL OR drv_crd_grd_rank IS NULL OR trim(coalesce(drv_crd_grd_norm,'')) = '')   -- 9/6 9바퀴 무등급(숨김)
             AND ($pension_only IS NULL OR upper(trim(coalesce(PD_PEN_TR_YN,''))) IN ('Y','TRUE','1'))
             AND ($min_issue_dt IS NULL OR ISU_DT >= $min_issue_dt)
             AND ($max_issue_dt IS NULL OR ISU_DT <= $max_issue_dt)
@@ -141,7 +143,7 @@ TEMPLATES = {t.id: t for t in [
             AND ($min_after_tax IS NULL OR TRY_CAST(AFTER_TAX_YIELD AS DOUBLE) >= $min_after_tax)   -- 9/3 문턱(숨김)
             AND ($max_after_tax IS NULL OR TRY_CAST(AFTER_TAX_YIELD AS DOUBLE) < $max_after_tax)""",
        [Param("currency"), Param("max_rating_rank"), Param("min_rating_rank"),
-        Param("maturity_status"), Param("buyable_only"), Param("bond_class"), Param("int_type"), Param("rate_type"),
+        Param("maturity_status"), Param("buyable_only"), Param("bond_class"), Param("int_type"), Param("rate_type"), Param("unrated_only"),
         Param("pension_only"), Param("min_issue_dt"), Param("max_issue_dt"),
         # 9/3: 표면금리 조건을 목록(bond_filter)과 건수가 같은 기준으로 세도록 — AI 라우터 목록에는 숨김(LLM_HIDDEN_PARAMS)
         Param("min_coupon"), Param("max_coupon"), Param("min_after_tax"), Param("max_after_tax")],
@@ -169,7 +171,7 @@ TEMPLATES = {t.id: t for t in [
        "활성 채권에 통화·신용등급·표면금리·대분류 조건을 함께 적용한다. 저장된 잔존일수 "
        "컬럼은 행별 기준일이 달라 쓰지 않는다. 대상: L-04/H-26.",
        """SELECT PD_NO, PD_NM, PD_ABRV_NM, STD_PD_MCLS_NM, CURR_CD, MAT_DT,
-                 drv_crd_grd_norm, drv_crd_grd_rank, SRFC_IRT, DUR
+                 drv_crd_grd_norm, drv_crd_grd_rank, SRFC_IRT, AFTER_TAX_YIELD, DUR
           FROM kr_bond
           WHERE drv_maturity_status = 'active'
             AND replace(coalesce(MAT_DT,''),'-','') BETWEEN replace($as_of_date,'-','')
@@ -182,13 +184,15 @@ TEMPLATES = {t.id: t for t in [
             AND ($bond_class IS NULL OR STD_PD_MCLS_NM = $bond_class)
           ORDER BY CASE WHEN $order = 'coupon' THEN TRY_CAST(SRFC_IRT AS DOUBLE) END DESC NULLS LAST,
                    CASE WHEN $order = 'coupon_asc' THEN TRY_CAST(SRFC_IRT AS DOUBLE) END ASC NULLS LAST,
+                   CASE WHEN $order = 'after_tax' THEN TRY_CAST(AFTER_TAX_YIELD AS DOUBLE) END DESC NULLS LAST,   -- 9/6 9바퀴(숨김)
+                   CASE WHEN $order = 'after_tax_asc' THEN TRY_CAST(AFTER_TAX_YIELD AS DOUBLE) END ASC NULLS LAST,
                    TRY_CAST(drv_crd_grd_rank AS INT) NULLS LAST,
                    TRY_CAST(SRFC_IRT AS DOUBLE) DESC NULLS LAST,
                    replace(MAT_DT,'-',''), PD_NO LIMIT $limit""",
        [Param("as_of_date", required=True), Param("until", required=True), Param("currency"),
         Param("max_rating_rank"), Param("min_rating_rank"), Param("min_coupon"),
         Param("max_coupon"), Param("bond_class"),
-        Param("order", enum=("coupon", "coupon_asc")),
+        Param("order", enum=("coupon", "coupon_asc", "after_tax", "after_tax_asc")),
         Param("limit", required=True)],
        source="PRBD01N001", key_col="PD_NO"),
 
@@ -315,14 +319,12 @@ TEMPLATES = {t.id: t for t in [
             AND ($min_listed_dt IS NULL OR replace(coalesce(pd_lstg_dt,''),'-','') >= replace($min_listed_dt,'-',''))
             AND ($max_listed_dt IS NULL OR nullif(replace(coalesce(pd_lstg_dt,''),'-',''),'') <= replace($max_listed_dt,'-',''))
             AND ($name_pattern IS NULL OR pd_nm ILIKE $name_pattern ESCAPE '\\' OR pd_abrv_nm ILIKE $name_pattern ESCAPE '\\')   -- 9/6 테마(숨김)
-          ORDER BY CASE $metric WHEN 'ytd' THEN TRY_CAST(du_er_ytd AS DOUBLE)
-                                WHEN '1m' THEN TRY_CAST(du_er_1m AS DOUBLE)
-                                WHEN '3m' THEN TRY_CAST(du_er_3m AS DOUBLE)
-                                WHEN '6m' THEN TRY_CAST(du_er_6m AS DOUBLE)
-                                ELSE TRY_CAST(du_er_1y AS DOUBLE) END DESC NULLS LAST
+          ORDER BY CASE WHEN $order = 'asc' THEN CASE $metric WHEN 'ytd' THEN TRY_CAST(du_er_ytd AS DOUBLE) WHEN '1m' THEN TRY_CAST(du_er_1m AS DOUBLE) WHEN '3m' THEN TRY_CAST(du_er_3m AS DOUBLE) WHEN '6m' THEN TRY_CAST(du_er_6m AS DOUBLE) ELSE TRY_CAST(du_er_1y AS DOUBLE) END END ASC NULLS LAST,   -- 9/6 9바퀴 '수익률 가장 낮은'(숨김)
+                   CASE WHEN coalesce($order, 'desc') = 'desc' THEN CASE $metric WHEN 'ytd' THEN TRY_CAST(du_er_ytd AS DOUBLE) WHEN '1m' THEN TRY_CAST(du_er_1m AS DOUBLE) WHEN '3m' THEN TRY_CAST(du_er_3m AS DOUBLE) WHEN '6m' THEN TRY_CAST(du_er_6m AS DOUBLE) ELSE TRY_CAST(du_er_1y AS DOUBLE) END END DESC NULLS LAST,
+                   pd_itm_no
           LIMIT $limit""",
        [Param("metric", required=True, enum=("ytd", "1y", "1m", "3m", "6m")),
-        Param("min_risk"), Param("max_risk"), Param("limit", required=True), Param("min_return"), Param("max_return"), Param("min_listed_dt"), Param("max_listed_dt"), Param("name_pattern"), Param("mgmt")],
+        Param("min_risk"), Param("max_risk"), Param("limit", required=True), Param("min_return"), Param("max_return"), Param("min_listed_dt"), Param("max_listed_dt"), Param("name_pattern"), Param("mgmt"), Param("order", enum=("asc",))],
        source="PREF01N001", key_col="pd_itm_no"),
 
     _t("etp_filter_risk",
@@ -331,10 +333,11 @@ TEMPLATES = {t.id: t for t in [
        """SELECT pd_itm_no, pd_abrv_nm, drv_risk_grade, pd_net_tamt FROM kr_etp
           WHERE drv_instrument_type = $instrument_type AND drv_listing_status = 'active'
             AND TRY_CAST(drv_risk_grade AS INT) BETWEEN $min_grade AND $max_grade
+            AND ($name_pattern IS NULL OR pd_nm ILIKE $name_pattern ESCAPE '\\' OR pd_abrv_nm ILIKE $name_pattern ESCAPE '\\')   -- 9/6 9바퀴 테마 표기(숨김)
           ORDER BY TRY_CAST(pd_net_tamt AS DOUBLE) DESC NULLS LAST LIMIT $limit""",
        [Param("instrument_type", required=True, enum=("ETF", "ETN")),
         Param("min_grade", required=True), Param("max_grade", required=True),
-        Param("limit", required=True)],
+        Param("limit", required=True), Param("name_pattern")],
        source="PREF01N001", key_col="pd_itm_no"),
 
     _t("etp_name_search",
@@ -659,6 +662,7 @@ TEMPLATES = {t.id: t for t in [
             AND ($region IS NULL OR ovrs_fd_desc = $region)
             AND ($name_pattern IS NULL OR itm_nm ILIKE $name_pattern ESCAPE '\\' OR itm_abrv_nm ILIKE $name_pattern ESCAPE '\\')   -- 9/6 이름 표기(숨김)
           ORDER BY CASE WHEN $order = 'aum' THEN TRY_CAST(fd_nast_suma AS DOUBLE) END DESC NULLS LAST,
+                   CASE WHEN $order = 'classes' THEN TRY_CAST(share_class_count AS INT) END DESC NULLS LAST,   -- 9/6 9바퀴 '클래스 수 많은'
                    CASE WHEN $order IS NULL AND $on_sale_only IS NULL
                              AND replace(trim(coalesce(sale_yn,'')), ' ', '') = '판매중' THEN 0
                         WHEN $order IS NULL AND $on_sale_only IS NULL THEN 1
@@ -814,6 +818,48 @@ TEMPLATES = {t.id: t for t in [
           WHERE c.etf_isin = $etf_id AND c.COMPST_ISU_CD = $code""",
        [Param("etf_id", required=True), Param("code", required=True)],
        source="KRX-PDF", key_col="COMPST_ISU_CD", as_of=AS_OF_CONSTITUENTS),
+
+    _t("bond_rating_dist",
+       "국내채권 신용등급(정규화 표기)별 건수 — 9/6 9바퀴('회사채 신용등급 분포'가 목록으로 답하던 것). "
+       "대분류·만기상태 선택. 등급 없는 종목은 별도 건수(unrated). 규칙 라우터 전용(AI 라우터 목록에서 숨김).",
+       """SELECT coalesce(nullif(trim(drv_crd_grd_norm), ''), '(등급 없음)') AS drv_crd_grd_norm, count(*) AS n
+          FROM kr_bond
+          WHERE ($bond_class IS NULL OR STD_PD_MCLS_NM = $bond_class)
+            AND ($maturity_status IS NULL OR drv_maturity_status = $maturity_status)
+          GROUP BY 1 ORDER BY min(TRY_CAST(drv_crd_grd_rank AS INT)) NULLS LAST, n DESC""",
+       [Param("bond_class"), Param("maturity_status")], source="PRBD01N001"),
+
+    _t("constituent_non_holders",
+       "특정 종목을 편입하지 않은 상장중 ETF(구성 공시가 있는 상품 기준) — 9/6 9바퀴('삼성전자 안 담은 반도체 ETF'가 편입 ETF 로 답하던 것). "
+       "name_pattern 으로 테마 표기 결합. 규칙 라우터 전용(AI 라우터 목록에서 숨김).",
+       """SELECT e.pd_itm_no, e.pd_abrv_nm, e.pd_nm, e.pd_net_tamt, e.drv_risk_grade
+          FROM kr_etp e
+          WHERE e.drv_instrument_type = 'ETF' AND e.drv_listing_status = 'active'
+            AND ($name_pattern IS NULL OR e.pd_nm ILIKE $name_pattern ESCAPE '\\' OR e.pd_abrv_nm ILIKE $name_pattern ESCAPE '\\')
+            AND e.pd_itm_no IN (SELECT DISTINCT etf_isin FROM etf_constituent)
+            AND e.pd_itm_no NOT IN (SELECT etf_isin FROM etf_constituent WHERE COMPST_ISU_CD = $code)
+          ORDER BY TRY_CAST(e.pd_net_tamt AS DOUBLE) DESC NULLS LAST, e.pd_itm_no LIMIT $limit""",
+       [Param("code", required=True), Param("name_pattern"), Param("limit", required=True)],
+       source="KRX-PDF", key_col="pd_itm_no", as_of=AS_OF_CONSTITUENTS),
+
+    _t("risk_grade_dist",
+       "금융상품 위험등급(1~6)별 × 상품군(국내채권·국내ETF·국내ETN·공모펀드) 상품 수 — 9/6 9바퀴('위험등급별로 몇 개씩'이 "
+       "등급 필수 조회문을 빈 파라미터로 불러 항상 오류이던 잠복 결함). 해외ETF 는 위험등급 항목이 없어 제외. 규칙 라우터 전용(숨김).",
+       """SELECT '국내채권' AS product_group, TRY_CAST(drv_risk_grade AS INT) AS grade, count(*) AS n
+          FROM kr_bond WHERE TRY_CAST(drv_risk_grade AS INT) BETWEEN 1 AND 6 GROUP BY 2
+          UNION ALL
+          SELECT '국내ETF' AS product_group, TRY_CAST(drv_risk_grade AS INT) AS grade, count(*) AS n
+          FROM kr_etp WHERE drv_instrument_type = 'ETF' AND drv_listing_status = 'active'
+            AND TRY_CAST(drv_risk_grade AS INT) BETWEEN 1 AND 6 GROUP BY 2
+          UNION ALL
+          SELECT '국내ETN' AS product_group, TRY_CAST(drv_risk_grade AS INT) AS grade, count(*) AS n
+          FROM kr_etp WHERE drv_instrument_type = 'ETN' AND drv_listing_status = 'active'
+            AND TRY_CAST(drv_risk_grade AS INT) BETWEEN 1 AND 6 GROUP BY 2
+          UNION ALL
+          SELECT '공모펀드' AS product_group, TRY_CAST(drv_risk_grade AS INT) AS grade, count(*) AS n
+          FROM fund_master WHERE TRY_CAST(drv_risk_grade AS INT) BETWEEN 1 AND 6 GROUP BY 2
+          ORDER BY grade, product_group""",
+       [], source="PRBD01N001·PREF01N001·PRFD01N001"),
 
     _t("etp_market_dist",
        "국내 ETP 상장 시장(pd_mkt_nm)별 분포 — 8/28 r4 R4-02('코스닥에 상장된 ETN 있어?' — "
@@ -1377,13 +1423,15 @@ def validate_params(template_id, params=None):
 #     목록에서만 숨기고 validate_params 는 그대로 받는다(규칙 라우터 호출용). 새 지표를 등록할 때도 같은 원칙.
 # 규칙 라우터 전용 조회문 — AI 라우터 목록(프롬프트)·도구 스키마에서 통째로 뺀다(9/6 6바퀴: 평균 집계 2종).
 # 왜: 목록 한 줄이 늘어도 경계 문항의 조회문 선택이 흔들린다(9/2 실측) — 평균 질의는 규칙이 앞에서 잡으므로 AI 가 알 필요 없음.
-LLM_HIDDEN_TEMPLATES = frozenset({"bond_metric_avg", "global_etf_metric_avg", "global_etf_detail", "constituent_pair_weight"})   # 7바퀴: 해외 티커 상세·상품×종목 비중
+LLM_HIDDEN_TEMPLATES = frozenset({"bond_metric_avg", "global_etf_metric_avg", "global_etf_detail", "constituent_pair_weight",
+                                  "bond_rating_dist", "constituent_non_holders", "risk_grade_dist"})   # 7바퀴: 해외 티커 상세·상품×종목 비중 · 9바퀴: 등급 분포·미편입·등급×상품군
 LLM_HIDDEN_ENUM_VALUES = {
     ("etp_metric_rank", "metric"): ("price", "mkt_cap", "fee", "shares", "listed"),
     ("constituent_holders", "order"): ("mkt_cap",),
     ("coverage_check", "field"): ("kr_etp.pd_dvid_yield",),
     ("etp_metric_avg", "metric"): ("fee",),               # 9/6 6바퀴: 'TIGER ETF 총보수 평균'
     ("bond_filter", "order"): ("mat_asc", "mat_desc", "issue_desc", "issue_asc"),   # 9/6 8바퀴: 만기 가까운 순·발행일 최근 순
+    ("bond_maturing_within", "order"): ("after_tax", "after_tax_asc"),   # 9/6 9바퀴: '만기 2년 이하 회사채 세후수익률 높은 순'
 }
 # 같은 원칙의 파라미터판 — 규칙 라우터만 넘기는 파라미터는 AI 라우터 목록에서 통째로 뺀다(9/3 bond_count 금리 조건).
 LLM_HIDDEN_PARAMS = {
@@ -1399,6 +1447,8 @@ LLM_HIDDEN_PARAMS = {
     ("bond_filter", "int_type"), ("bond_filter", "rate_type"), ("bond_count", "int_type"), ("bond_count", "rate_type"),
     ("etp_by_dividend", "order"), ("global_etf_filter", "lev_abs"), ("global_etf_count", "lev_abs"),
     ("global_etf_filter", "brand_word"), ("global_etf_count", "brand_word"),
+    # 9/6 9바퀴 — 수익률 오름차순, 등급 필터 테마 표기, 무등급
+    ("etp_top_return", "order"), ("etp_filter_risk", "name_pattern"), ("bond_filter", "unrated_only"), ("bond_count", "unrated_only"),
     # 9/3 2바퀴 — 숫자 조건이 조용히 버려지던 부류를 규칙 라우터 전용 파라미터로 메움
     ("etp_by_dividend", "min_yield"), ("etp_by_dividend", "max_yield"),
     ("etp_top_aum", "min_aum_gt"), ("etp_top_aum", "min_aum_ge"), ("etp_top_aum", "max_aum_lt"),

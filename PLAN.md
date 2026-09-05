@@ -57,6 +57,8 @@
 
 지금 진행해야 하는 것은 **제출물 마무리(⑨) 셋뿐**이다 — 아래 §4.
 
+**두 AI 세션 병행 규약(9/6)**: 리더 세션은 main 직접 푸시(작은 커밋), Codex 는 브랜치+PR, 문서(README·PLAN·ROADMAP)는 리더만, 코드 구역 분담, 관문에 HCX 재채점 명시 — [evalset/TEAM_IMPROVEMENT_GUIDE.md](evalset/TEAM_IMPROVEMENT_GUIDE.md) §6.5.
+
 **팀 운영 방식(8/27 확정, 유지)**: 팀원은 `main`에 직접 푸시하되 관문(pull → 테스트 전부 통과 → 본인이 만들거나 고친 문항은 HCX 포함 통과 → force push 금지·비밀값 검사)을 지킨다. 채점은 항상 HCX 포함(주최 평가와 같은 구성). **한 번 통과한 문항은 반복 재채점하지 않는다**(8/28 저녁 확정) — 검증은 코드 시험 + 새로 만들거나 고친 문항의 표적 채점만. 리더는 이상 없는 커밋에 `stable-날짜` 태그를 남기고, 하락이 확인되면 stable 기준으로 원인 커밋을 되돌린다. 절차와 복붙용 프롬프트는 [evalset/TEAM_IMPROVEMENT_GUIDE.md](evalset/TEAM_IMPROVEMENT_GUIDE.md).
 
 서버 실행법: `python server/app.py`(기본 8000 포트, 그래프·벡터·HCX 전부 적재 — 기동 약 1분). 개발용 가벼운 시작은 `--light`. 브라우저에서 `http://localhost:8000/`을 열면 질문 시험대가 뜬다. 설치는 [README.md](README.md) §5.

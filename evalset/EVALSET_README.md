@@ -243,7 +243,7 @@ CA-23의 모든 조건을 만족하는 상품도 직접 조회 결과 0건이다
 - 새 세트 전체 최종 점수는 **30/30 (HCX 포함, 함정 오답 0·과잉 거절 0)**이다. 보완 직전 실전 측정은 29/30이었고, 최신 main 병합 뒤 HCX 표적 CA-11·CA-23도 2/2였다. 최종 무료 성적표는 `reports/eval_20260906_0207_blind_codex_all_merged_nohcx_final.txt`, HCX 표적 성적표는 `reports/eval_20260906_0207_blind_codex_all_merged_hcx_targeted.txt`이다.
 - 추가한 표현 변형 시험은 `tests/test_codex_all_fixes.py`의 59개이며, 전체 자동 시험은 **606 passed, 2 skipped**(경고 1개)이다. 바꾼 규칙과 직접 관련된 기존 문항 표적 확인은 28개 중 **27개 통과**했다. 실패한 1개는 v1 T-14로, 질문은 공모펀드라고 했지만 기존 SQL 검사표가 사모를 포함한 최저 보수를 기대한다. 기존 시험지·채점표를 고치지 않는 규칙과 의미가 충돌해 코드로 우회하지 않고 제안 목록에 남겼다.
 
-**기존 9종 무료 회귀:** v1 **104/105**(T-14 검사표 불일치 1건), v2 **80/80**, v3 **80/80**, 미러 **38/38**, claude **20/20**, claude_r2 **30/30**, claude_r3 **25/25**, claude_r4 **25/25**, price_mktcap **34/34**. T-14 외 527개 문항에는 새 실패가 없었다. 표적·회귀 성적표는 `reports/eval_20260906_0153~0156_codex_all_targeted_*`와 `reports/eval_20260906_0209~0212_codex_all_regression_final_*`에 있다.
+**기존 9종 무료 회귀:** v1 **104/105**(T-14 검사표 불일치 1건), v2 **80/80**, v3 **80/80**, 미러 **38/38**, claude **20/20**, claude_r2 **30/30**, claude_r3 **25/25**, claude_r4 **25/25**, price_mktcap **34/34**. T-14 외 440개 문항에는 새 실패가 없었다. 표적·회귀 성적표는 `reports/eval_20260906_0153~0156_codex_all_targeted_*`와 `reports/eval_20260906_0209~0212_codex_all_regression_final_*`에 있다.
 
 **구조·정리 점검(읽기 전용):**
 

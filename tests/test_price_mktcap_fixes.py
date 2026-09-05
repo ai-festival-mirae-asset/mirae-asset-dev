@@ -371,3 +371,105 @@ def test_op_label_is_korean_head_of_description():
     assert _op_label("etp_by_dividend") == "국내 ETF 분배(배당) 정렬"
     assert _op_label("bond_filter") == "국내채권 필터 목록"
     assert _op_label("no_such_template") == "no_such_template"
+
+
+# ---------------------------------------------------------------------------
+# 9. (9/3 2바퀴 — 자체 점검 47문항) 숫자 조건이 조용히 버려지던 부류·표 오인·조각 오인 회귀 잠금
+#    조회문 파라미터는 전부 규칙 라우터 전용(LLM_HIDDEN_PARAMS) — AI 라우터 목록 해시 불변.
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("q, op, key, lo, hi", [
+    ("1년 수익률이 20% 이상인 국내 ETF 알려줘", "etp_top_return", "min_return", 20.0, None),
+    ("1년 수익률 5% 이하인 국내 ETF 있어?", "etp_top_return", "max_return", None, 5.0 + 1e-6),
+    ("배당수익률이 25% 이상인 ETF만 알려줘", "etp_by_dividend", "min_yield", 25.0, None),
+    ("세후수익률 4% 이상 채권 알려줘", "bond_filter", "min_after_tax", 4.0, None),
+    ("1년 수익률 15% 이상인 공모펀드 알려줘", "fund_top_return_1y", "min_return", 15.0, None),
+    ("총보수 0.5% 이하 펀드 알려줘", "fund_by_fee", "max_total_fee", None, 0.5 + 1e-6),
+    ("순자산 1조원 이상인 국내 ETF 목록 보여줘", "etp_top_aum", "min_aum_ge", 1e12, None),
+])
+def test_numeric_threshold_reaches_query(index, q, op, key, lo, hi):
+    c = _call(_route(index, q), op)
+    assert c is not None, q
+    assert abs(c.params[key] - (lo if lo is not None else hi)) < 1e-9
+
+
+def test_metric_thresholds_and_count_mode(index):
+    c = _call(_route(index, "괴리율이 1% 넘는 ETF 알려줘"), "etp_metric_rank")
+    assert c and c.params["metric"] == "diff" and abs(c.params["min_metric"] - 1.0) < 1e-9
+    c = _call(_route(index, "거래량 100만주 이상인 ETF 몇 개야?"), "etp_metric_rank")
+    assert c and c.params["metric"] == "volume" and c.params["limit"] == 2000 and c.params["min_metric"] < 1e6
+    c = _call(_route(index, "종가 1만원 이하인 ETF 5개"), "etp_metric_rank")
+    assert c and c.params["metric"] == "price" and c.params["direction"] == "asc" and c.params["max_metric"] > 1e4
+
+
+def test_new_metrics_fee_shares_listed(index):
+    assert _call(_route(index, "총보수가 가장 높은 국내 ETF 3개"), "etp_metric_rank").params["metric"] == "fee"
+    assert _call(_route(index, "총보수 0.1% 이하 ETF 중 순자산 큰 순 5개"), "etp_metric_rank") is None   # 낮은 쪽은 종전 필터
+    assert _call(_route(index, "상장주식수가 가장 많은 ETF 3개"), "etp_metric_rank").params["metric"] == "shares"
+    c = _call(_route(index, "국내 ETF 중 상장일이 가장 오래된 5개"), "etp_metric_rank")
+    assert c.params["metric"] == "listed" and c.params["direction"] == "asc"
+    assert _call(_route(index, "2024년 이후 상장한 ETF 중 순자산 상위 5개"), "etp_metric_rank") is None   # '상장일' 방향 낱말 없음
+
+
+def test_listed_year_bounds(index):
+    c = _call(_route(index, "2024년 이후 상장한 ETF 중 순자산 상위 5개"), "etp_top_aum")
+    assert c and c.params.get("min_listed_dt") == "2024-01-01"
+    c = _call(_route(index, "2020년 이전에 상장한 국내 ETF 몇 개야?"), "etp_count")
+    assert c and c.params.get("max_listed_dt") == "2019-12-31" and "min_listed_dt" not in c.params
+
+
+def test_bond_maturity_year_and_residual_above(index):
+    c = _call(_route(index, "만기가 2030년 이후인 국공채 알려줘"), "bond_maturing_within")
+    assert c and c.params["as_of_date"] == "2030-01-01" and c.params["bond_class"] == "국공채"
+    c = _call(_route(index, "잔존만기 5년 이상인 회사채 중 신용등급 AA 이상 알려줘"), "bond_maturing_within")
+    assert c and c.params["as_of_date"] == "2031-09-02" and c.params.get("max_rating_rank") == 3
+    c = _call(_route(index, "표면금리 5% 초과 채권 몇 개야?"), "bond_count")
+    assert c and c.params["min_coupon"] > 5.0                       # 초과 = 경계 제외
+
+
+def test_global_fee_rank_region_asset_and_aum_count(index):
+    c = _call(_route(index, "해외 ETF 중 총보수 가장 낮은 5개"), "global_etf_filter")
+    assert c and c.params.get("order") == "fee_asc"
+    plan = _route(index, "유럽에 투자하는 해외 채권형 ETF 알려줘")
+    calls = [x for x in plan.calls if x.op == "global_etf_filter"]
+    assert calls and all(x.params.get("ast_type") == "Bond" for x in calls) \
+        and any("Europe" in str(x.params.get("region_pattern_raw")) for x in calls)
+    assert _call(plan, "fund_detail") is None                       # '유럽펀드' 상세로 새지 않는다
+    c = _call(_route(index, "해외 ETF 중 순자산 100억달러 이상인 게 몇 개야?"), "global_etf_count")
+    assert c and abs(c.params["min_aum_ge"] - 1e10) < 1
+
+
+def test_fund_conditional_count_and_lowest_return(index):
+    c = _call(_route(index, "판매 중인 해외 주식형 펀드 몇 개야?"), "fund_filter")
+    assert c and c.params.get("region") == "해외" and c.params.get("on_sale_only") == "Y" \
+        and c.params.get("attr_pattern_raw") == "주식형"
+    c = _call(_route(index, "국내 채권형 펀드 중 수익률 가장 낮은 3개"), "fund_top_return_1y")
+    assert c and c.params.get("order") == "asc" and c.params.get("btyp_pattern") == "%채권형%"
+
+
+def test_fragment_guard_and_name_count(index):
+    c = _call(_route(index, "SK하이닉스 비중 10% 이상 ETF 중 순자산 큰 순"), "constituent_weight_above")
+    assert c and c.params["code"] == "000660" and c.params["min_weight"] == 10.0
+    c = _call(_route(index, "이름에 배당이 들어간 ETF 몇 개야?"), "etp_name_search")
+    assert c and c.params.get("pattern_raw") == "배당" and c.params["limit"] == 2000
+
+
+def test_constituent_fee_cap(index):
+    plan = _route(index, "삼성전자 포함 ETF 중 총보수 0.1% 이하인 것")
+    c = _call(plan, "constituent_holders")
+    assert c and abs(c.params["max_fee"] - 0.1) < 1e-5 and plan.behavior_hint == "partial"
+
+
+def test_global_aum_display_uses_currency_not_won():
+    row = {"pd_abrv_nm": "VOO", "pd_nm": "Vanguard 500 Index Fund;ETF", "wu_inv_rgn": "United States of America",
+           "pd_trd_ccy": "USD", "du_last_aum": "997351790000.0"}
+    out = _fmt_row(row)
+    assert "9,974억 USD" in out and "억원" not in out
+
+
+def test_etp_count_listed_bounds_are_format_safe(con):
+    # 9/3 2바퀴: '2019-12-31' 상한이 '20191231' 형식과 문자열 비교되어 2019년 상장분이 빠지던 것(317 vs 349)
+    n_dash = _rows(con, "etp_count", {"max_listed_dt": "2019-12-31"})
+    n_plain = _rows(con, "etp_count", {"max_listed_dt": "20191231"})
+    active = lambda rows: next(r["n"] for r in rows if r.get("drv_instrument_type") == "ETF" and r.get("drv_listing_status") == "active")
+    assert active(n_dash) == active(n_plain) == 349

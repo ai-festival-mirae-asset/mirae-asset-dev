@@ -125,6 +125,17 @@ def _to_float(v):
         return None
 
 
+def _fmt_amount(row, col):
+    """금액 열 표기 — 국내는 억원·조원 환산(짝 열 우선), 해외 ETF 행(pd_trd_ccy 보유)은 그 통화로
+    ('9,974억 USD'). 9/3 실측: 달러값을 '억원'으로 표기하던 버그."""
+    v = row.get(col)
+    ccy = str(row.get("pd_trd_ccy") or "").strip().upper()
+    if ccy and ccy != "KRW":
+        r = krw_readable(v)
+        return (r[:-1] + " " + ccy) if (r and r.endswith("원")) else (_fmt_value(v) + " " + ccy)
+    return row.get(col + "_krw") or krw_readable(v) or _fmt_value(v)
+
+
 def _fmt_display_value(row, col, fmt):
     """열 형식에 맞춘 값 표기 — 숫자 문자열('27.783191')도 형식대로. 형식을 모르면 _fmt_value."""
     v = row.get(col)
@@ -133,7 +144,7 @@ def _fmt_display_value(row, col, fmt):
     if isinstance(v, list):
         return " / ".join(str(x) for x in v[:5]) + (" 외" if len(v) > 5 else "")
     if fmt == "krw":
-        return row.get(col + "_krw") or krw_readable(v) or _fmt_value(v)
+        return _fmt_amount(row, col)
     if fmt == "date":
         return _fmt_attr(row, col, "date")
     if fmt == "months":
@@ -331,11 +342,16 @@ def _draft_answer(plan, result, question=""):
                 lines.append(f"[{o.op}] 구성 공시 없음 — 해당 상품의 {AS_OF_CONSTITUENTS} KRX 구성종목 공시가 "
                              "비어 있거나 미수집이라 구성종목을 확인할 수 없습니다")
             elif o.channel == "sql":
-                lines.append(f"[{o.op}] 조건 일치 결과 0건")
+                # 9/3: 지역 표기 변형 등 같은 조회문의 다른 호출이 결과를 냈으면 0건 줄은 잡음이라 생략
+                if not any(x.ok and x.op == o.op and x.rows for x in result.outcomes):
+                    lines.append(f"[{_op_label(o.op)}] 조건 일치 결과 0건")
             continue
         rows = o.rows
         if o.channel == "sql":
-            if o.op in _COUNT_OPS or o.op in _DIST_OPS:    # 9/3: 건수·분포는 문장 노트로만(원문 행 n=… 생략)
+            if o.op in _COUNT_OPS or o.op in _DIST_OPS:    # 9/3: 건수·분포는 원문 행(n=…) 대신 문장을 본문에
+                _sent = count_sentence(o.op, rows) if o.op in _COUNT_OPS else dist_sentence(o.op, rows)
+                if _sent:
+                    lines.append(_sent)
                 continue
             _order_col = _ORDER_HINT_COLS.get(plan.hints.get("order"))
             if _order_col and rows and _order_col in rows[0]:
@@ -376,8 +392,11 @@ def _draft_answer(plan, result, question=""):
     if not lines:
         lines.append("조건에 일치하는 결과를 보유 데이터에서 확인하지 못했습니다.")
     if plan.notes:
-        lines.append("")
-        lines += [f"※ {n}" for n in plan.notes]
+        _seen = set(lines)                                # 본문에 이미 쓴 건수·분포 문장은 노트로 되풀이하지 않는다(9/3)
+        extra = [f"※ {n}" for n in plan.notes if n not in _seen]
+        if extra:
+            lines.append("")
+            lines += extra
     lines.append(f"(데이터 기준일: 마스터 {AS_OF_MASTER} · 구성종목 {AS_OF_CONSTITUENTS})")
     return "\n".join(lines)
 
@@ -526,7 +545,7 @@ def _fmt_only_value(row, cols, fmt):
         return None
     v = row[col]
     if fmt == "krw":
-        return row.get(col + "_krw") or _fmt_value(v)
+        return _fmt_amount(row, col)
     if fmt == "date":
         return _fmt_attr(row, col, "date")
     if fmt == "months":

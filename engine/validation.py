@@ -149,6 +149,17 @@ def gate_existence(question, index, policy):
     # 보유 동사 없는 가짜 상품명 질의(함정)는 그대로 거절된다.
     reverse_holding = bool(re.search(r"보유|편입|담|포함", normalized_question)) and any(
         r.kind in ("constituent", "company") for _n, refs in grounded for r in refs)
+    # 이름+숫자+상품군의 상세 요청은 브랜드가 없어도 이름 존재를 검사한다.
+    # 조건 조회('2024년 이후 상장...')나 알려진 이름 일부는 부재 증거가 아니다.
+    numbered_name = re.match(
+        r"^([가-힣A-Za-z]{4,})\s+(\d{4})\s+(ETF|ETN|펀드)\s*(?:상품\s*)?(?:정보|상세)",
+        question.strip(), re.IGNORECASE)
+    if numbered_name and asks and not has_product and not reverse_holding:
+        stem = numbered_name.group(1)
+        target = " ".join(numbered_name.group(1, 2, 3))
+        if not index.exact(target) and not token_matches(index, stem, limit=1):
+            return (GateResult("existence", "refuse",
+                               f"'{target}' 명칭의 상품이 기준일 상품 목록에 없음"), [])
     if brand and asks and not has_product and not reverse_holding:
         phrase = re.sub(r"정보|알려줘|알려|수익률|어때|찾아줘|있어|\?", " ",
                         normalized_question).strip()
@@ -193,7 +204,8 @@ def gate_time_boundary(question):
     if flags.get("post_snapshot"):
         return GateResult("time", "refuse",
                           f"기준일({AS_OF_MASTER}) 이후({flags['post_snapshot']}) 정보는 보유하지 않음")
-    if flags.get("future") and re.search(r"추천|골라|알려", question):
+    if flags.get("future") and re.search(
+            r"추천|골라|알려|찍어|오를|내릴|상승|하락|수익률", question):
         return GateResult("time", "refuse",
                           "미래 전망·시장 예측은 제공 불가(단정 추천 금지) — 조건 기반 사실 조회로 전환 가능")
     return GateResult("time", "pass")

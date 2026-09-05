@@ -161,7 +161,7 @@ TEMPLATES = {t.id: t for t in [
        "활성 채권에 통화·신용등급·표면금리·대분류 조건을 함께 적용한다. 저장된 잔존일수 "
        "컬럼은 행별 기준일이 달라 쓰지 않는다. 대상: L-04/H-26.",
        """SELECT PD_NO, PD_NM, PD_ABRV_NM, STD_PD_MCLS_NM, CURR_CD, MAT_DT,
-                 drv_crd_grd_norm, drv_crd_grd_rank, SRFC_IRT
+                 drv_crd_grd_norm, drv_crd_grd_rank, SRFC_IRT, DUR
           FROM kr_bond
           WHERE drv_maturity_status = 'active'
             AND replace(coalesce(MAT_DT,''),'-','') BETWEEN replace($as_of_date,'-','')
@@ -288,7 +288,7 @@ TEMPLATES = {t.id: t for t in [
        "정렬 기준 값이 0인 행은 제외한다(8/26 주최 공지: '값이 0인 행들은 아예 포함하지 않도록'). "
        "대상: L-14, M-15, H-09.",
        """SELECT pd_itm_no, pd_abrv_nm, du_er_ytd, du_er_1y, du_er_1m, du_er_3m, du_er_6m,
-                 drv_risk_grade FROM kr_etp
+                 drv_risk_grade, du_clpr FROM kr_etp
           WHERE drv_instrument_type = 'ETF' AND drv_listing_status = 'active'
             AND ($min_risk IS NULL OR TRY_CAST(drv_risk_grade AS INT) >= $min_risk)
             AND ($max_risk IS NULL OR TRY_CAST(drv_risk_grade AS INT) <= $max_risk)
@@ -444,6 +444,10 @@ TEMPLATES = {t.id: t for t in [
                  coalesce(cu_base_index, ref_base_index) AS base_index, du_last_aum
           FROM kr_etp
           WHERE drv_listing_status = 'active'
+            AND ($min_aum_gt IS NULL OR TRY_CAST(pd_net_tamt AS DOUBLE) > $min_aum_gt)
+            AND ($min_aum_ge IS NULL OR TRY_CAST(pd_net_tamt AS DOUBLE) >= $min_aum_ge)
+            AND ($max_aum_lt IS NULL OR TRY_CAST(pd_net_tamt AS DOUBLE) < $max_aum_lt)
+            AND ($max_aum_le IS NULL OR TRY_CAST(pd_net_tamt AS DOUBLE) <= $max_aum_le)
             AND ($type IS NULL OR drv_instrument_type = $type)
             AND ($index_pattern IS NULL OR coalesce(cu_base_index, ref_base_index) ILIKE $index_pattern
                  OR pd_nm ILIKE $index_pattern OR pd_abrv_nm ILIKE $index_pattern)
@@ -460,6 +464,9 @@ TEMPLATES = {t.id: t for t in [
                                       WHEN 'fee' THEN TRY_CAST(cu_charge_rt AS DOUBLE) WHEN 'shares' THEN TRY_CAST(pd_lst_stk_cnt AS DOUBLE) WHEN 'listed' THEN TRY_CAST(replace(coalesce(pd_lstg_dt,''),'-','') AS DOUBLE) ELSE TRY_CAST(du_vlty_1y AS DOUBLE) END, 0) <> 0
             AND ($max_metric IS NULL OR CASE $metric WHEN 'diff' THEN TRY_CAST(du_diff_rt AS DOUBLE)
                                                      WHEN 'tracking' THEN TRY_CAST(du_chas_errt AS DOUBLE)
+                                                     WHEN 'vol_1m' THEN TRY_CAST(du_vlty_1m AS DOUBLE)
+                                                     WHEN 'vol_3m' THEN TRY_CAST(du_vlty_3m AS DOUBLE)
+                                                     WHEN 'vol_6m' THEN TRY_CAST(du_vlty_6m AS DOUBLE)
                                                      WHEN 'volume' THEN TRY_CAST(du_vol_1d AS DOUBLE)
                                                      WHEN 'value' THEN TRY_CAST(du_val_1d AS DOUBLE)
                                                      WHEN 'nav' THEN TRY_CAST(du_last_nav AS DOUBLE)
@@ -468,6 +475,9 @@ TEMPLATES = {t.id: t for t in [
                                                      WHEN 'fee' THEN TRY_CAST(cu_charge_rt AS DOUBLE) WHEN 'shares' THEN TRY_CAST(pd_lst_stk_cnt AS DOUBLE) WHEN 'listed' THEN TRY_CAST(replace(coalesce(pd_lstg_dt,''),'-','') AS DOUBLE) ELSE TRY_CAST(du_vlty_1y AS DOUBLE) END < $max_metric)
             AND ($min_metric IS NULL OR CASE $metric WHEN 'diff' THEN TRY_CAST(du_diff_rt AS DOUBLE)
                                                      WHEN 'tracking' THEN TRY_CAST(du_chas_errt AS DOUBLE)
+                                                     WHEN 'vol_1m' THEN TRY_CAST(du_vlty_1m AS DOUBLE)
+                                                     WHEN 'vol_3m' THEN TRY_CAST(du_vlty_3m AS DOUBLE)
+                                                     WHEN 'vol_6m' THEN TRY_CAST(du_vlty_6m AS DOUBLE)
                                                      WHEN 'volume' THEN TRY_CAST(du_vol_1d AS DOUBLE)
                                                      WHEN 'value' THEN TRY_CAST(du_val_1d AS DOUBLE)
                                                      WHEN 'nav' THEN TRY_CAST(du_last_nav AS DOUBLE)
@@ -506,7 +516,7 @@ TEMPLATES = {t.id: t for t in [
         Param("direction", required=True, enum=("asc", "desc")),
         Param("type", enum=("ETF", "ETN")), Param("index_pattern"),
         Param("max_metric"), Param("min_metric"),
-        Param("limit", required=True)],
+        Param("min_aum_gt"), Param("min_aum_ge"), Param("max_aum_lt"), Param("max_aum_le"), Param("limit", required=True)],
        source="PREF01N001", key_col="pd_itm_no"),
 
     _t("risk_grade_product_counts",
@@ -549,12 +559,16 @@ TEMPLATES = {t.id: t for t in [
             AND ($min_aum_ge IS NULL OR TRY_CAST(du_last_aum AS DOUBLE) >= $min_aum_ge)
             AND ($max_aum_lt IS NULL OR TRY_CAST(du_last_aum AS DOUBLE) < $max_aum_lt)
             AND ($max_aum_le IS NULL OR TRY_CAST(du_last_aum AS DOUBLE) <= $max_aum_le)
+            AND ($min_fee_gt IS NULL OR (TRY_CAST(cu_charge_rt AS DOUBLE)>0 AND TRY_CAST(cu_charge_rt AS DOUBLE) > $min_fee_gt))
+            AND ($min_fee_ge IS NULL OR (TRY_CAST(cu_charge_rt AS DOUBLE)>0 AND TRY_CAST(cu_charge_rt AS DOUBLE) >= $min_fee_ge))
+            AND ($max_fee_lt IS NULL OR (TRY_CAST(cu_charge_rt AS DOUBLE)>0 AND TRY_CAST(cu_charge_rt AS DOUBLE) < $max_fee_lt))
+            AND ($max_fee_le IS NULL OR (TRY_CAST(cu_charge_rt AS DOUBLE)>0 AND TRY_CAST(cu_charge_rt AS DOUBLE) <= $max_fee_le))
           ORDER BY CASE WHEN $order = 'fee_asc' THEN TRY_CAST(cu_charge_rt AS DOUBLE) END ASC NULLS LAST,
                    CASE WHEN $order = 'fee_desc' THEN TRY_CAST(cu_charge_rt AS DOUBLE) END DESC NULLS LAST,
                    TRY_CAST(du_last_aum AS DOUBLE) DESC NULLS LAST, pd_itm_no LIMIT $limit""",
        [Param("region_pattern"), Param("exclude_region_pattern"), Param("name_pattern"),
         Param("inverse_only"), Param("etn_only"), Param("ast_type"), Param("ccy"),
-        Param("exclude_ccy"), Param("limit", required=True), Param("order", enum=("fee_asc", "fee_desc")), Param("min_aum_gt"), Param("min_aum_ge"), Param("max_aum_lt"), Param("max_aum_le")],
+        Param("exclude_ccy"), Param("min_fee_gt"), Param("min_fee_ge"), Param("max_fee_lt"), Param("max_fee_le"), Param("limit", required=True), Param("order", enum=("fee_asc", "fee_desc")), Param("min_aum_gt"), Param("min_aum_ge"), Param("max_aum_lt"), Param("max_aum_le")],
        source="PREF02N001", key_col="pd_itm_no", as_of=AS_OF_MASTER_GL),
 
     _t("global_etf_count",
@@ -629,8 +643,10 @@ TEMPLATES = {t.id: t for t in [
                        + coalesce(TRY_CAST(or_co_rwrd_r AS DOUBLE), 0)
                        + coalesce(TRY_CAST(trusc_rwrd_r AS DOUBLE), 0)
                        + coalesce(TRY_CAST(ofwk_trus_rwrd_r AS DOUBLE), 0), 4) AS total_fee_pct,
-                 fd_nast_suma
-          FROM fund_master
+                 fd_nast_suma, drv_risk_grade, prvo_pbff_desc, han_clas_fee_type, han_clas_sales_channel
+          FROM (SELECT * EXCLUDE (share_class_count) FROM fund_master WHERE $class_only IS NULL
+                UNION ALL
+                SELECT * FROM fund_class WHERE $class_only IS NOT NULL)
           WHERE coalesce(TRY_CAST(sale_co_rwrd_r AS DOUBLE), 0)
                 + coalesce(TRY_CAST(or_co_rwrd_r AS DOUBLE), 0)
                 + coalesce(TRY_CAST(trusc_rwrd_r AS DOUBLE), 0)
@@ -640,13 +656,19 @@ TEMPLATES = {t.id: t for t in [
             AND ($btyp_pattern IS NULL OR zrin_btyp_nm ILIKE $btyp_pattern)
             AND ($on_sale_only IS NULL OR replace(trim(coalesce(sale_yn,'')), ' ', '') = '판매중')
             AND ($max_total_fee IS NULL OR (coalesce(TRY_CAST(sale_co_rwrd_r AS DOUBLE), 0) + coalesce(TRY_CAST(or_co_rwrd_r AS DOUBLE), 0) + coalesce(TRY_CAST(trusc_rwrd_r AS DOUBLE), 0) + coalesce(TRY_CAST(ofwk_trus_rwrd_r AS DOUBLE), 0)) <= $max_total_fee)   -- 9/3 문턱(숨김)
+
+            AND ($public_only IS NULL OR prvo_pbff_desc='공모')
+            AND ($min_risk IS NULL OR TRY_CAST(drv_risk_grade AS INT)>=$min_risk)
+            AND ($max_risk IS NULL OR TRY_CAST(drv_risk_grade AS INT)<=$max_risk)
+            AND ($fee_type IS NULL OR han_clas_fee_type=$fee_type)
+            AND ($channel_pattern IS NULL OR han_clas_sales_channel ILIKE $channel_pattern)
           ORDER BY CASE WHEN $order = 'total_asc' THEN total_fee_pct END ASC NULLS LAST,
                    CASE WHEN $order = 'total_desc' THEN total_fee_pct END DESC NULLS LAST,
                    CASE WHEN $order = 'sale_asc' THEN TRY_CAST(sale_co_rwrd_r AS DOUBLE) END ASC NULLS LAST,
                    itm_no LIMIT $limit""",
        [Param("order", required=True, enum=("total_asc", "total_desc", "sale_asc")),
         Param("attr_pattern"), Param("btyp_pattern"), Param("on_sale_only"),
-        Param("limit", required=True), Param("max_total_fee")],
+        Param("public_only"), Param("min_risk"), Param("max_risk"), Param("fee_type"), Param("channel_pattern"), Param("class_only"), Param("limit", required=True), Param("max_total_fee")],
        source="PRFD01N001", key_col="itm_no"),
 
     _t("etp_metric_avg",
@@ -1255,6 +1277,22 @@ LLM_HIDDEN_PARAMS = {
     ("global_etf_count", "max_aum_lt"), ("global_etf_count", "max_aum_le"),
     ("global_etf_filter", "min_aum_gt"), ("global_etf_filter", "min_aum_ge"),
     ("global_etf_filter", "max_aum_lt"), ("global_etf_filter", "max_aum_le"),
+    # codex_all: 추가 조건은 규칙 전용이며 AI 조회문 목록을 유지한다.
+    ("etp_metric_rank", "min_aum_gt"),
+    ("etp_metric_rank", "min_aum_ge"),
+    ("etp_metric_rank", "max_aum_lt"),
+    ("etp_metric_rank", "max_aum_le"),
+    ("global_etf_filter", "min_fee_gt"),
+    ("global_etf_filter", "min_fee_ge"),
+    ("global_etf_filter", "max_fee_lt"),
+    ("global_etf_filter", "max_fee_le"),
+    ("fund_by_fee", "public_only"),
+    ("fund_by_fee", "min_risk"),
+    ("fund_by_fee", "max_risk"),
+    ("fund_by_fee", "fee_type"),
+    ("fund_by_fee", "channel_pattern"),
+    ("fund_by_fee", "class_only"),
+
 }
 
 
@@ -1316,4 +1354,11 @@ def run_template(con, template_id, params=None):
         evidences[-1] = Evidence(source=evidences[-1].source, source_id=evidences[-1].source_id,
                                  channel="sql", as_of=t.as_of, fields=evidences[-1].fields,
                                  note=f"외 {len(rows) - MAX_EVIDENCE_ROWS:,}건(총 {len(rows):,}건)")
+    if not rows:
+        # 조건에 맞는 행이 없어도 조회한 원천과 기준일을 근거로 남긴다.
+        # 빈 결과를 근거 없음으로 오인하지 않도록 하는 일반적인 증거 표기다.
+        evidences.append(Evidence(source=t.source or "storage", source_id="(0건)",
+                                  channel="sql", as_of=t.as_of,
+                                  fields={"결과": "조건 일치 0건"},
+                                  note="조회 기록: 조건에 맞는 행이 없어 목록은 비어 있음"))
     return TemplateResult(t.id, rows, evidences)

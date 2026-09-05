@@ -664,7 +664,15 @@ def route_stage_a(question, index, policy=None, today=None):
         return plan, False
 
     has_etf_word = bool(re.search(r"ETF|ETN|ETP|이티에프", q, re.IGNORECASE))
-    is_global = "해외" in q
+    # 9/6: 주최 과제설명 p.4 예시 "미국 증시에 상장된 주식형 ETF 중에서 총보수가 낮고 운용규모가 큰 상품 3개"가
+    # '해외' 낱말이 없어 국내 ETF 표(11절 보수 규칙)로 새던 것 — 상장 시장을 말하는 구절(미국/뉴욕/나스닥/NYSE …
+    # + (증시|시장|거래소)? + (에|에서)? + 상장|거래|리스팅)도 해외 판정. 해외 ETF 마스터(PREF02N001) 6,037종은
+    # 전부 미국 상장(pd_mkt_id='US')이라 상장시장 조건은 표 전체에 해당한다. '미국 ETF'처럼 상장 낱말이 없는
+    # 표현은 국내 ETF(미국 지수 추종)와 겹치므로 그대로 둔다.
+    _LISTED_ABROAD_RE = (r"(미국|뉴욕|나스닥|NASDAQ|NYSE|아멕스|AMEX|해외)\s*(증시|주식\s*시장|시장|거래소)?\s*"
+                         r"(에|에서)?\s*(상장|거래|리스팅)")
+    _listed_abroad = re.search(_LISTED_ABROAD_RE, q, re.IGNORECASE)
+    is_global = "해외" in q or bool(_listed_abroad)
     is_bond_domain = any(w in q for w, _v in BOND_CLASS_MAP) or "채권" in q or "영구채" in q
     is_fund_domain = "펀드" in q
     product_name, product_ref = _first_of_kind(
@@ -1780,13 +1788,43 @@ def route_stage_a(question, index, policy=None, today=None):
             if kind == "fee" and direction in fee_bound_keys:
                 global_bounds[fee_bound_keys[direction]] = value
                 global_bound_notes.append(f"총보수 {value:g}% {direction} 조건 — 값 보유 상품 기준(0 표기는 미확정이라 제외)")
+        # 9/6: 상장 시장 구절('미국 증시에 상장된')은 투자지역 조건이 아니다 — 지역 낱말은 그 구절을 뺀 나머지에서 찾고,
+        # 자산유형(주식형·채권형…)은 보수·규모 순위 규칙에도 함께 건다(종전엔 보수 순위가 자산유형을 무시).
+        _q_gl = re.sub(_LISTED_ABROAD_RE, " ", q, flags=re.IGNORECASE)
+        _gl_region = next((t for t in theme_hits if t in REGIONS and t in _q_gl), None)
+        _gl_ast = next((en for ko, en in (("채권", "Bond"), ("주식", "Equity"), ("원자재", "Commodity"),
+                                          ("대체", "Alternatives"), ("혼합", "Mixed Assets")) if ko in q), None)
+        _gl_common, _gl_notes = dict(global_bounds), list(global_bound_notes)
+        if _gl_ast:
+            _gl_common["ast_type"] = _gl_ast
+            _gl_notes.append(f"자산유형(wu_inv_ast_type)='{_gl_ast}' 기준")
+        if _gl_region:
+            _gl_common["region_pattern_raw"] = REGION_INV_RGN_EN.get(_gl_region, _gl_region)
+            _gl_notes.append(f"투자지역(wu_inv_rgn) '{_gl_region}'({REGION_INV_RGN_EN.get(_gl_region, _gl_region)}) 기준")
+        if _listed_abroad:
+            _gl_notes.append("해외 ETF 마스터(PREF02N001) 6,037종은 전부 미국 상장(pd_mkt_id='US') — 상장시장 조건은 표 전체에 해당")
+        _gl_fee_low = bool(re.search(r"보수", q) and re.search(r"낮|싼|저렴|최저|적은|적고", q))
+        _gl_big = bool(re.search(r"(규모|순자산|자산|AUM)\s*(이|가|은|는|도)?\s*(가장|제일|더|매우|아주)?\s*(큰|크|많|높|상위|대형|1위)", q)
+                       or "대형" in q)
+        if _gl_fee_low and _gl_big:
+            # 9/6: 주최 과제설명 p.4 예시 "총보수가 낮고 운용규모가 큰 상품 3개만 비교" — 두 조건을 동등하게 보아
+            # 총보수 오름차순 순위 + 순자산 내림차순 순위의 합이 작은 순(값 0·결측 제외). 임의 문턱값('낮음'=0.2% 이하 등)을
+            # 정하지 않고도 결정적으로 답이 나오며, 실측 상위는 VOO·VTI·VEA(주식형) — 규모·보수 모두 최상위권.
+            _gp = dict(_gl_common, order="fee_aum", limit=top_n or 3)
+            plan.calls.append(ChannelCall("sql", "global_etf_filter", _gp))
+            plan.notes.append("'총보수 낮고 규모 큰' = 총보수(cu_charge_rt) 오름차순 순위와 순자산(du_last_aum) 내림차순 순위의 합이 "
+                              "작은 순(두 조건 동등 가중) — 값 0·결측 상품 제외(값 보유분 기준)")
+            plan.notes.extend(_gl_notes)
+            plan.hints["display_rows"] = top_n or 3
+            plan.hints["skip_generation"] = True
+            return done("global_fee_aum_rank", "partial")
         if re.search(r"보수", q) and re.search(r"낮|싼|저렴|최저|높|비싼|최고", q):
             # 9/3 2바퀴: '해외 ETF 중 총보수 가장 낮은 5개'가 11절 국내 보수 규칙으로 새던 것(표 오인)
             _gf = "fee_desc" if re.search(r"높|비싼|최고", q) else "fee_asc"
-            plan.calls.append(ChannelCall("sql", "global_etf_filter", {**global_bounds, "order": _gf, "limit": top_n or 5}))
-            plan.notes.extend(global_bound_notes)
+            plan.calls.append(ChannelCall("sql", "global_etf_filter", dict(_gl_common, order=_gf, limit=top_n or 5)))
             plan.notes.append("해외 ETF 총보수(cu_charge_rt) " + ("내림" if _gf == "fee_desc" else "오름")
                               + "차순 — 값 0·결측 상품 제외(값 보유분 기준)")
+            plan.notes.extend(_gl_notes)                  # 9/6: 자산유형·지역 조건 결합
             plan.hints["display_rows"] = top_n or 5
             plan.hints["skip_generation"] = True
             return done("global_fee_rank", "partial")

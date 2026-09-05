@@ -544,7 +544,7 @@ TEMPLATES = {t.id: t for t in [
        "해외ETF 필터 — 지역(포함/제외)·상품명/전략 서술 패턴·인버스·거래통화. 위험등급 컬럼은 원천에 없음(요청 시 "
        "Validation 이 refuse — T-13/M-29). exclude_region_pattern='United States' + name_pattern='dividend' 이면 "
        "'미국 말고 다른 지역 배당형'(H-18). 대상: L-18/19/20, H-18.",
-       """SELECT pd_itm_no, pd_abrv_nm, pd_nm, wu_inv_rgn, pd_trd_ccy, du_last_aum, cu_charge_rt FROM global_etf
+       """SELECT pd_itm_no, pd_abrv_nm, pd_nm, cu_charge_rt, du_last_aum, cu_base_index, wu_inv_rgn, pd_trd_ccy FROM global_etf
           WHERE ($region_pattern IS NULL OR wu_inv_rgn ILIKE $region_pattern ESCAPE '\\')
             AND ($exclude_region_pattern IS NULL OR coalesce(wu_inv_rgn, '') NOT ILIKE $exclude_region_pattern ESCAPE '\\')
             AND ($name_pattern IS NULL OR pd_nm ILIKE $name_pattern ESCAPE '\\'
@@ -554,7 +554,8 @@ TEMPLATES = {t.id: t for t in [
             AND ($ast_type IS NULL OR wu_inv_ast_type = $ast_type)
             AND ($ccy IS NULL OR pd_trd_ccy = $ccy)
             AND ($exclude_ccy IS NULL OR pd_trd_ccy <> $exclude_ccy)
-            AND ($order IS NULL OR $order NOT IN ('fee_asc', 'fee_desc') OR coalesce(TRY_CAST(cu_charge_rt AS DOUBLE), 0) > 0)   -- 9/3(숨김)
+            AND ($order IS NULL OR $order NOT IN ('fee_asc', 'fee_desc', 'fee_aum') OR coalesce(TRY_CAST(cu_charge_rt AS DOUBLE), 0) > 0)   -- 9/3(숨김)
+            AND ($order IS NULL OR $order <> 'fee_aum' OR coalesce(TRY_CAST(du_last_aum AS DOUBLE), 0) > 0)   -- 9/6 순위 합(숨김)
             AND ($min_aum_gt IS NULL OR TRY_CAST(du_last_aum AS DOUBLE) > $min_aum_gt)   -- 9/3 달러 범위(숨김)
             AND ($min_aum_ge IS NULL OR TRY_CAST(du_last_aum AS DOUBLE) >= $min_aum_ge)
             AND ($max_aum_lt IS NULL OR TRY_CAST(du_last_aum AS DOUBLE) < $max_aum_lt)
@@ -563,12 +564,14 @@ TEMPLATES = {t.id: t for t in [
             AND ($min_fee_ge IS NULL OR (TRY_CAST(cu_charge_rt AS DOUBLE)>0 AND TRY_CAST(cu_charge_rt AS DOUBLE) >= $min_fee_ge))
             AND ($max_fee_lt IS NULL OR (TRY_CAST(cu_charge_rt AS DOUBLE)>0 AND TRY_CAST(cu_charge_rt AS DOUBLE) < $max_fee_lt))
             AND ($max_fee_le IS NULL OR (TRY_CAST(cu_charge_rt AS DOUBLE)>0 AND TRY_CAST(cu_charge_rt AS DOUBLE) <= $max_fee_le))
-          ORDER BY CASE WHEN $order = 'fee_asc' THEN TRY_CAST(cu_charge_rt AS DOUBLE) END ASC NULLS LAST,
+          ORDER BY CASE WHEN $order = 'fee_aum' THEN (RANK() OVER (ORDER BY TRY_CAST(cu_charge_rt AS DOUBLE) ASC NULLS LAST)
+                                                    + RANK() OVER (ORDER BY TRY_CAST(du_last_aum AS DOUBLE) DESC NULLS LAST)) END ASC NULLS LAST,   -- 9/6 '보수 낮고 규모 큰' 순위 합(숨김)
+                   CASE WHEN $order = 'fee_asc' THEN TRY_CAST(cu_charge_rt AS DOUBLE) END ASC NULLS LAST,
                    CASE WHEN $order = 'fee_desc' THEN TRY_CAST(cu_charge_rt AS DOUBLE) END DESC NULLS LAST,
                    TRY_CAST(du_last_aum AS DOUBLE) DESC NULLS LAST, pd_itm_no LIMIT $limit""",
        [Param("region_pattern"), Param("exclude_region_pattern"), Param("name_pattern"),
         Param("inverse_only"), Param("etn_only"), Param("ast_type"), Param("ccy"),
-        Param("exclude_ccy"), Param("min_fee_gt"), Param("min_fee_ge"), Param("max_fee_lt"), Param("max_fee_le"), Param("limit", required=True), Param("order", enum=("fee_asc", "fee_desc")), Param("min_aum_gt"), Param("min_aum_ge"), Param("max_aum_lt"), Param("max_aum_le")],
+        Param("exclude_ccy"), Param("min_fee_gt"), Param("min_fee_ge"), Param("max_fee_lt"), Param("max_fee_le"), Param("limit", required=True), Param("order", enum=("fee_asc", "fee_desc", "fee_aum")), Param("min_aum_gt"), Param("min_aum_ge"), Param("max_aum_lt"), Param("max_aum_le")],
        source="PREF02N001", key_col="pd_itm_no", as_of=AS_OF_MASTER_GL),
 
     _t("global_etf_count",

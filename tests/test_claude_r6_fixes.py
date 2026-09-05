@@ -314,9 +314,9 @@ def test_english_manager_count_uses_global_master(index, con):
     plan = _route(index, "iShares가 운용하는 ETF 몇 개")
     assert plan.intent == "global_count", plan.intent
     c = _call(plan, "global_etf_count")
-    assert c.params == {"mgmt_pattern_raw": "iShares"}
-    n = con.execute("SELECT count(*) FROM global_etf WHERE pd_nm ILIKE '%ishares%' "
-                    "OR cu_fund_mgmt_co ILIKE '%ishares%'").fetchone()[0]
+    assert c.params["mgmt_pattern_raw"] == "iShares" and "iShares" in c.params["brand_word"]   # 8바퀴: 상품명은 낱말 경계 정규식
+    n = con.execute("SELECT count(*) FROM global_etf WHERE regexp_matches(pd_nm, '(^|[^A-Za-z0-9])iShares([^A-Za-z0-9]|$)', 'i') "
+                    "OR cu_fund_mgmt_co ILIKE '%ishares%'").fetchone()[0]   # 8바퀴: 상품명은 낱말 경계(ARK ≠ Markets)
     assert sum(int(r["n"]) for r in _rows(con, c)) == n and n > 100   # 운용사 표기(BlackRock)에만 기대면 8건
 
 

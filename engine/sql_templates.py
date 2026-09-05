@@ -87,6 +87,8 @@ TEMPLATES = {t.id: t for t in [
             AND ($min_coupon IS NULL OR TRY_CAST(SRFC_IRT AS DOUBLE) >= $min_coupon)
             AND ($max_coupon IS NULL OR TRY_CAST(SRFC_IRT AS DOUBLE) < $max_coupon)
             AND ($bond_class IS NULL OR STD_PD_MCLS_NM = $bond_class)
+            AND ($int_type IS NULL OR BD_INTP_TCD = $int_type)      -- 9/6 8바퀴 이자 유형(이표채·복리채·할인채·단리채, 숨김)
+            AND ($rate_type IS NULL OR BD_INRT_TCD = $rate_type)    -- 금리 유형(고정·변동, 숨김)
             AND ($pension_only IS NULL OR upper(trim(coalesce(PD_PEN_TR_YN,''))) IN ('Y','TRUE','1'))
             AND ($min_issue_dt IS NULL OR ISU_DT >= $min_issue_dt)
             AND ($max_issue_dt IS NULL OR ISU_DT <= $max_issue_dt)
@@ -104,12 +106,16 @@ TEMPLATES = {t.id: t for t in [
                    CASE WHEN $order = 'after_tax_asc' THEN TRY_CAST(AFTER_TAX_YIELD AS DOUBLE) END ASC NULLS LAST,
                    CASE WHEN $order = 'dur' THEN TRY_CAST(DUR AS DOUBLE) END DESC NULLS LAST,
                    CASE WHEN $order = 'dur_asc' THEN TRY_CAST(DUR AS DOUBLE) END ASC NULLS LAST,
+                   CASE WHEN $order = 'mat_asc' THEN MAT_DT END ASC NULLS LAST,        -- 9/6 8바퀴 만기 가까운 순(숨김)
+                   CASE WHEN $order = 'mat_desc' THEN MAT_DT END DESC NULLS LAST,
+                   CASE WHEN $order = 'issue_desc' THEN ISU_DT END DESC NULLS LAST,    -- 발행일 최근 순(숨김)
+                   CASE WHEN $order = 'issue_asc' THEN ISU_DT END ASC NULLS LAST,
                    TRY_CAST(drv_crd_grd_rank AS INT) NULLS LAST,
                    TRY_CAST(SRFC_IRT AS DOUBLE) DESC NULLS LAST, PD_NO
           LIMIT $limit""",
        [Param("currency"), Param("max_rating_rank"), Param("min_rating_rank"),
         Param("maturity_status"), Param("buyable_only"), Param("min_coupon"),
-        Param("max_coupon"), Param("bond_class"), Param("order", enum=("coupon", "coupon_asc", "after_tax", "after_tax_asc", "dur", "dur_asc")),
+        Param("max_coupon"), Param("bond_class"), Param("int_type"), Param("rate_type"), Param("order", enum=("coupon", "coupon_asc", "after_tax", "after_tax_asc", "dur", "dur_asc", "mat_asc", "mat_desc", "issue_desc", "issue_asc")),
         Param("pension_only"), Param("min_issue_dt"), Param("max_issue_dt"),
         Param("min_dur"), Param("max_dur"),
         Param("limit", required=True), Param("min_after_tax"), Param("max_after_tax")],
@@ -125,6 +131,8 @@ TEMPLATES = {t.id: t for t in [
             AND ($maturity_status IS NULL OR drv_maturity_status = $maturity_status)
             AND ($buyable_only IS NULL OR upper(coalesce(drv_is_buyable,'')) IN ('Y','TRUE','1'))
             AND ($bond_class IS NULL OR STD_PD_MCLS_NM = $bond_class)
+            AND ($int_type IS NULL OR BD_INTP_TCD = $int_type)      -- 9/6 8바퀴 이자 유형(이표채·복리채·할인채·단리채, 숨김)
+            AND ($rate_type IS NULL OR BD_INRT_TCD = $rate_type)    -- 금리 유형(고정·변동, 숨김)
             AND ($pension_only IS NULL OR upper(trim(coalesce(PD_PEN_TR_YN,''))) IN ('Y','TRUE','1'))
             AND ($min_issue_dt IS NULL OR ISU_DT >= $min_issue_dt)
             AND ($max_issue_dt IS NULL OR ISU_DT <= $max_issue_dt)
@@ -133,7 +141,7 @@ TEMPLATES = {t.id: t for t in [
             AND ($min_after_tax IS NULL OR TRY_CAST(AFTER_TAX_YIELD AS DOUBLE) >= $min_after_tax)   -- 9/3 문턱(숨김)
             AND ($max_after_tax IS NULL OR TRY_CAST(AFTER_TAX_YIELD AS DOUBLE) < $max_after_tax)""",
        [Param("currency"), Param("max_rating_rank"), Param("min_rating_rank"),
-        Param("maturity_status"), Param("buyable_only"), Param("bond_class"),
+        Param("maturity_status"), Param("buyable_only"), Param("bond_class"), Param("int_type"), Param("rate_type"),
         Param("pension_only"), Param("min_issue_dt"), Param("max_issue_dt"),
         # 9/3: 표면금리 조건을 목록(bond_filter)과 건수가 같은 기준으로 세도록 — AI 라우터 목록에는 숨김(LLM_HIDDEN_PARAMS)
         Param("min_coupon"), Param("max_coupon"), Param("min_after_tax"), Param("max_after_tax")],
@@ -425,11 +433,12 @@ TEMPLATES = {t.id: t for t in [
             AND ($min_listed_dt IS NULL OR replace(coalesce(pd_lstg_dt,''),'-','') >= replace($min_listed_dt,'-',''))   -- 9/3: 형식 정규화
             AND ($min_yield IS NULL OR TRY_CAST(pd_dvid_yield AS DOUBLE) >= $min_yield)   -- 9/3 문턱(숨김)
             AND ($max_yield IS NULL OR TRY_CAST(pd_dvid_yield AS DOUBLE) < $max_yield)
-          ORDER BY CASE WHEN $metric = 'amount' THEN TRY_CAST(pd_divd_amt_ann AS DOUBLE)
+          ORDER BY CASE WHEN $order = 'aum' THEN TRY_CAST(pd_net_tamt AS DOUBLE) END DESC NULLS LAST,   -- 9/6 8바퀴 '월배당 ETF 중 순자산 상위'(숨김)
+                   CASE WHEN $metric = 'amount' THEN TRY_CAST(pd_divd_amt_ann AS DOUBLE)
                         ELSE TRY_CAST(pd_dvid_yield AS DOUBLE) END DESC NULLS LAST,
                    pd_itm_no LIMIT $limit""",
        [Param("metric", required=True, enum=("yield", "amount")), Param("month_pattern"),
-        Param("min_pay_cnt"), Param("min_listed_dt"), Param("limit", required=True), Param("min_yield"), Param("max_yield"), Param("max_pay_cnt"), Param("mgmt"), Param("name_pattern")],
+        Param("min_pay_cnt"), Param("min_listed_dt"), Param("limit", required=True), Param("min_yield"), Param("max_yield"), Param("max_pay_cnt"), Param("mgmt"), Param("name_pattern"), Param("order", enum=("aum",))],
        source="PREF01N001", key_col="pd_itm_no"),
 
     # 9/2: price(장내 종가 du_clpr)·mkt_cap(시가총액 = 종가×상장주식수 pd_lst_stk_cnt — 원천에 열 없음) 추가.
@@ -564,10 +573,12 @@ TEMPLATES = {t.id: t for t in [
           WHERE ($region_pattern IS NULL OR wu_inv_rgn ILIKE $region_pattern ESCAPE '\\')
             AND ($exclude_region_pattern IS NULL OR coalesce(wu_inv_rgn, '') NOT ILIKE $exclude_region_pattern ESCAPE '\\')
             AND ($name_pattern IS NULL OR pd_nm ILIKE $name_pattern ESCAPE '\\'
-                 OR pd_abrv_nm ILIKE $name_pattern ESCAPE '\\' OR cu_strtegy ILIKE $name_pattern ESCAPE '\\')
+                 OR pd_abrv_nm ILIKE $name_pattern ESCAPE '\\' OR cu_strtegy ILIKE $name_pattern ESCAPE '\\'
+                 OR cu_base_index ILIKE $name_pattern ESCAPE '\\')   -- 9/6 8바퀴 기초지수 표기도(숨김 아님·같은 뜻)
             AND ($inverse_only IS NULL OR upper(coalesce(drv_is_inverse,'')) IN ('Y','TRUE','1'))
             AND ($etn_only IS NULL OR upper(coalesce(drv_is_etn,'')) IN ('Y','TRUE','1'))
             AND ($leveraged_only IS NULL OR abs(TRY_CAST(cu_lev_fector AS DOUBLE)) > 1)   -- 9/6 7바퀴 레버리지 배수(숨김)
+            AND ($lev_abs IS NULL OR abs(TRY_CAST(cu_lev_fector AS DOUBLE)) = $lev_abs)   -- 9/6 8바퀴 'N배'(숨김)
             AND ($ast_type IS NULL OR wu_inv_ast_type = $ast_type)
             AND ($ccy IS NULL OR pd_trd_ccy = $ccy)
             AND ($exclude_ccy IS NULL OR pd_trd_ccy <> $exclude_ccy)
@@ -578,7 +589,8 @@ TEMPLATES = {t.id: t for t in [
             AND ($min_aum_ge IS NULL OR TRY_CAST(du_last_aum AS DOUBLE) >= $min_aum_ge)
             AND ($max_aum_lt IS NULL OR TRY_CAST(du_last_aum AS DOUBLE) < $max_aum_lt)
             AND ($max_aum_le IS NULL OR TRY_CAST(du_last_aum AS DOUBLE) <= $max_aum_le)
-            AND ($mgmt_pattern IS NULL OR cu_fund_mgmt_co ILIKE $mgmt_pattern ESCAPE '\\' OR pd_nm ILIKE $mgmt_pattern ESCAPE '\\')   -- 9/6 운용사 표기(숨김)
+            AND ($mgmt_pattern IS NULL OR cu_fund_mgmt_co ILIKE $mgmt_pattern ESCAPE '\\'
+                 OR ($brand_word IS NOT NULL AND regexp_matches(pd_nm, $brand_word, 'i')))   -- 8바퀴: 상품명은 낱말 경계로(ARK ≠ Markets)   -- 9/6 운용사 표기(숨김)
             AND ($min_fee_gt IS NULL OR (TRY_CAST(cu_charge_rt AS DOUBLE)>0 AND TRY_CAST(cu_charge_rt AS DOUBLE) > $min_fee_gt))
             AND ($min_fee_ge IS NULL OR (TRY_CAST(cu_charge_rt AS DOUBLE)>0 AND TRY_CAST(cu_charge_rt AS DOUBLE) >= $min_fee_ge))
             AND ($max_fee_lt IS NULL OR (TRY_CAST(cu_charge_rt AS DOUBLE)>0 AND TRY_CAST(cu_charge_rt AS DOUBLE) < $max_fee_lt))
@@ -590,8 +602,8 @@ TEMPLATES = {t.id: t for t in [
                    CASE WHEN $order = 'aum_asc' THEN TRY_CAST(du_last_aum AS DOUBLE) END ASC NULLS LAST,   -- 9/6 순자산 작은 순(숨김)
                    TRY_CAST(du_last_aum AS DOUBLE) DESC NULLS LAST, pd_itm_no LIMIT $limit""",
        [Param("region_pattern"), Param("exclude_region_pattern"), Param("name_pattern"),
-        Param("inverse_only"), Param("etn_only"), Param("leveraged_only"), Param("ast_type"), Param("ccy"),
-        Param("exclude_ccy"), Param("min_fee_gt"), Param("min_fee_ge"), Param("max_fee_lt"), Param("max_fee_le"), Param("limit", required=True), Param("order", enum=("fee_asc", "fee_desc", "fee_aum", "aum_asc")), Param("min_aum_gt"), Param("min_aum_ge"), Param("max_aum_lt"), Param("max_aum_le"), Param("mgmt_pattern")],
+        Param("inverse_only"), Param("etn_only"), Param("leveraged_only"), Param("lev_abs"), Param("ast_type"), Param("ccy"),
+        Param("exclude_ccy"), Param("min_fee_gt"), Param("min_fee_ge"), Param("max_fee_lt"), Param("max_fee_le"), Param("limit", required=True), Param("order", enum=("fee_asc", "fee_desc", "fee_aum", "aum_asc")), Param("min_aum_gt"), Param("min_aum_ge"), Param("max_aum_lt"), Param("max_aum_le"), Param("mgmt_pattern"), Param("brand_word")],
        source="PREF02N001", key_col="pd_itm_no", as_of=AS_OF_MASTER_GL),
 
     _t("global_etf_count",
@@ -601,14 +613,16 @@ TEMPLATES = {t.id: t for t in [
           WHERE ($inverse_only IS NULL OR upper(coalesce(drv_is_inverse,'')) IN ('Y','TRUE','1'))
             AND ($etn_only IS NULL OR upper(coalesce(drv_is_etn,'')) IN ('Y','TRUE','1'))
             AND ($leveraged_only IS NULL OR abs(TRY_CAST(cu_lev_fector AS DOUBLE)) > 1)   -- 9/6 7바퀴 레버리지 배수(숨김)
+            AND ($lev_abs IS NULL OR abs(TRY_CAST(cu_lev_fector AS DOUBLE)) = $lev_abs)   -- 9/6 8바퀴 'N배'(숨김)
             AND ($ast_type IS NULL OR wu_inv_ast_type = $ast_type)
             AND ($min_aum_gt IS NULL OR TRY_CAST(du_last_aum AS DOUBLE) > $min_aum_gt)   -- 9/3 달러 범위(숨김)
             AND ($min_aum_ge IS NULL OR TRY_CAST(du_last_aum AS DOUBLE) >= $min_aum_ge)
             AND ($max_aum_lt IS NULL OR TRY_CAST(du_last_aum AS DOUBLE) < $max_aum_lt)
             AND ($max_aum_le IS NULL OR TRY_CAST(du_last_aum AS DOUBLE) <= $max_aum_le)
-            AND ($mgmt_pattern IS NULL OR cu_fund_mgmt_co ILIKE $mgmt_pattern ESCAPE '\\' OR pd_nm ILIKE $mgmt_pattern ESCAPE '\\')   -- 9/6 운용사 표기(숨김)
+            AND ($mgmt_pattern IS NULL OR cu_fund_mgmt_co ILIKE $mgmt_pattern ESCAPE '\\'
+                 OR ($brand_word IS NOT NULL AND regexp_matches(pd_nm, $brand_word, 'i')))   -- 8바퀴: 상품명은 낱말 경계로(ARK ≠ Markets)   -- 9/6 운용사 표기(숨김)
           GROUP BY 1 ORDER BY n DESC""",
-       [Param("inverse_only"), Param("etn_only"), Param("leveraged_only"), Param("ast_type"), Param("min_aum_gt"), Param("min_aum_ge"), Param("max_aum_lt"), Param("max_aum_le"), Param("mgmt_pattern")],
+       [Param("inverse_only"), Param("etn_only"), Param("leveraged_only"), Param("lev_abs"), Param("ast_type"), Param("min_aum_gt"), Param("min_aum_ge"), Param("max_aum_lt"), Param("max_aum_le"), Param("mgmt_pattern"), Param("brand_word")],
        source="PREF02N001", as_of=AS_OF_MASTER_GL),
 
     _t("global_ccy_dist",
@@ -742,6 +756,8 @@ TEMPLATES = {t.id: t for t in [
             AND ($min_rating_rank IS NULL OR TRY_CAST(drv_crd_grd_rank AS INT) >= $min_rating_rank)
             AND ($maturity_status IS NULL OR drv_maturity_status = $maturity_status)
             AND ($bond_class IS NULL OR STD_PD_MCLS_NM = $bond_class)
+            AND ($int_type IS NULL OR BD_INTP_TCD = $int_type)      -- 9/6 8바퀴 이자 유형(이표채·복리채·할인채·단리채, 숨김)
+            AND ($rate_type IS NULL OR BD_INRT_TCD = $rate_type)    -- 금리 유형(고정·변동, 숨김)
             AND ($pension_only IS NULL OR upper(trim(coalesce(PD_PEN_TR_YN,''))) IN ('Y','TRUE','1'))
             AND ($min_issue_dt IS NULL OR ISU_DT >= $min_issue_dt)
             AND ($max_issue_dt IS NULL OR ISU_DT <= $max_issue_dt)
@@ -750,7 +766,7 @@ TEMPLATES = {t.id: t for t in [
                                       ELSE TRY_CAST(DUR AS DOUBLE) END, 0) <> 0""",
        [Param("metric", required=True, enum=("coupon", "after_tax", "dur")),
         Param("currency"), Param("max_rating_rank"), Param("min_rating_rank"), Param("maturity_status"),
-        Param("bond_class"), Param("pension_only"), Param("min_issue_dt"), Param("max_issue_dt")],
+        Param("bond_class"), Param("int_type"), Param("rate_type"), Param("pension_only"), Param("min_issue_dt"), Param("max_issue_dt")],
        source="PRBD01N001"),
 
     _t("global_etf_metric_avg",
@@ -765,16 +781,19 @@ TEMPLATES = {t.id: t for t in [
             AND ($ast_type IS NULL OR wu_inv_ast_type = $ast_type)
             AND ($etn_only IS NULL OR upper(coalesce(drv_is_etn,'')) IN ('Y','TRUE','1'))
             AND ($leveraged_only IS NULL OR abs(TRY_CAST(cu_lev_fector AS DOUBLE)) > 1)   -- 9/6 7바퀴 레버리지 배수(숨김)
+            AND ($lev_abs IS NULL OR abs(TRY_CAST(cu_lev_fector AS DOUBLE)) = $lev_abs)   -- 9/6 8바퀴 'N배'(숨김)
             AND ($etf_only IS NULL OR upper(coalesce(drv_is_etn,'')) NOT IN ('Y','TRUE','1'))
             AND ($inverse_only IS NULL OR upper(coalesce(drv_is_inverse,'')) IN ('Y','TRUE','1'))
-            AND ($mgmt_pattern IS NULL OR cu_fund_mgmt_co ILIKE $mgmt_pattern ESCAPE '\\' OR pd_nm ILIKE $mgmt_pattern ESCAPE '\\')
+            AND ($mgmt_pattern IS NULL OR cu_fund_mgmt_co ILIKE $mgmt_pattern ESCAPE '\\'
+                 OR ($brand_word IS NOT NULL AND regexp_matches(pd_nm, $brand_word, 'i')))   -- 8바퀴: 상품명은 낱말 경계로(ARK ≠ Markets)
             AND ($name_pattern IS NULL OR pd_nm ILIKE $name_pattern ESCAPE '\\'
-                 OR pd_abrv_nm ILIKE $name_pattern ESCAPE '\\' OR cu_strtegy ILIKE $name_pattern ESCAPE '\\')
+                 OR pd_abrv_nm ILIKE $name_pattern ESCAPE '\\' OR cu_strtegy ILIKE $name_pattern ESCAPE '\\'
+                 OR cu_base_index ILIKE $name_pattern ESCAPE '\\')   -- 9/6 8바퀴 기초지수 표기도(숨김 아님·같은 뜻)
             AND coalesce(CASE $metric WHEN 'aum' THEN TRY_CAST(du_last_aum AS DOUBLE)
                                       ELSE TRY_CAST(cu_charge_rt AS DOUBLE) END, 0) > 0""",
        [Param("metric", required=True, enum=("fee", "aum")),
-        Param("region_pattern"), Param("ast_type"), Param("etn_only"), Param("leveraged_only"), Param("etf_only"),
-        Param("inverse_only"), Param("mgmt_pattern"), Param("name_pattern")],
+        Param("region_pattern"), Param("ast_type"), Param("etn_only"), Param("leveraged_only"), Param("lev_abs"), Param("etf_only"),
+        Param("inverse_only"), Param("mgmt_pattern"), Param("brand_word"), Param("name_pattern")],
        source="PREF02N001", as_of=AS_OF_MASTER_GL),
 
     _t("global_etf_detail",
@@ -1364,6 +1383,7 @@ LLM_HIDDEN_ENUM_VALUES = {
     ("constituent_holders", "order"): ("mkt_cap",),
     ("coverage_check", "field"): ("kr_etp.pd_dvid_yield",),
     ("etp_metric_avg", "metric"): ("fee",),               # 9/6 6바퀴: 'TIGER ETF 총보수 평균'
+    ("bond_filter", "order"): ("mat_asc", "mat_desc", "issue_desc", "issue_asc"),   # 9/6 8바퀴: 만기 가까운 순·발행일 최근 순
 }
 # 같은 원칙의 파라미터판 — 규칙 라우터만 넘기는 파라미터는 AI 라우터 목록에서 통째로 뺀다(9/3 bond_count 금리 조건).
 LLM_HIDDEN_PARAMS = {
@@ -1375,6 +1395,10 @@ LLM_HIDDEN_PARAMS = {
     ("etp_by_dividend", "mgmt"), ("etp_by_dividend", "name_pattern"), ("etp_top_return", "mgmt"),
     ("etp_low_fee", "mgmt"), ("etp_metric_rank", "mgmt"),
     ("global_etf_filter", "leveraged_only"), ("global_etf_count", "leveraged_only"),
+    # 9/6 8바퀴 — 채권 이자·금리 유형, 분배 순자산 정렬, 해외 N배
+    ("bond_filter", "int_type"), ("bond_filter", "rate_type"), ("bond_count", "int_type"), ("bond_count", "rate_type"),
+    ("etp_by_dividend", "order"), ("global_etf_filter", "lev_abs"), ("global_etf_count", "lev_abs"),
+    ("global_etf_filter", "brand_word"), ("global_etf_count", "brand_word"),
     # 9/3 2바퀴 — 숫자 조건이 조용히 버려지던 부류를 규칙 라우터 전용 파라미터로 메움
     ("etp_by_dividend", "min_yield"), ("etp_by_dividend", "max_yield"),
     ("etp_top_aum", "min_aum_gt"), ("etp_top_aum", "min_aum_ge"), ("etp_top_aum", "max_aum_lt"),

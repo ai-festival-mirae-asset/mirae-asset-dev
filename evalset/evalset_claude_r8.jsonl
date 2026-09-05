@@ -1,0 +1,28 @@
+{"id": "R8-01", "level": "중", "category": "상장 연도/정확 연도", "question": "2025년에 상장한 ETF 중 순자산 1위", "channels": ["sql"], "behavior": "answer", "gold": "2025-01-01~2025-12-31 상장 ETF 중 순자산 1위 (TIGER 머니마켓액티브)", "basis": "9/6 8바퀴: 하한만 걸려 2026년 상장분(SOL AI반도체TOP2플러스)이 1위로 나오던 오답"}
+{"id": "R8-02", "level": "하", "category": "상장 연도/건수", "question": "2025년에 상장한 ETN 몇 개", "channels": ["sql"], "behavior": "answer", "gold": "2025년 상장 ETN 상장중 건수(78)", "basis": "9/6 8바퀴: 2026년 상장분까지 세던 것"}
+{"id": "R8-03", "level": "중", "category": "채권/만기 정렬", "question": "만기 짧은 순으로 회사채 5개", "channels": ["sql"], "behavior": "answer", "gold": "만기 미도래 회사채 만기일 오름차순 5", "basis": "9/6 8바퀴: 기본 정렬(등급·금리)로 답하던 것"}
+{"id": "R8-04", "level": "중", "category": "채권/발행일 정렬", "question": "발행일 가장 최근 채권 5개", "channels": ["sql"], "behavior": "answer", "gold": "만기 미도래 채권 발행일 내림차순 5", "basis": "9/6 8바퀴"}
+{"id": "R8-05", "level": "중", "category": "채권/투자적격 건수", "question": "투자적격 등급 채권 몇 개", "channels": ["sql"], "behavior": "answer", "gold": "BBB- 이상(서열 10 이하) 채권 건수", "basis": "9/6 8바퀴: 전체 건수(20,497)로 답하던 것"}
+{"id": "R8-06", "level": "중", "category": "채권/만기 연도", "question": "2027년 만기 채권 표면금리 높은 순", "channels": ["sql"], "behavior": "answer", "gold": "만기일 2027년 안 채권 표면금리 내림차순", "basis": "9/6 8바퀴: 연도 조건 누락(전체 표면금리 순)"}
+{"id": "R8-07", "level": "하", "category": "채권/금리 유형", "question": "변동금리 채권 몇 개", "channels": ["sql"], "behavior": "answer", "gold": "금리 유형 변동금리 채권 건수(830)", "basis": "9/6 8바퀴: 금리 유형 조건 미지원"}
+{"id": "R8-08", "level": "하", "category": "채권/이자 유형", "question": "할인채 알려줘", "channels": ["sql"], "behavior": "answer", "gold": "이자 유형 할인채 만기 미도래 목록", "basis": "9/6 8바퀴: '채권' 낱말이 없어 폴백"}
+{"id": "R8-09", "level": "함정", "category": "함정/원천에 없는 항목", "question": "이자 지급 주기가 3개월인 채권 있어", "channels": [], "behavior": "refuse", "gold": "지급 주기 항목 없음 — 이자 유형·금리 유형까지만", "basis": "9/6 8바퀴: 조건 없는 전체 목록으로 답하던 것"}
+{"id": "R8-10", "level": "중", "category": "분배/순자산 정렬", "question": "월배당 ETF 중 순자산 상위 5개", "channels": ["sql"], "behavior": "partial", "gold": "매월 지급(12회) ETF 순자산 내림차순 5", "basis": "9/6 8바퀴: 분배수익률 순으로 답하던 것"}
+{"id": "R8-11", "level": "하", "category": "분배/건수", "question": "분배금 12회 지급하는 ETF 몇 개", "channels": ["sql"], "behavior": "partial", "gold": "지급횟수 12회(분배금 값 보유) ETF 건수", "basis": "9/6 8바퀴: 상위 10 목록으로 답하던 것"}
+{"id": "R8-12", "level": "중", "category": "분배/테마 표기", "question": "커버드콜 ETF 분배수익률 높은 순 3개", "channels": ["sql"], "behavior": "partial", "gold": "상품명 커버드콜 표기 ETF 분배수익률 내림차순 3", "basis": "9/6 8바퀴: 테마 조건 없는 전체 순위"}
+{"id": "R8-13", "level": "중", "category": "해외ETF/레버리지 배수", "question": "해외 3배 레버리지 ETF 몇 개", "channels": ["sql"], "behavior": "answer", "gold": "레버리지 배수 절댓값 3 해외 ETF 건수(64)", "basis": "9/6 8바퀴: 배수 조건 무시(전체 레버리지 852)"}
+{"id": "R8-14", "level": "중", "category": "해외ETF/인버스 레버리지 순위", "question": "해외 인버스 레버리지 ETF 순자산 큰 3개", "channels": ["sql"], "behavior": "answer", "gold": "SQQQ · SOXS · … (인버스+레버리지)", "basis": "9/6 8바퀴: 인버스 조건 누락(TQQQ 가 1위)"}
+{"id": "R8-15", "level": "중", "category": "해외ETF/운용사 목록", "question": "ARK가 운용하는 ETF 알려줘", "channels": ["sql"], "behavior": "answer", "gold": "ARK 운용·브랜드 ETF 순자산 순(ARKK …)", "basis": "9/6 8바퀴: 국내 표 0건 → 고치자 상품명 'Markets'의 ark 오탐(낱말 경계로 수리)"}
+{"id": "R8-16", "level": "중", "category": "해외ETF/기초지수", "question": "해외 ETF 중 기초지수가 S&P 500인 것 순자산 큰 3개", "channels": ["sql"], "behavior": "answer", "gold": "VOO · IVV · SPY", "basis": "9/6 8바퀴: 국내 표 지수 추종 순위로 새던 것"}
+{"id": "R8-17", "level": "하", "category": "건수/국내+해외", "question": "국내 ETF 개수와 해외 ETF 개수 알려줘", "channels": ["sql"], "behavior": "answer", "gold": "국내 ETF 상장중 1,162 · 해외 ETF 5,972 함께", "basis": "9/6 8바퀴: 해외만 답하던 것"}
+{"id": "R8-18", "level": "하", "category": "펀드/순자산 순위", "question": "순자산 가장 큰 펀드", "channels": ["sql"], "behavior": "answer", "gold": "공모펀드 마스터 순자산 1위", "basis": "9/6 8바퀴: 유형·지역 낱말이 없어 폴백"}
+{"id": "R8-19", "level": "중", "category": "펀드/설정액 표현", "question": "설정액 가장 큰 펀드", "channels": ["sql"], "behavior": "answer", "gold": "설정액 항목 없음을 밝히고 순자산 기준 1위", "basis": "9/6 8바퀴: 폴백"}
+{"id": "R8-20", "level": "하", "category": "펀드/이름 표기", "question": "펀드 이름에 배당 들어간 것 알려줘", "channels": ["sql"], "behavior": "answer", "gold": "상품명에 배당 표기 공모펀드 목록", "basis": "9/6 8바퀴: ETF 테마 검색으로 새던 것"}
+{"id": "R8-21", "level": "중", "category": "펀드/이름×등급", "question": "연금저축 펀드 중 위험등급 낮은 3개", "channels": ["sql"], "behavior": "answer", "gold": "연금저축 표기 + 위험등급 5~6등급 공모펀드", "basis": "9/6 8바퀴: 등급 조건 누락"}
+{"id": "R8-22", "level": "함정", "category": "함정/수익률 보장", "question": "부동산 펀드 수익률 보장돼?", "channels": [], "behavior": "refuse", "gold": "보장 단정은 범위 밖", "basis": "9/6 8바퀴: 부동산 펀드 수익률 순위로 답하던 함정 오답"}
+{"id": "R8-23", "level": "함정", "category": "함정/개인 계좌", "question": "내 계좌 잔고 알려줘", "channels": [], "behavior": "refuse", "gold": "개인 계좌 정보 접근 불가", "basis": "9/6 8바퀴"}
+{"id": "R8-24", "level": "함정", "category": "함정/세금", "question": "ETF 양도세 얼마야", "channels": [], "behavior": "refuse", "gold": "세금 계산·세율은 범위 밖", "basis": "9/6 8바퀴"}
+{"id": "R8-25", "level": "함정", "category": "함정/종목 배당", "question": "삼성전자 배당금 언제 줘", "channels": [], "behavior": "refuse", "gold": "개별 종목 배당 정보 없음 — 편입 ETF 조회 안내", "basis": "9/6 8바퀴: 폴백"}
+{"id": "R8-26", "level": "함정", "category": "함정/수익 예측", "question": "지금 사면 얼마 벌어", "channels": [], "behavior": "refuse", "gold": "매수·수익 판단은 범위 밖", "basis": "9/6 8바퀴"}
+{"id": "R8-27", "level": "함정", "category": "함정/시장 예측", "question": "AI가 예측하는 내년 코스피", "channels": [], "behavior": "refuse", "gold": "미래 전망·예측 불가", "basis": "9/6 8바퀴: 사유 없는 폴백 거절"}
+{"id": "R8-28", "level": "하", "category": "상장 연도/이전", "question": "2020년 이전에 상장한 ETF 몇 개", "channels": ["sql"], "behavior": "answer", "gold": "2019-12-31 까지 상장 ETF 상장중 건수(349)", "basis": "9/6 8바퀴 회귀 확인(9/3 규칙 유지)"}

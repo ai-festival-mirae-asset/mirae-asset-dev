@@ -151,15 +151,11 @@ def gate_existence(question, index, policy):
         r.kind in ("constituent", "company") for _n, refs in grounded for r in refs)
     # 이름+숫자+상품군의 상세 요청은 브랜드가 없어도 이름 존재를 검사한다.
     # 조건 조회('2024년 이후 상장...')나 알려진 이름 일부는 부재 증거가 아니다.
-    numbered_name = re.match(
-        r"^([가-힣A-Za-z]{4,})\s+(\d{4})\s+(ETF|ETN|펀드)\s*(?:상품\s*)?(?:정보|상세)",
-        question.strip(), re.IGNORECASE)
-    if numbered_name and asks and not has_product and not reverse_holding:
-        stem = numbered_name.group(1)
-        target = " ".join(numbered_name.group(1, 2, 3))
-        if not index.exact(target) and not token_matches(index, stem, limit=1):
-            return (GateResult("existence", "refuse",
-                               f"'{target}' 명칭의 상품이 기준일 상품 목록에 없음"), [])
+    from engine.router import absent_numbered_product
+    target = absent_numbered_product(question, index, has_product, reverse_holding)
+    if target:
+        return (GateResult("existence", "refuse",
+                           f"'{target}' 명칭의 상품이 기준일 상품 목록에 없음"), [])
     if brand and asks and not has_product and not reverse_holding \
             and not re.search(r"몇\s*개|몇개|몇\s*종|개수|총\s*몇|얼마나\s*(되|돼)|평균|합계|합쳐|분포", normalized_question):
         # 9/6: 'TIGER ETF 총 몇 종목?'은 상품 존재 질의가 아니라 브랜드 건수 질의 — 라우터가 건수로 답한다

@@ -3116,7 +3116,11 @@ def route_stage_a(question, index, policy=None, today=None):
             plan.hints["display_rows"] = top_n or 3
             plan.hints["skip_generation"] = True
             return done("etp_fee_aum_rank", "partial")
-        if not fee_request and re.search(r"순자산|AUM|규모", q, re.IGNORECASE) and (any(w in q for w in TOP_WORDS)
+        _big_only = bool(has_etf_word and not re.search(r"순자산|AUM|규모", q, re.IGNORECASE)
+                         and re.search(r"(?:제일|가장)\s*큰|큰\s*(?:거|것|상품|ETF|ETN)", q, re.IGNORECASE)
+                         and not re.search(r"수익률|보수|배당|분배|거래량|거래대금|괴리|추적|변동성|위험|등급|종가|가격|비중|구성|편입|담", q))   # 17바퀴: '국내 etf 중에 제일 큰 거 하나만'(종전 폴백)
+        _one_only = bool(re.search(r"하나만|한\s*개만|1\s*개만|딱\s*하나", q))
+        if not fee_request and (re.search(r"순자산|AUM|규모", q, re.IGNORECASE) or _big_only) and (any(w in q for w in TOP_WORDS)
                                                                   or (top_n and re.search(r"큰|작은|높은|낮은|많은", q))
                                                                   or re.search(r"(큰|작은|높은|낮은|많은|적은)\s*(것|거|상품|ETF|ETN|애)", q, re.IGNORECASE)) \
                 and not ("보수" in q and re.search(r"낮|싼|저렴|이하|미만", q)
@@ -3145,7 +3149,9 @@ def route_stage_a(question, index, policy=None, today=None):
                 plan.notes.append(f"위험등급 {risk[0]}~{risk[1]}등급 필터 + 순자산총액 내림차순")
                 plan.notes.append("상장중(active) 기준 · ETF/ETN 구분 적용")
                 return done("etp_ranking")
-            top_params = {"instrument_type": itype, "limit": top_n or 5, **_range_params}   # 9/3: 범위 조건 동반
+            top_params = {"instrument_type": itype, "limit": top_n or (1 if _one_only else 5), **_range_params}   # 9/3: 범위 조건 동반 · 17바퀴: '하나만'
+            if _big_only:
+                plan.notes.append("'큰'은 순자산총액(pd_net_tamt) 기준으로 해석 — 다른 기준(거래량·수익률 등)은 낱말로 지정해 재질의")
             plan.notes.extend(_range_notes)
             if re.search(r"작은|낮은|최소|꼴찌|적은", q):   # 8/28 r4 R4-18: 하위 순위
                 top_params["order"] = "asc"
@@ -3487,7 +3493,7 @@ def route_stage_a(question, index, policy=None, today=None):
             _fn_generic = ("공모", "국내", "해외", "판매중인", "판매", "전체", "모든", "어떤", "무슨", "공모형", "현재", "지금",
                            "우리", "당사", "요즘", "국내외", "이런", "그런", "추천", "좋은", "인기", "유명한", "괜찮", "괜찜",
                            "낮은", "높은", "나쁜", "없는", "있는", "싼", "비싼", "저렴", "큰", "작은", "많은", "적은", "새로운", "오래된",
-                           "가능한", "관련", "같은", "다른", "위험한", "안전한", "수익", "보수")
+                           "가능한", "관련", "같은", "다른", "위험한", "안전한", "수익", "보수", "등급", "위험", "이상", "이하", "초과", "미만")   # 17바퀴: '위험등급 2등급 펀드 중 …'의 '등급'
             if _fn_tok and not re.search(r"수수료|클래스|온라인|선취|후취|미징구|가입|벤치마크|추종|자산\s*구성|비중|보수", q):
                 # 클래스·보수·수익률·벤치마크 질의는 각 전용 규칙(뒤쪽) 소관 — 이름 검색이 가로채지 않는다(8/28 B-11 시험)
                 _fn_word = re.sub(r"(용|형|의|들|이나|나|랑)$", "", _fn_tok.group(1).strip())

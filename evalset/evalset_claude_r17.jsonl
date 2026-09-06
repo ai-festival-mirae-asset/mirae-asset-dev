@@ -1,0 +1,4 @@
+{"id": "R17-01", "level": "하", "category": "순위/순자산 낱말 없음", "question": "국내 etf 중에 제일 큰 거 하나만", "channels": ["sql"], "behavior": "answer", "gold": "순자산총액 1위 KODEX 200 + '큰'=순자산 해석 안내", "basis": "9/6 17바퀴: 폴백"}
+{"id": "R17-02", "level": "하", "category": "순위/순자산 낱말 없음", "question": "제일 큰 ETF 뭐야", "channels": ["sql"], "behavior": "answer", "gold": "순자산총액 상위 5", "basis": "9/6 17바퀴: 폴백"}
+{"id": "R17-03", "level": "중", "category": "펀드 등급×수익률", "question": "위험등급 2등급 펀드 중 1년 수익률 높은 3개", "channels": ["sql"], "behavior": "answer", "gold": "2등급 펀드 안에서 1년 수익률 상위 3", "basis": "9/6 17바퀴: '등급'이 이름 조각으로 새어 3등급 상품이 나가던 오답"}
+{"id": "R17-04", "level": "하", "category": "기준 낱말 유지", "question": "거래량 제일 큰 ETF", "channels": ["sql"], "behavior": "answer", "gold": "1일 거래량 상위(순자산 아님)", "basis": "9/6 17바퀴: 회귀 방지"}

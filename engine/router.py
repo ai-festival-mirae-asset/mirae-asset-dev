@@ -326,7 +326,7 @@ def extract_risk_grades(question, policy):
     return None
 
 
-_TOPN_RE = re.compile(r"(?:상위|톱|탑|top)\s*(\d+)|(\d+)\s*(?:개(?!\s*월)|위|종목)(?:만)?", re.IGNORECASE)
+_TOPN_RE = re.compile(r"(?:상위|톱|탑|top)\s*(\d+)|(\d+)\s*(?:개(?!\s*월)|위|종목|종(?!목|합|류)|가지)(?:만)?", re.IGNORECASE)   # 19바퀴: 'etf 3종만\'
 _COUNT_WORD_VALUES = {"하나": 1, "한": 1, "둘": 2, "두": 2, "셋": 3, "세": 3,
                       "넷": 4, "네": 4, "다섯": 5, "여섯": 6, "일곱": 7, "여덟": 8, "아홉": 9, "열": 10}
 _COUNT_WORD_RE = re.compile(
@@ -1331,7 +1331,8 @@ def route_stage_a(question, index, policy=None, today=None):
     # ── 5.86 두 종목 교집합(순위 낱말 없음) — 8/28 회귀(V3-H-01): 'A랑 B 둘 다 담은 ETF'가
     #        규칙 없이 LLM 라우터에 넘어가 HCX 분류 흔들림('추천' 오분류)으로 폴백되던 것을
     #        결정적 규칙으로 승격. 정렬은 순자산 내림차순 기본(노트로 명시).
-    if len(constituent_refs) >= 2 and (any(v in q for v in HOLDING_VERBS) or "보유" in q):
+    if len(constituent_refs) >= 2 and (any(v in q for v in HOLDING_VERBS) or "보유" in q
+                                        or re.search(r"(?:둘\s*다|모두|함께|같이|다)\s*(?:든|들어\s*있|들어간|가진|담긴)", q)):   # 19바퀴: '둘 다 든 ETF'
         first, second = constituent_refs[:2]
         for ref in (first, second):
             plan.calls.append(ChannelCall("graph", "holding_etfs",
@@ -3119,7 +3120,7 @@ def route_stage_a(question, index, policy=None, today=None):
             plan.hints["skip_generation"] = True
             return done("etp_fee_aum_rank", "partial")
         _big_only = bool(has_etf_word and not re.search(r"순자산|AUM|규모", q, re.IGNORECASE)
-                         and re.search(r"(?:제일|가장)\s*큰|큰\s*(?:거|것|상품|ETF|ETN)", q, re.IGNORECASE)
+                         and re.search(r"(?:제일|가장)\s*큰|큰\s*(?:거|것|상품|ETF|ETN)|(?:상위|톱|탑|top)\s*(?:\d+|한|두|세|네|다섯|여섯|일곱|여덟|아홉|열)\s*(?:개|종|가지|위)?", q, re.IGNORECASE)   # 19바퀴: 'ETF 상위 10개\'
                          and not re.search(r"수익률|보수|배당|분배|거래량|거래대금|괴리|추적|변동성|위험|등급|종가|가격|비중|구성|편입|담", q))   # 17바퀴: '국내 etf 중에 제일 큰 거 하나만'(종전 폴백)
         _one_only = bool(re.search(r"하나만|한\s*개만|1\s*개만|딱\s*하나", q))
         if not fee_request and (re.search(r"순자산|AUM|규모", q, re.IGNORECASE) or _big_only) and (any(w in q for w in TOP_WORDS)
@@ -3153,7 +3154,7 @@ def route_stage_a(question, index, policy=None, today=None):
                 return done("etp_ranking")
             top_params = {"instrument_type": itype, "limit": top_n or (1 if _one_only else 5), **_range_params}   # 9/3: 범위 조건 동반 · 17바퀴: '하나만'
             if _big_only:
-                plan.notes.append("'큰'은 순자산총액(pd_net_tamt) 기준으로 해석 — 다른 기준(거래량·수익률 등)은 낱말로 지정해 재질의")
+                plan.notes.append(("'큰'은" if re.search(r"큰", q) else "'상위'는") + " 순자산총액(pd_net_tamt) 기준으로 해석 — 다른 기준(거래량·수익률 등)은 낱말로 지정해 재질의")
             plan.notes.extend(_range_notes)
             if re.search(r"작은|낮은|최소|꼴찌|적은", q):   # 8/28 r4 R4-18: 하위 순위
                 top_params["order"] = "asc"
@@ -3259,6 +3260,11 @@ def route_stage_a(question, index, policy=None, today=None):
                                   "구성종목 기준일 2026-08-21 · 구성 공시가 빈 ETF 는 집계에서 빠짐")
                 return done("etp_ranking_common_holdings")
             return done("etp_ranking")
+        if ("보수" in q or re.search(r"(제일|가장|젤)\s*(싼|저렴한)", q)) and re.search(r"ETN", q) and not re.search(r"ETF|ETP|상장지수", q, re.IGNORECASE) \
+                and not product_ref:   # 19바퀴: 'ETN 중 총보수 낮은 3개'(종전 ETF 목록으로 답하던 조용한 오답) — ETN 총보수 값은 원천에 없다
+            plan.notes.append("국내 ETN 의 총보수(cu_charge_rt) 값은 원천(PREF01N001)에 없음(상장중 374종 전부 0·결측) — ETN 은 순자산·거래량·괴리율·상장일 등으로, 총보수 조회는 ETF 로 질문")
+            plan.hints["unsupported_request"] = "etn_fee"
+            return done("unsupported_field", "refuse")
         if ("보수" in q or re.search(r"(제일|가장|젤)\s*(싼|저렴한)", q)) and (re.search(r"이하|미만|낮|싼|저렴", q)
                             or (idx_ref and re.search(r"비교|알려|목록|나열|어때|얼마", q))):   # L-26 · v3 H-04 · 11바퀴: 'KOSPI200 추종 ETF들의 총보수 비교'
             fee_th = next((v for v, k, _d in percents if k == "fee"), None)

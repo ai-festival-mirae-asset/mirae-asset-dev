@@ -1,0 +1,5 @@
+{"id": "R19-01", "level": "하", "category": "순위/기준 낱말 없음", "question": "ETF 상위 10개", "channels": ["sql"], "behavior": "answer", "gold": "순자산총액 상위 10 + '상위'=순자산 해석 안내", "basis": "9/6 19바퀴: 폴백"}
+{"id": "R19-02", "level": "하", "category": "수량 낱말", "question": "etf 3종만 순자산순으로", "channels": ["sql"], "behavior": "answer", "gold": "순자산총액 상위 3", "basis": "9/6 19바퀴: '종' 단위 미인식(5건)"}
+{"id": "R19-03", "level": "중", "category": "교집합 구어체", "question": "삼성전자랑 sk하이닉스 둘 다 든 etf 상위 3", "channels": ["sql", "graph"], "behavior": "answer", "gold": "두 종목 모두 편입한 ETF 순자산 상위", "basis": "9/6 19바퀴: '든' 동사 → 폴백"}
+{"id": "R19-04", "level": "함정", "category": "ETN 총보수", "question": "ETN 중 총보수 낮은 3개", "channels": [], "behavior": "refuse", "gold": "ETN 총보수 값 없음 안내(ETF 목록 금지)", "basis": "9/6 19바퀴: ETF 목록으로 답하던 조용한 오답"}
+{"id": "R19-05", "level": "하", "category": "비교 초점", "question": "TIGER 200 vs KODEX 200 뭐가 더 싸", "channels": ["sql"], "behavior": "answer", "gold": "두 상품 총보수 비교(원천 0 표기 안내)", "basis": "9/6 19바퀴: 초점 없음"}

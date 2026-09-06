@@ -200,52 +200,85 @@ def create_app(ctx, llm_router=None, generator=None, cache_path=CACHE_PATH_DEFAU
 # 브라우저 테스트 화면 — 질문을 입력하면 /answer 를 호출해 5필드를 보여준다
 _TEST_PAGE = """<!doctype html><html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>금융상품 에이전트 — 질문 시험대</title>
+<title>금융상품 질의응답 에이전트 — 질문 시험대</title>
 <style>
- body{font-family:'Malgun Gothic',Apple SD Gothic Neo,sans-serif;max-width:860px;
-      margin:2rem auto;padding:0 1rem;background:#f7f8fa;color:#1c1e21}
- h1{font-size:1.3rem} .hint{color:#667;font-size:.85rem}
- form{display:flex;gap:.5rem;margin:1rem 0}
- input{flex:1;padding:.7rem .9rem;font-size:1rem;border:1px solid #c8ccd4;border-radius:8px}
- button{padding:.7rem 1.2rem;font-size:1rem;border:0;border-radius:8px;
-        background:#f77f00;color:#fff;cursor:pointer} button:disabled{background:#ccc}
- .card{background:#fff;border:1px solid #e3e6ec;border-radius:10px;padding:1rem;margin:.8rem 0}
- .label{font-weight:700;font-size:.8rem;color:#889;margin-bottom:.3rem}
- pre{white-space:pre-wrap;word-break:break-all;margin:0;font-size:.9rem;line-height:1.5}
- details{margin-top:.6rem} summary{cursor:pointer;color:#556;font-size:.85rem}
- .time{color:#889;font-size:.8rem}
- .ex{margin:.15rem 0;font-size:.85rem}
- .ex a{color:#0b62c4;text-decoration:none;cursor:pointer}
+ :root{--orange:#f47920;--ink:#1c1e21;--muted:#6b7280;--line:#e5e7eb;--bg:#f5f6f8;--card:#fff}
+ *{box-sizing:border-box}
+ body{font-family:'Pretendard','Malgun Gothic','Apple SD Gothic Neo',sans-serif;margin:0;background:var(--bg);color:var(--ink)}
+ header{background:linear-gradient(135deg,#1f2937 0%,#0f172a 100%);color:#fff;padding:2.2rem 1rem 1.8rem}
+ .wrap{max-width:900px;margin:0 auto;padding:0 1rem}
+ header h1{margin:0;font-size:1.55rem;font-weight:800;letter-spacing:-.01em}
+ header p{margin:.5rem 0 0;color:#cbd5e1;font-size:.92rem;line-height:1.55}
+ header .tags{margin-top:.9rem;display:flex;flex-wrap:wrap;gap:.4rem}
+ .tag{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:.2rem .65rem;font-size:.78rem;color:#e5e7eb}
+ main{padding:1.4rem 0 3rem}
+ form{display:flex;gap:.5rem;margin:0 0 .7rem}
+ input{flex:1;padding:.85rem 1rem;font-size:1rem;border:1px solid #cfd4dc;border-radius:10px;background:#fff}
+ input:focus{outline:2px solid var(--orange);border-color:transparent}
+ button{padding:.85rem 1.3rem;font-size:1rem;font-weight:700;border:0;border-radius:10px;background:var(--orange);color:#fff;cursor:pointer;white-space:nowrap}
+ button:disabled{background:#c7cbd1;cursor:default}
+ .ex{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center;font-size:.85rem;color:var(--muted);margin-bottom:1.2rem}
+ .ex a{color:#1d4ed8;background:#eef2ff;border:1px solid #dbe3ff;border-radius:999px;padding:.22rem .7rem;text-decoration:none;cursor:pointer}
+ .ex a:hover{background:#e0e7ff}
+ .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1.1rem 1.25rem;margin:.9rem 0;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+ .head{display:flex;justify-content:space-between;align-items:baseline;gap:.6rem;flex-wrap:wrap;margin-bottom:.55rem}
+ .q{font-weight:700;font-size:1.02rem}
+ .meta{color:var(--muted);font-size:.8rem}
+ .badge{display:inline-block;border-radius:999px;padding:.12rem .55rem;font-size:.75rem;font-weight:700;margin-left:.4rem;vertical-align:middle}
+ .ok{background:#dcfce7;color:#166534} .no{background:#fee2e2;color:#991b1b}
+ .answer{white-space:pre-wrap;word-break:break-word;margin:0;font-size:.95rem;line-height:1.65;font-family:inherit}
+ .answer .note{color:var(--muted)}
+ details{margin-top:.75rem;border-top:1px dashed var(--line);padding-top:.5rem}
+ summary{cursor:pointer;color:#475569;font-size:.84rem;font-weight:600}
+ details pre{white-space:pre-wrap;word-break:break-all;margin:.5rem 0 0;font-size:.8rem;line-height:1.5;color:#334155;background:#f8fafc;border-radius:8px;padding:.7rem}
+ .empty{color:var(--muted);font-size:.9rem;text-align:center;padding:2rem 0}
+ footer{color:var(--muted);font-size:.78rem;text-align:center;padding:1rem;border-top:1px solid var(--line)}
+ footer code{background:#eef0f3;padding:.1rem .35rem;border-radius:4px}
+ @media (max-width:600px){form{flex-direction:column} button{width:100%}}
 </style></head><body>
-<h1>금융상품 질의응답 에이전트 — 질문 시험대</h1>
-<p class="hint">질문을 입력하면 실제 평가와 동일한 경로(<code>GET /answer</code>)로 답변을 받아 보여줍니다.
-데이터 기준일 2026-08-22(국내)·2026-08-23(해외) — 그 이후 정보나 없는 상품을 물으면 "확인할 수 없음"이 정답입니다.</p>
-<form id="f"><input id="q" placeholder="예: 순자산총액 기준으로 국내 ETF 상위 5개 알려줘" autofocus>
+<header><div class="wrap">
+ <h1>금융상품 질의응답 에이전트</h1>
+ <p>국내 ETF·ETN·채권·공모펀드와 해외 ETF 데이터를 근거로 질문에 답합니다. 확보한 데이터에 없는 내용은 추측하지 않고 "확인할 수 없음"으로 답합니다.</p>
+ <div class="tags"><span class="tag">데이터 기준일 국내 2026-08-22 · 해외 2026-08-23</span><span class="tag">답변마다 근거·처리 과정 표시</span><span class="tag">평가 규격 GET /answer 그대로 호출</span></div>
+</div></header>
+<main><div class="wrap">
+<form id="f"><input id="q" placeholder="예: 순자산총액 기준으로 국내 ETF 상위 5개 알려줘" autofocus autocomplete="off">
 <button id="b">질문하기</button></form>
-<div class="ex">예시:
- <a onclick="ask('현재 판매 가능한 원화채권 중 신용등급 AA 이상인 종목을 알려줘')">채권 필터</a> ·
- <a onclick="ask('삼성전자가 포함된 ETF 알려줘')">종목 편입</a> ·
- <a onclick="ask('반도체 산업에 집중 투자하는 해외 ETF는?')">의미 검색</a> ·
- <a onclick="ask('kimi 관련 투자 상품 있어?')">함정(거절이 정답)</a></div>
-<div id="out"></div>
+<div class="ex">예시 질문:
+ <a onclick="ask('순자산총액 기준으로 국내 ETF 상위 5개 알려줘')">순자산 상위 ETF</a>
+ <a onclick="ask('현재 판매 가능한 원화채권 중 신용등급 AA 이상인 종목을 알려줘')">채권 조건 조회</a>
+ <a onclick="ask('삼성전자가 포함된 ETF 알려줘')">종목 편입 ETF</a>
+ <a onclick="ask('KODEX 200 총보수와 위험등급 알려줘')">상품 상세</a>
+ <a onclick="ask('반도체 산업에 집중 투자하는 해외 ETF는?')">해외 ETF 검색</a>
+ <a onclick="ask('내일 코스피 오를까?')">답변 불가 예시</a></div>
+<div id="out"><div class="empty">질문을 입력하거나 위 예시를 눌러 보세요.</div></div>
+</div></main>
+<footer>평가용 API: <code>GET /answer?question_id=…&amp;question=…</code> → JSON 5개 항목(question_id · question · retrieved_context · think_trace · answer) · 상태 확인 <code>/health</code></footer>
 <script>
 const f=document.getElementById('f'),q=document.getElementById('q'),
       b=document.getElementById('b'),out=document.getElementById('out');
+let first=true;
 function ask(t){q.value=t;f.requestSubmit();}
 f.addEventListener('submit',async e=>{
-  e.preventDefault(); if(!q.value.trim())return;
-  b.disabled=true;b.textContent='답변 중…';const t0=performance.now();
+  e.preventDefault(); const text=q.value.trim(); if(!text)return;
+  b.disabled=true;b.textContent='답변 생성 중…';const t0=performance.now();
   try{
-    const r=await fetch('/answer?question_id=test&question='+encodeURIComponent(q.value));
-    const d=await r.json();const ms=((performance.now()-t0)/1000).toFixed(1);
-    out.innerHTML=`<div class="card"><div class="label">답변 <span class="time">(${ms}초)</span></div>
-      <pre>${esc(d.answer)}</pre>
-      <details><summary>근거 보기 (retrieved_context)</summary><pre>${esc(d.retrieved_context)}</pre></details>
-      <details><summary>처리 과정 보기 (think_trace)</summary><pre>${esc(d.think_trace)}</pre></details></div>`+out.innerHTML;
-  }catch(err){out.innerHTML=`<div class="card"><pre>요청 실패: ${esc(String(err))}</pre></div>`+out.innerHTML;}
+    const r=await fetch('/answer?question_id=web&question='+encodeURIComponent(text));
+    const d=await r.json();const sec=((performance.now()-t0)/1000).toFixed(1);
+    const refused=/확인할 수 없습니다|제공 범위 밖|답변 드리기 어렵|확인할 수 없음/.test(d.answer||'');
+    const badge=refused?'<span class="badge no">답변 불가</span>':'<span class="badge ok">답변</span>';
+    const html=`<div class="card"><div class="head"><div class="q">${esc(text)}${badge}</div><div class="meta">${sec}초 · ${new Date().toLocaleTimeString('ko-KR')}</div></div>
+      <pre class="answer">${fmt(d.answer)}</pre>
+      <details><summary>근거 자료 보기 (retrieved_context)</summary><pre>${esc(d.retrieved_context)}</pre></details>
+      <details><summary>처리 과정 보기 (think_trace)</summary><pre>${esc(d.think_trace)}</pre></details></div>`;
+    if(first){out.innerHTML='';first=false;}
+    out.insertAdjacentHTML('afterbegin',html);
+  }catch(err){if(first){out.innerHTML='';first=false;}
+    out.insertAdjacentHTML('afterbegin',`<div class="card"><pre class="answer">요청 실패: ${esc(String(err))}</pre></div>`);}
   b.disabled=false;b.textContent='질문하기';
 });
-function esc(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function esc(s){return String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function fmt(s){return esc(s).split('\\n').map(l=>/^[※(]/.test(l.trim())?`<span class="note">${l}</span>`:l).join('\\n');}
 </script></body></html>"""
 
 

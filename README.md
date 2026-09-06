@@ -3,6 +3,18 @@
 > **처음 오셨다면 이 문서부터 읽으세요.** 모르는 용어는 [용어집(GLOSSARY.md)](GLOSSARY.md)에 정리돼 있습니다.
 > 문서는 이 저장소에 **11개**뿐입니다(§6 문서 지도). 새 md 파일을 만들지 않고 이 11개 안에서 고칩니다.
 
+## 0. 제출 정보 (2026-09-06 최종)
+
+| 항목 | 내용 |
+|---|---|
+| 제출 저장소 | `https://github.com/miraeasset-aifestival-2026-product/fin-125` (main 브랜치) — 이 저장소 전체가 소스코드 제출물 |
+| **평가용 API End-point URL** | **`http://49.50.143.28/answer`** — `GET /answer?question_id=…&question=…`, 응답은 JSON 5개 항목(전부 문자열). 상태 확인 `http://49.50.143.28/health` |
+| API 명세서 | [API_SPEC.md](API_SPEC.md) — 요청 파라미터·응답 JSON 스키마·오류 시 동작 |
+| 기술제안서 | 저장소 루트 `기술제안서_금융상품Agent.pdf` (원본 `.docx` 동봉) |
+| 온톨로지 | `ontology/` — `common.ttl` · `etf_kr.ttl` · `etf_gl.ttl` · `bond_kr.ttl` · `fund_pub.ttl` (+ 검증용 `shapes.ttl`) |
+| 환경 구성·실행 | `requirements.txt` + 이 문서 §5 (설치 → 데이터 준비 → `python server/app.py`) |
+| 서버 운영 | NCP `mirae-api-01`(공인 IP 49.50.143.28, 80 포트) — 9/7~9/20 상시 가동, 브라우저에서 `http://49.50.143.28/` 로 질문 시험 가능 |
+
 ## 1. 이 프로젝트가 만드는 것
 
 **"금융상품 질문을 받으면, 확보한 데이터에 근거해서만 답하고, 모르는 것은 모른다고 말하는 API 서버"** 입니다.
@@ -30,7 +42,7 @@
 
 ## 3. 진행 현황 (2026-09-06 기준)
 
-**개발은 끝났고, 제출물 마무리 단계입니다.** 마지막 코드 변경은 9/3 낮(사용자가 서버에서 직접 찾은 오답 — 9/2 종가·시가총액·규모 동의어 3건 + 회귀 1건, 9/3 채권 금리 조건 1건 — [PLAN.md](PLAN.md) 부록 A 9/2·9/3)이며, 전부 `main`에 있습니다.
+**개발은 끝났고, 9/6 최종 제출본입니다.** 마지막 코드 변경은 9/6 저녁(리더 16바퀴 + Codex 2차 PR #6 합침 + 브라우저 화면 새 단장 — [PLAN.md](PLAN.md) 부록 A 9/6)이며, 전부 `main`에 있습니다. 제출 정보는 §0.
 
 | 단계 | 내용 (쉬운 설명) | 상태 |
 |---|---|---|
@@ -71,7 +83,7 @@
 | codex_2 개선 바퀴 | 30 | 16/30 → 30/30 | 표현 변형·복합 조건·회사에서 편입 ETF로 이어지는 조회, 채권 한 종목 표시 보완 |
 | 사용자 실측 + 자체 점검(9/2 종가·시가총액, 9/3 채권 금리·표시 요청·숫자 조건, 9/6 주최 예시) | 38 | 38/38 | 사용자가 서버에서 직접 찾은 오답 5건(첫 측정 0/5)의 표현 변형 16 + 함정 1, 9/3 자체 점검 47문항이 찾은 오답(숫자 조건 누락 등, 첫 측정 약 20/47)의 재발 방지 17, 9/6 주최 과제설명 p.4 예시(해외 판정 누락 오답, 첫 측정 0/1)의 변형 4 |
 
-합계 707문항 · 함정 오답 0 · 15초 초과 0. 자동 테스트 **927개** 전부 통과. 9/6 기술제안서 시나리오를 뽑다가 주최 과제설명 p.4 예시 "미국 증시에 상장된 주식형 ETF 중에서 총보수가 낮고 운용규모가 큰 상품 3개"가 '해외' 낱말이 없어 국내 ETF 표로 잘못 가는 것을 찾아 당일 고쳤다([PLAN.md](PLAN.md) 부록 A 9/6). 9/3 저녁 2바퀴 자체 점검에서 질문의 숫자 조건(퍼센트·금액·연도)이 규칙에서 통째로 버려진 채 나머지 조건만으로 "자신 있는 오답"이 나가던 유형을 찾아 고쳤다([PLAN.md](PLAN.md) §5 9/3 ④). 9/3 오후에 결정적 답변의 표기를 사람이 읽는 형태(한글 라벨·소수 2자리·환산 금액·N월)로 바꿨다([PLAN.md](PLAN.md) §5 9/3 ③). 9/2에 v1·실전 미러를 HCX 포함으로 다시 채점해 회귀 1건(H-25 — 8/29 개선 4바퀴가 넣은 것)을 찾아 고쳤다([PLAN.md](PLAN.md) 부록 A 9/2). 성적표는 `evalset/reports/`.
+합계 737문항 · 함정 오답 0 · 15초 초과 0. 자동 테스트 **990개**(988 통과 · 2 건너뜀) 전부 통과. 9/6 기술제안서 시나리오를 뽑다가 주최 과제설명 p.4 예시 "미국 증시에 상장된 주식형 ETF 중에서 총보수가 낮고 운용규모가 큰 상품 3개"가 '해외' 낱말이 없어 국내 ETF 표로 잘못 가는 것을 찾아 당일 고쳤다([PLAN.md](PLAN.md) 부록 A 9/6). 9/3 저녁 2바퀴 자체 점검에서 질문의 숫자 조건(퍼센트·금액·연도)이 규칙에서 통째로 버려진 채 나머지 조건만으로 "자신 있는 오답"이 나가던 유형을 찾아 고쳤다([PLAN.md](PLAN.md) §5 9/3 ④). 9/3 오후에 결정적 답변의 표기를 사람이 읽는 형태(한글 라벨·소수 2자리·환산 금액·N월)로 바꿨다([PLAN.md](PLAN.md) §5 9/3 ③). 9/2에 v1·실전 미러를 HCX 포함으로 다시 채점해 회귀 1건(H-25 — 8/29 개선 4바퀴가 넣은 것)을 찾아 고쳤다([PLAN.md](PLAN.md) 부록 A 9/2). 성적표는 `evalset/reports/`.
 
 **남은 일(마감 9/6까지)**
 
@@ -93,8 +105,8 @@
 ├── server/           API 서버 (app.py — 공식 규격 GET /answer, 상태 확인 /health, 브라우저 질문 시험대 /)
 ├── agent/            CLOVA(HCX) API 클라이언트 — 규정 준수 강제 장치 포함
 ├── config/           정책 파일(policy.json)과 설정 읽기(env_loader.py — .env 처리)
-├── evalset/          시험지 22종(jsonl) + 생성 스크립트 + 자동 채점기(eval_runner.py) + 성적표(reports/) — EVALSET_README.md
-├── tests/            자동 테스트 927개 (pytest)
+├── evalset/          시험지 23종(jsonl) + 생성 스크립트 + 자동 채점기(eval_runner.py) + 성적표(reports/) — EVALSET_README.md
+├── tests/            자동 테스트 990개 (pytest)
 ├── infra/deploy/     NCP 서버 생성·배포·2주 무인 운영 안내(README_DEPLOY.md) + 설치 스크립트·systemd·상태 점검
 └── datasets/         대회 원본 엑셀 8개 — 각자 로컬에만 두고 커밋하지 않음
 ```
@@ -215,7 +227,7 @@ python engine/answer_cli.py "kimi 관련 투자 상품 있어?"
 | [preprocessing/PREPROCESSING_METHOD.md](preprocessing/PREPROCESSING_METHOD.md) | 데이터 정제 규칙과 이유 | 전처리를 고치거나 제안서 "수집·정제" 절을 쓸 때 |
 | [external_data/COLLECTION_METHOD.md](external_data/COLLECTION_METHOD.md) | 해석 사전 9종 · ETF 구성종목 수집(KRX) · 계열사 수집기 | 외부 데이터의 출처·절차·재수집 방법 |
 | [kg/KG_METHOD.md](kg/KG_METHOD.md) | 온톨로지·지식그래프 구축 방법과 실측, 발전 방향 | 그래프를 고치거나 제안서 "온톨로지" 절을 쓸 때 |
-| [evalset/EVALSET_README.md](evalset/EVALSET_README.md) | 시험지 22종의 구조 · 자동 채점기 · 공식 예시 분석 · 개선 바퀴 기록 | 평가셋을 고치거나 점수 이력을 볼 때 |
+| [evalset/EVALSET_README.md](evalset/EVALSET_README.md) | 시험지 23종의 구조 · 자동 채점기 · 공식 예시 분석 · 개선 바퀴 기록 | 평가셋을 고치거나 점수 이력을 볼 때 |
 | [evalset/TEAM_IMPROVEMENT_GUIDE.md](evalset/TEAM_IMPROVEMENT_GUIDE.md) | 팀원용 개선 바퀴 안내(출제→채점→수정→푸시) + 블라인드 출제 원칙 | 새 문제를 내고 시스템을 고칠 때 |
 | [infra/deploy/README_DEPLOY.md](infra/deploy/README_DEPLOY.md) | NCP 서버 만들기 · 배포 · 2주 무인 운영 | 서버를 올리고 지킬 때 |
 

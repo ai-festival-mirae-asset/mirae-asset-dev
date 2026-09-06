@@ -483,8 +483,11 @@ _ATTR_NOTES = [
     (r"기초\s*지수|추종", "cu_base_index", "기초지수", "text"),
     (r"듀레이션", "DUR", "듀레이션(년)", "num"),
     (r"보수", "cu_charge_rt", "총보수(%)", "text"),
-    (r"수익률", "fd_yr1_ern_r", "1년 수익률(%)", "text"),
-    (r"수익률", "du_er_1y", "1년 수익률(%)", "text"),
+    (r"1\s*개월\s*수익률|한\s*달\s*수익률|최근\s*(?:1\s*개월|한\s*달)", "du_er_1m", "1개월 수익률(%)", "text"),   # 13바퀴: 'KODEX 200 최근 1개월 수익률'(종전 1년 수익률로 답함)
+    (r"3\s*개월\s*수익률|최근\s*3\s*개월", "du_er_3m", "3개월 수익률(%)", "text"),
+    (r"6\s*개월\s*수익률|최근\s*6\s*개월", "du_er_6m", "6개월 수익률(%)", "text"),
+    (r"^(?!.*(?:[136]\s*개월|한\s*달)).*수익률", "fd_yr1_ern_r", "1년 수익률(%)", "text"),
+    (r"^(?!.*(?:[136]\s*개월|한\s*달)).*수익률", "du_er_1y", "1년 수익률(%)", "text"),
     (r"ETF야|ETN이야|유형|종류", "drv_instrument_type", "상품 유형", "text"),
     # 8/27 재배포본 신설 분배·품질 필드 (구본은 전부 0/결측이라 거절하던 항목)
     (r"배당\s*수익률|분배\s*수익률|배당|분배", "pd_dvid_yield", "분배(배당)수익률(%)", "text"),
@@ -642,6 +645,8 @@ def _fmt_attr(row, col, fmt):
     f = _to_float(s)                                  # 9/3: 노트의 숫자도 소수 2자리(원문 6자리)
     if f is not None and re.fullmatch(r"-?\d+\.\d{3,}", s):
         return f"{f:,.2f}".rstrip("0").rstrip(".")
+    if f is not None and f.is_integer() and abs(f) >= 1000 and re.fullmatch(r"-?\d+(?:\.0+)?", s):   # 13바퀴: 거래량·상장주식수 노트도 천 단위 쉼표
+        return f"{int(f):,}"
     return s
 
 

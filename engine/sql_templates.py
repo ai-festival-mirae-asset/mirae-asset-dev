@@ -80,6 +80,7 @@ TEMPLATES = {t.id: t for t in [
                  SRFC_IRT, MAT_DT, drv_maturity_status, drv_is_buyable, AFTER_TAX_YIELD, DUR
           FROM kr_bond
           WHERE ($currency IS NULL OR CURR_CD = $currency)
+            AND ($name_pattern IS NULL OR PD_NM ILIKE $name_pattern OR PD_ABRV_NM ILIKE $name_pattern)   -- 13바퀴 발행사 이름(숨김)
             AND ($max_rating_rank IS NULL OR TRY_CAST(drv_crd_grd_rank AS INT) <= $max_rating_rank)
             AND ($min_rating_rank IS NULL OR TRY_CAST(drv_crd_grd_rank AS INT) >= $min_rating_rank)
             AND ($maturity_status IS NULL OR drv_maturity_status = $maturity_status)
@@ -119,7 +120,7 @@ TEMPLATES = {t.id: t for t in [
         Param("max_coupon"), Param("bond_class"), Param("int_type"), Param("rate_type"), Param("unrated_only"), Param("order", enum=("coupon", "coupon_asc", "after_tax", "after_tax_asc", "dur", "dur_asc", "mat_asc", "mat_desc", "issue_desc", "issue_asc")),
         Param("pension_only"), Param("min_issue_dt"), Param("max_issue_dt"),
         Param("min_dur"), Param("max_dur"),
-        Param("limit", required=True), Param("min_after_tax"), Param("max_after_tax")],
+        Param("limit", required=True), Param("min_after_tax"), Param("max_after_tax"), Param("name_pattern")],
        source="PRBD01N001", key_col="PD_NO"),
 
     _t("bond_count",
@@ -127,6 +128,7 @@ TEMPLATES = {t.id: t for t in [
        "8/28 블라인드(claude) B-01: 퇴직연금 조건이 카운트에서 빠져 전체 AAA 건수를 세던 공백 보강.",
        """SELECT count(*) AS n FROM kr_bond
           WHERE ($currency IS NULL OR CURR_CD = $currency)
+            AND ($name_pattern IS NULL OR PD_NM ILIKE $name_pattern OR PD_ABRV_NM ILIKE $name_pattern)   -- 13바퀴 발행사 이름(숨김)
             AND ($max_rating_rank IS NULL OR TRY_CAST(drv_crd_grd_rank AS INT) <= $max_rating_rank)
             AND ($min_rating_rank IS NULL OR TRY_CAST(drv_crd_grd_rank AS INT) >= $min_rating_rank)
             AND ($maturity_status IS NULL OR drv_maturity_status = $maturity_status)
@@ -146,7 +148,7 @@ TEMPLATES = {t.id: t for t in [
         Param("maturity_status"), Param("buyable_only"), Param("bond_class"), Param("int_type"), Param("rate_type"), Param("unrated_only"),
         Param("pension_only"), Param("min_issue_dt"), Param("max_issue_dt"),
         # 9/3: 표면금리 조건을 목록(bond_filter)과 건수가 같은 기준으로 세도록 — AI 라우터 목록에는 숨김(LLM_HIDDEN_PARAMS)
-        Param("min_coupon"), Param("max_coupon"), Param("min_after_tax"), Param("max_after_tax")],
+        Param("min_coupon"), Param("max_coupon"), Param("min_after_tax"), Param("max_after_tax"), Param("name_pattern")],
        source="PRBD01N001"),
 
     _t("bond_class_dist",
@@ -267,7 +269,8 @@ TEMPLATES = {t.id: t for t in [
                  cu_charge_rt, drv_risk_grade,
                  pd_net_tamt, du_er_1y, du_er_ytd, pd_lstg_dt, drv_curr_cd,
                  pd_dvid_yield, pd_divd_amt_ann, pd_dvid_pay_cnt, pd_dvid_pay_months,
-                 du_chas_errt, du_diff_rt, du_vlty_1y, du_vol_1d, cu_strtegy, pd_lst_stk_cnt, du_last_nav
+                 du_chas_errt, du_diff_rt, du_vlty_1y, du_vol_1d, cu_strtegy, pd_lst_stk_cnt, du_last_nav,
+                 du_er_1m, du_er_3m, du_er_6m, du_vlty_1m, du_vlty_3m, du_vlty_6m
           FROM kr_etp WHERE pd_itm_no = $pd_itm_no""",
        [Param("pd_itm_no", required=True)], source="PREF01N001", key_col="pd_itm_no"),
 
@@ -411,9 +414,16 @@ TEMPLATES = {t.id: t for t in [
             AND TRY_CAST(cu_charge_rt AS DOUBLE) <= $max_fee
             AND ($min_grade IS NULL OR TRY_CAST(drv_risk_grade AS INT) >= $min_grade)
             AND ($max_grade IS NULL OR TRY_CAST(drv_risk_grade AS INT) <= $max_grade)
+            AND ($min_listed_dt IS NULL OR replace(coalesce(pd_lstg_dt,''),'-','') >= replace($min_listed_dt,'-',''))   -- 13바퀴 상장 구간·순자산 문턱(숨김)
+            AND ($max_listed_dt IS NULL OR nullif(replace(coalesce(pd_lstg_dt,''),'-',''),'') <= replace($max_listed_dt,'-',''))
+            AND ($min_aum_gt IS NULL OR TRY_CAST(pd_net_tamt AS DOUBLE) >  $min_aum_gt)
+            AND ($min_aum_ge IS NULL OR TRY_CAST(pd_net_tamt AS DOUBLE) >= $min_aum_ge)
+            AND ($max_aum_lt IS NULL OR TRY_CAST(pd_net_tamt AS DOUBLE) <  $max_aum_lt)
+            AND ($max_aum_le IS NULL OR TRY_CAST(pd_net_tamt AS DOUBLE) <= $max_aum_le)
           ORDER BY TRY_CAST(cu_charge_rt AS DOUBLE), pd_itm_no LIMIT $limit""",
        [Param("max_fee", required=True), Param("limit", required=True),
-        Param("min_grade"), Param("max_grade"), Param("name_pattern"), Param("mgmt")],
+        Param("min_grade"), Param("max_grade"), Param("name_pattern"), Param("mgmt"),
+        Param("min_listed_dt"), Param("max_listed_dt"), Param("min_aum_gt"), Param("min_aum_ge"), Param("max_aum_lt"), Param("max_aum_le")],
        source="PREF01N001", key_col="pd_itm_no"),
 
     _t("etp_currency_dist",
@@ -441,12 +451,17 @@ TEMPLATES = {t.id: t for t in [
             AND ($min_listed_dt IS NULL OR replace(coalesce(pd_lstg_dt,''),'-','') >= replace($min_listed_dt,'-',''))   -- 9/3: 형식 정규화
             AND ($min_yield IS NULL OR TRY_CAST(pd_dvid_yield AS DOUBLE) >= $min_yield)   -- 9/3 문턱(숨김)
             AND ($max_yield IS NULL OR TRY_CAST(pd_dvid_yield AS DOUBLE) < $max_yield)
+            AND ($min_aum_gt IS NULL OR TRY_CAST(pd_net_tamt AS DOUBLE) >  $min_aum_gt)   -- 13바퀴 '월배당이면서 순자산 1000억 이상'(숨김)
+            AND ($min_aum_ge IS NULL OR TRY_CAST(pd_net_tamt AS DOUBLE) >= $min_aum_ge)
+            AND ($max_aum_lt IS NULL OR TRY_CAST(pd_net_tamt AS DOUBLE) <  $max_aum_lt)
+            AND ($max_aum_le IS NULL OR TRY_CAST(pd_net_tamt AS DOUBLE) <= $max_aum_le)
           ORDER BY CASE WHEN $order = 'aum' THEN TRY_CAST(pd_net_tamt AS DOUBLE) END DESC NULLS LAST,   -- 9/6 8바퀴 '월배당 ETF 중 순자산 상위'(숨김)
                    CASE WHEN $metric = 'amount' THEN TRY_CAST(pd_divd_amt_ann AS DOUBLE)
                         ELSE TRY_CAST(pd_dvid_yield AS DOUBLE) END DESC NULLS LAST,
                    pd_itm_no LIMIT $limit""",
        [Param("metric", required=True, enum=("yield", "amount")), Param("month_pattern"),
-        Param("min_pay_cnt"), Param("min_listed_dt"), Param("limit", required=True), Param("min_yield"), Param("max_yield"), Param("max_pay_cnt"), Param("mgmt"), Param("name_pattern"), Param("order", enum=("aum",))],
+        Param("min_pay_cnt"), Param("min_listed_dt"), Param("limit", required=True), Param("min_yield"), Param("max_yield"), Param("max_pay_cnt"), Param("mgmt"), Param("name_pattern"), Param("order", enum=("aum",)),
+        Param("min_aum_gt"), Param("min_aum_ge"), Param("max_aum_lt"), Param("max_aum_le")],
        source="PREF01N001", key_col="pd_itm_no"),
 
     # 9/2: price(장내 종가 du_clpr)·mkt_cap(시가총액 = 종가×상장주식수 pd_lst_stk_cnt — 원천에 열 없음) 추가.
@@ -627,6 +642,7 @@ TEMPLATES = {t.id: t for t in [
             AND ($max_fee_lt IS NULL OR (TRY_CAST(cu_charge_rt AS DOUBLE)>0 AND TRY_CAST(cu_charge_rt AS DOUBLE) < $max_fee_lt))
             AND ($max_fee_le IS NULL OR (TRY_CAST(cu_charge_rt AS DOUBLE)>0 AND TRY_CAST(cu_charge_rt AS DOUBLE) <= $max_fee_le))
             AND ($ast_type IS NULL OR wu_inv_ast_type = $ast_type)
+            AND ($region_pattern IS NULL OR wu_inv_rgn ILIKE $region_pattern)   -- 13바퀴 '일본 해외 ETF 몇 개'(숨김)
             AND ($min_aum_gt IS NULL OR TRY_CAST(du_last_aum AS DOUBLE) > $min_aum_gt)   -- 9/3 달러 범위(숨김)
             AND ($min_aum_ge IS NULL OR TRY_CAST(du_last_aum AS DOUBLE) >= $min_aum_ge)
             AND ($max_aum_lt IS NULL OR TRY_CAST(du_last_aum AS DOUBLE) < $max_aum_lt)
@@ -634,7 +650,7 @@ TEMPLATES = {t.id: t for t in [
             AND ($mgmt_pattern IS NULL OR cu_fund_mgmt_co ILIKE $mgmt_pattern ESCAPE '\\'
                  OR ($brand_word IS NOT NULL AND regexp_matches(pd_nm, $brand_word, 'i')))   -- 8바퀴: 상품명은 낱말 경계로(ARK ≠ Markets)   -- 9/6 운용사 표기(숨김)
           GROUP BY 1 ORDER BY n DESC""",
-       [Param("inverse_only"), Param("etn_only"), Param("leveraged_only"), Param("lev_abs"), Param("min_fee_gt"), Param("min_fee_ge"), Param("max_fee_lt"), Param("max_fee_le"), Param("ast_type"), Param("min_aum_gt"), Param("min_aum_ge"), Param("max_aum_lt"), Param("max_aum_le"), Param("mgmt_pattern"), Param("brand_word")],
+       [Param("inverse_only"), Param("etn_only"), Param("leveraged_only"), Param("lev_abs"), Param("min_fee_gt"), Param("min_fee_ge"), Param("max_fee_lt"), Param("max_fee_le"), Param("ast_type"), Param("min_aum_gt"), Param("min_aum_ge"), Param("max_aum_lt"), Param("max_aum_le"), Param("mgmt_pattern"), Param("brand_word"), Param("region_pattern")],
        source="PREF02N001", as_of=AS_OF_MASTER_GL),
 
     _t("global_ccy_dist",
@@ -1501,6 +1517,11 @@ LLM_HIDDEN_PARAMS = {
     # 9/6 7바퀴 — 지수 추종 건수·순위(기초지수 열), 운용사 범위 순위(배당·수익률·보수·지표), 해외 레버리지 배수
     ("etp_count", "index_pattern"), ("etp_top_aum", "index_pattern"),
     ("etp_count", "mgmt"), ("etp_listed_between", "order"),   # 12바퀴 — 운용사×순자산 문턱 건수 · 가장 오래된 ETF
+    # 13바퀴 — 보수 필터에 상장 구간·순자산 문턱, 분배 정렬에 순자산 문턱, 채권 발행사 이름, 해외 건수 지역
+    ("etp_low_fee", "min_listed_dt"), ("etp_low_fee", "max_listed_dt"), ("etp_low_fee", "min_aum_gt"), ("etp_low_fee", "min_aum_ge"),
+    ("etp_low_fee", "max_aum_lt"), ("etp_low_fee", "max_aum_le"),
+    ("etp_by_dividend", "min_aum_gt"), ("etp_by_dividend", "min_aum_ge"), ("etp_by_dividend", "max_aum_lt"), ("etp_by_dividend", "max_aum_le"),
+    ("bond_filter", "name_pattern"), ("bond_count", "name_pattern"), ("global_etf_count", "region_pattern"),
     ("etp_by_dividend", "mgmt"), ("etp_by_dividend", "name_pattern"), ("etp_top_return", "mgmt"),
     ("etp_low_fee", "mgmt"), ("etp_metric_rank", "mgmt"),
     ("global_etf_filter", "leveraged_only"), ("global_etf_count", "leveraged_only"),

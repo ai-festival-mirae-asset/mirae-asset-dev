@@ -134,6 +134,8 @@ TEMPLATES = {t.id: t for t in [
             AND ($maturity_status IS NULL OR drv_maturity_status = $maturity_status)
             AND ($buyable_only IS NULL OR upper(coalesce(drv_is_buyable,'')) IN ('Y','TRUE','1'))
             AND ($bond_class IS NULL OR STD_PD_MCLS_NM = $bond_class)
+            AND ($min_dur IS NULL OR TRY_CAST(DUR AS DOUBLE) > $min_dur)   -- 14바퀴 듀레이션(숨김, bond_filter 와 같은 기준)
+            AND ($max_dur IS NULL OR TRY_CAST(DUR AS DOUBLE) <= $max_dur)
             AND ($int_type IS NULL OR BD_INTP_TCD = $int_type)      -- 9/6 8바퀴 이자 유형(이표채·복리채·할인채·단리채, 숨김)
             AND ($rate_type IS NULL OR BD_INRT_TCD = $rate_type)    -- 금리 유형(고정·변동, 숨김)
             AND ($unrated_only IS NULL OR drv_crd_grd_rank IS NULL OR trim(coalesce(drv_crd_grd_norm,'')) = '')   -- 9/6 9바퀴 무등급(숨김)
@@ -148,7 +150,7 @@ TEMPLATES = {t.id: t for t in [
         Param("maturity_status"), Param("buyable_only"), Param("bond_class"), Param("int_type"), Param("rate_type"), Param("unrated_only"),
         Param("pension_only"), Param("min_issue_dt"), Param("max_issue_dt"),
         # 9/3: 표면금리 조건을 목록(bond_filter)과 건수가 같은 기준으로 세도록 — AI 라우터 목록에는 숨김(LLM_HIDDEN_PARAMS)
-        Param("min_coupon"), Param("max_coupon"), Param("min_after_tax"), Param("max_after_tax"), Param("name_pattern")],
+        Param("min_coupon"), Param("max_coupon"), Param("min_after_tax"), Param("max_after_tax"), Param("name_pattern"), Param("min_dur"), Param("max_dur")],
        source="PRBD01N001"),
 
     _t("bond_class_dist",
@@ -238,7 +240,8 @@ TEMPLATES = {t.id: t for t in [
                  e.pd_net_tamt, e.pd_lstg_dt, e.drv_risk_grade, e.cu_charge_rt,
                  coalesce(m.resolved, e.cu_fund_mgmt_co) AS mgmt
           FROM kr_etp e LEFT JOIN mgmt_resolved m USING (pd_itm_no)
-          WHERE coalesce(m.resolved, e.cu_fund_mgmt_co) = $mgmt
+          WHERE (coalesce(m.resolved, e.cu_fund_mgmt_co) = $mgmt
+                 OR (length($mgmt) >= 4 AND coalesce(m.resolved, e.cu_fund_mgmt_co) LIKE $mgmt || '%'))   -- 14바퀴: '삼성증권' → '삼성증권(주)'(ETN 발행사, 건수 조회문과 같은 기준)
             AND ($instrument_type IS NULL OR e.drv_instrument_type = $instrument_type)
             AND ($active_only IS NULL OR e.drv_listing_status = 'active')
             AND ($name_pattern IS NULL OR e.pd_nm ILIKE $name_pattern ESCAPE '\\')
@@ -727,6 +730,7 @@ TEMPLATES = {t.id: t for t in [
             AND ($btyp_pattern IS NULL OR zrin_btyp_nm ILIKE $btyp_pattern)
             AND ($on_sale_only IS NULL OR replace(trim(coalesce(sale_yn,'')), ' ', '') = '판매중')
             AND ($max_total_fee IS NULL OR (coalesce(TRY_CAST(sale_co_rwrd_r AS DOUBLE), 0) + coalesce(TRY_CAST(or_co_rwrd_r AS DOUBLE), 0) + coalesce(TRY_CAST(trusc_rwrd_r AS DOUBLE), 0) + coalesce(TRY_CAST(ofwk_trus_rwrd_r AS DOUBLE), 0)) <= $max_total_fee)   -- 9/3 문턱(숨김)
+            AND ($min_total_fee IS NULL OR (coalesce(TRY_CAST(sale_co_rwrd_r AS DOUBLE), 0) + coalesce(TRY_CAST(or_co_rwrd_r AS DOUBLE), 0) + coalesce(TRY_CAST(trusc_rwrd_r AS DOUBLE), 0) + coalesce(TRY_CAST(ofwk_trus_rwrd_r AS DOUBLE), 0)) > $min_total_fee)   -- 14바퀴 하한(숨김)
 
             AND ($public_only IS NULL OR prvo_pbff_desc='공모')
             AND ($min_risk IS NULL OR TRY_CAST(drv_risk_grade AS INT)>=$min_risk)
@@ -739,7 +743,7 @@ TEMPLATES = {t.id: t for t in [
                    itm_no LIMIT $limit""",
        [Param("order", required=True, enum=("total_asc", "total_desc", "sale_asc")),
         Param("attr_pattern"), Param("btyp_pattern"), Param("on_sale_only"),
-        Param("public_only"), Param("min_risk"), Param("max_risk"), Param("fee_type"), Param("channel_pattern"), Param("class_only"), Param("limit", required=True), Param("max_total_fee")],
+        Param("public_only"), Param("min_risk"), Param("max_risk"), Param("fee_type"), Param("channel_pattern"), Param("class_only"), Param("limit", required=True), Param("max_total_fee"), Param("min_total_fee")],
        source="PRFD01N001", key_col="itm_no"),
 
     _t("etp_metric_avg",
@@ -926,6 +930,28 @@ TEMPLATES = {t.id: t for t in [
             AND ($region_pattern IS NULL OR wu_inv_rgn ILIKE $region_pattern)
             AND ($name_pattern IS NULL OR pd_nm ILIKE $name_pattern OR pd_abrv_nm ILIKE $name_pattern)""",
        [Param("name_pattern"), Param("region_pattern")], source="PREF02N001"),
+
+    _t("constituent_top_weight_sum",
+       "상품 1종의 구성종목 비중 상위 N 의 비중 합계(%) — 14바퀴 'KODEX 200 상위 10종목 비중 합계'. 규칙 라우터 전용(숨김).",
+       """SELECT count(*) AS n, round(sum(w), 2) AS weight_sum
+          FROM (SELECT TRY_CAST(replace(COMPST_RTO, ',', '') AS DOUBLE) AS w
+                FROM etf_constituent
+                WHERE etf_isin = $etf_id AND TRY_CAST(replace(COMPST_RTO, ',', '') AS DOUBLE) IS NOT NULL
+                ORDER BY w DESC NULLS LAST LIMIT $top_n)""",
+       [Param("etf_id", required=True), Param("top_n", required=True)],
+       source="KRX-PDF", as_of=AS_OF_CONSTITUENTS),
+
+    _t("constituent_pair_common",
+       "두 ETF 가 함께 담은 종목(교집합)과 각 비중 — 14바퀴 'TIGER 200과 KODEX 200 공통 종목'(종전 상품 상세 둘). 규칙 라우터 전용(숨김).",
+       """SELECT c1.COMPST_ISU_CD, coalesce(c1.COMPST_ISU_NM, c2.COMPST_ISU_NM) AS COMPST_ISU_NM,
+                 TRY_CAST(replace(c1.COMPST_RTO, ',', '') AS DOUBLE) AS weight_a,
+                 TRY_CAST(replace(c2.COMPST_RTO, ',', '') AS DOUBLE) AS weight_b
+          FROM etf_constituent c1 JOIN etf_constituent c2 ON c1.COMPST_ISU_CD = c2.COMPST_ISU_CD
+          WHERE c1.etf_isin = $etf_a AND c2.etf_isin = $etf_b
+            AND c1.COMPST_ISU_CD IS NOT NULL AND trim(c1.COMPST_ISU_CD) <> ''
+          ORDER BY weight_a DESC NULLS LAST, c1.COMPST_ISU_CD LIMIT $limit""",
+       [Param("etf_a", required=True), Param("etf_b", required=True), Param("limit", required=True)],
+       source="KRX-PDF", key_col="COMPST_ISU_CD", as_of=AS_OF_CONSTITUENTS),
 
     _t("data_as_of",
        "데이터 기준일 안내 — 9/6 11바퀴('기준일이 언제야'·'데이터 기준일 알려줘'가 폴백 거절). 규칙 라우터 전용(숨김).",
@@ -1253,13 +1279,14 @@ TEMPLATES = {t.id: t for t in [
        "8/28 r4 R4-16: 마스터 조인으로 약칭·1년 수익률·위험등급 동반(비중 문턱+속성 질문).",
        """SELECT c.etf_isin, coalesce(e.pd_abrv_nm, c.etf_name) AS pd_abrv_nm, c.etf_name,
                  TRY_CAST(replace(c.COMPST_RTO, ',', '') AS DOUBLE) AS weight_pct,
-                 e.du_er_1y, e.drv_risk_grade
+                 e.du_er_1y, e.drv_risk_grade, e.pd_net_tamt
           FROM etf_constituent c LEFT JOIN kr_etp e ON c.etf_isin = e.pd_itm_no
           WHERE c.COMPST_ISU_CD = $code
             AND TRY_CAST(replace(c.COMPST_RTO, ',', '') AS DOUBLE) > $min_weight
-          ORDER BY weight_pct DESC LIMIT $limit""",
+          ORDER BY CASE WHEN $order = 'aum' THEN TRY_CAST(e.pd_net_tamt AS DOUBLE) END DESC NULLS LAST,   -- 14바퀴 순자산 정렬(숨김)
+                   weight_pct DESC LIMIT $limit""",
        [Param("code", required=True), Param("min_weight", required=True),
-        Param("limit", required=True)],
+        Param("limit", required=True), Param("order", enum=("aum",))],
        source="KRX-PDF", key_col="etf_isin", as_of=AS_OF_CONSTITUENTS),
 
 _t("etp_pattern_top_constituents",
@@ -1500,7 +1527,8 @@ def validate_params(template_id, params=None):
 # 왜: 목록 한 줄이 늘어도 경계 문항의 조회문 선택이 흔들린다(9/2 실측) — 평균 질의는 규칙이 앞에서 잡으므로 AI 가 알 필요 없음.
 LLM_HIDDEN_TEMPLATES = frozenset({"bond_metric_avg", "global_etf_metric_avg", "global_etf_detail", "constituent_pair_weight",
                                   "bond_rating_dist", "constituent_non_holders", "risk_grade_dist",
-                                  "etp_fee_aum_rank", "etp_aum_sum", "data_as_of", "global_etf_aum_sum"})   # 7바퀴: 해외 티커 상세·상품×종목 비중 · 9바퀴: 등급 분포·미편입·등급×상품군 · 11바퀴: 보수×순자산·순자산 합계·기준일
+                                  "etp_fee_aum_rank", "etp_aum_sum", "data_as_of", "global_etf_aum_sum",
+                                  "constituent_top_weight_sum", "constituent_pair_common"})   # 14바퀴: 상위 N 비중 합계·두 상품 공통 종목   # 7바퀴: 해외 티커 상세·상품×종목 비중 · 9바퀴: 등급 분포·미편입·등급×상품군 · 11바퀴: 보수×순자산·순자산 합계·기준일
 LLM_HIDDEN_ENUM_VALUES = {
     ("etp_metric_rank", "metric"): ("price", "mkt_cap", "fee", "shares", "listed"),
     ("constituent_holders", "order"): ("mkt_cap",),
@@ -1522,6 +1550,8 @@ LLM_HIDDEN_PARAMS = {
     ("etp_low_fee", "max_aum_lt"), ("etp_low_fee", "max_aum_le"),
     ("etp_by_dividend", "min_aum_gt"), ("etp_by_dividend", "min_aum_ge"), ("etp_by_dividend", "max_aum_lt"), ("etp_by_dividend", "max_aum_le"),
     ("bond_filter", "name_pattern"), ("bond_count", "name_pattern"), ("global_etf_count", "region_pattern"),
+    # 14바퀴 — 펀드 총보수 하한, 채권 건수 듀레이션, 종목 비중 문턱 목록의 순자산 정렬
+    ("fund_by_fee", "min_total_fee"), ("bond_count", "min_dur"), ("bond_count", "max_dur"), ("constituent_weight_above", "order"),
     ("etp_by_dividend", "mgmt"), ("etp_by_dividend", "name_pattern"), ("etp_top_return", "mgmt"),
     ("etp_low_fee", "mgmt"), ("etp_metric_rank", "mgmt"),
     ("global_etf_filter", "leveraged_only"), ("global_etf_count", "leveraged_only"),

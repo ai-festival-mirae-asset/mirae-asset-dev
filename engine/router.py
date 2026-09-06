@@ -817,6 +817,11 @@ def route_stage_a(question, index, policy=None, today=None):
         plan.notes.append("가입·매매 절차 안내는 제공 범위 밖(정보 조회 전용 서비스) — 상품 사실 조회로 전환 가능")
         plan.hints["unsupported_request"] = "how_to_buy"
         return done("action_request", "refuse")
+    if re.search(r"요즘\s*(?:뜨는|핫한|잘\s*나가는|인기|유행)|인기\s*(?:있는|많은|좋은|순위|많이|가장)|핫한\s*(?:ETF|ETN|펀드|상품|종목)|유행하는|트렌드|잘\s*나가는|뜨는\s*(?:ETF|ETN|펀드|상품|종목)", q) \
+            and not product_ref:   # 14바퀴: '요즘 뜨는 ETF 뭐야'·'인기 있는 ETF 추천해줘'(종전 사유 없는 폴백 거절)
+        plan.notes.append("인기·유행 판단 항목은 제공 데이터에 없음 — 거래량·순자산·최근 수익률 상위 같은 사실 조회로 전환 가능")
+        plan.hints["unsupported_request"] = "popularity"
+        return done("unsupported_field", "refuse")
     if re.search(r"(최고의|최선의|제일\s*좋은|가장\s*좋은|베스트|최상의)\s*(ETF|ETN|펀드|채권|상품)", q, re.I) \
             and not re.search(r"수익률|보수|순자산|배당|분배|위험|등급|거래", q):   # 9/6 7바퀴: '최고의 ETF 추천해줘'(종전 폴백 거절)
         plan.notes.append("'최고·가장 좋은' 상품 추천은 제공 범위 밖(단정 추천 금지) — 기준(수익률·보수·순자산·위험등급 등)을 정해 주면 사실 조회 가능")
@@ -1440,7 +1445,9 @@ def route_stage_a(question, index, policy=None, today=None):
 
     # ── 6. 구성종목 역질의 (M-01~07/16/21/22, H-14, H-27) — 서로 다른 종목 2개(교집합)는 5.8/Stage B ──
     if const_ref and n_const_groups == 1 and (
-            any(v in q for v in HOLDING_VERBS) or ("구성" not in q and "비중" in q)):
+            any(v in q for v in HOLDING_VERBS) or ("구성" not in q and "비중" in q)) \
+            and not (product_ref is not None and not any(v in q for v in HOLDING_VERBS)
+                     and re.sub(r"\s+", "", str(const_name)).casefold() == re.sub(r"\s+", "", str(product_name)).casefold()):   # 14바퀴: 'KODEX 200 상위 10종목 비중 합계'는 상품 규칙(7절) 소관
         keys = [r.key for r in const_groups[0][1]][:3]      # 별칭의 복수 상장(A/C 종류주·ADR)은 합쳐 조회
         if is_fund_domain and not has_etf_word:           # 9/6: '삼성전자 담은 펀드 있어?' — 펀드 보유종목 자료 없음 → 한계 + 참고 ETF
             plan.calls.append(ChannelCall("sql", "constituent_holders", {"code": keys[0], "limit": 30}))
@@ -1481,7 +1488,10 @@ def route_stage_a(question, index, policy=None, today=None):
             if weight_th is not None:
                 plan.calls.append(ChannelCall("sql", "constituent_weight_above",
                                               {"code": key, "min_weight": weight_th,
-                                               "limit": 2000 if _cnt_w else limit}))
+                                               "limit": 2000 if _cnt_w else limit,
+                                               **({"order": "aum"} if by_aum else {})}))   # 14바퀴: '현대차 비중 5% 이상 ETF 순자산 큰 순'
+                if by_aum and not any("순자산총액(pd_net_tamt) 큰 순" in n for n in plan.notes):
+                    plan.notes.append("순자산총액(pd_net_tamt) 큰 순 — 비중 조건을 만족하는 ETF 중")
             elif by_return:
                 plan.calls.append(ChannelCall("sql", "constituent_holders_top_return",
                                               {"code": key, "limit": max(top_n or 5, 5)}))
@@ -1600,6 +1610,33 @@ def route_stage_a(question, index, policy=None, today=None):
                 plan.notes.append("구성종목 수는 목록 머리의 '결과 N건'(KRX 공시 행 기준 — 설정현금액·원화현금 같은 비주식 항목이 포함될 수 있음)")
                 plan.hints["display_rows"] = 5
                 plan.hints["skip_generation"] = True
+            return done("product_constituents")
+        _cmp_refs = []                                    # 14바퀴: 두 상품 공통 종목 / 상위 N 종목 비중 합계
+        for _n, _refs in entities:
+            for _r in _refs:
+                if _r.kind == "product_kr_etp" and _r.key != product_ref.key and all(o.key != _r.key for o in _cmp_refs):
+                    _cmp_refs.append(_r)
+        if _cmp_refs and re.search(r"공통|겹치|둘\s*다|모두\s*(?:담|가진|보유|포함)|같이\s*(?:담|가진|보유)|교집합", q) \
+                and re.search(r"종목|주식|구성|담", q):   # 14바퀴: 'TIGER 200과 KODEX 200 공통 종목'(종전 상품 상세 둘)
+            _cc = any(w in q for w in COUNT_WORDS)
+            plan.calls.append(ChannelCall("sql", "constituent_pair_common",
+                                          {"etf_a": product_ref.key, "etf_b": _cmp_refs[0].key, "limit": 2000 if _cc else (top_n or 20)}))
+            plan.notes.append(f"'{product_ref.display}'와 '{_cmp_refs[0].display}'가 함께 담은 종목 — 첫 상품 비중 큰 순(구성종목 기준일 2026-08-21)")
+            if _cc:
+                plan.notes.append("공통 종목 수는 목록 머리의 '결과 N건'")
+            plan.hints["display_rows"] = top_n or 10
+            plan.hints["skip_generation"] = True
+            return done("constituent_pair_common")
+        if re.search(r"(?:상위|톱|top)\s*\d+\s*(?:개\s*)?종목|비중\s*(?:합계|총합|합이|합은)|종목\s*비중", q, re.IGNORECASE) \
+                and not re.search(r"담(은|고|는)|편입|보유\s*(한|하는)|포함", q):   # 14바퀴: 'KODEX 200 상위 10종목 비중 합계'(종전 '종목'으로 읽혀 편입 역질의)
+            _tn = top_n or 10
+            plan.calls.append(ChannelCall("sql", "constituent_top_weights", {"etf_id": product_ref.key, "limit": _tn}))
+            if re.search(r"합계|총합|더하|총\s*비중|합이|합은", q):
+                plan.calls.append(ChannelCall("sql", "constituent_top_weight_sum", {"etf_id": product_ref.key, "top_n": _tn}))
+                plan.notes.append(f"비중 합계 = 비중 상위 {_tn}종목의 편입 비중(COMPST_RTO) 단순 합")
+            plan.notes.append("구성종목 기준일 2026-08-21")
+            plan.hints["display_rows"] = _tn
+            plan.hints["skip_generation"] = True
             return done("product_constituents")
         if "구성" not in q:
             second_ref = None
@@ -2370,7 +2407,8 @@ def route_stage_a(question, index, policy=None, today=None):
             count_keys = ("currency", "max_rating_rank", "min_rating_rank",
                           "maturity_status", "buyable_only", "bond_class", "pension_only",
                           "min_issue_dt", "max_issue_dt", "min_coupon", "max_coupon",   # 9/3: 금리 조건도 건수에
-                          "min_after_tax", "max_after_tax", "int_type", "rate_type", "unrated_only", "name_pattern")
+                          "min_after_tax", "max_after_tax", "int_type", "rate_type", "unrated_only", "name_pattern",
+                          "min_dur", "max_dur")   # 14바퀴: '듀레이션 5년 이상 채권 몇 개'(종전 조건 없는 전체 건수)
             plan.notes.extend(notes)
             plan.calls.append(ChannelCall("sql", "bond_count",
                                           {k: v for k, v in params.items() if k in count_keys}))
@@ -2383,7 +2421,8 @@ def route_stage_a(question, index, policy=None, today=None):
             count_keys = ("currency", "max_rating_rank", "min_rating_rank",
                           "maturity_status", "buyable_only", "bond_class", "pension_only",
                           "min_issue_dt", "max_issue_dt", "min_coupon", "max_coupon",   # 9/3: 금리 조건도 건수에
-                          "min_after_tax", "max_after_tax", "int_type", "rate_type", "unrated_only", "name_pattern")
+                          "min_after_tax", "max_after_tax", "int_type", "rate_type", "unrated_only", "name_pattern",
+                          "min_dur", "max_dur")   # 14바퀴: '듀레이션 5년 이상 채권 몇 개'(종전 조건 없는 전체 건수)
             plan.calls.append(ChannelCall("sql", "bond_count",
                                           {k: v for k, v in params.items() if k in count_keys}))
             return done("bond_filter")
@@ -2625,6 +2664,19 @@ def route_stage_a(question, index, policy=None, today=None):
 
     # ── 10.9 동사 없는 종목 역질의 (9/6 7바퀴 — 11절 건수 규칙보다 앞) — '삼성전자 ETF 알려줘'·'현대차 ETF 몇 개'가 폴백이던 것.
     #        종목 + ETF 낱말만 있고 담다/편입 같은 동사가 없어도 '그 종목을 편입한 ETF'로 읽는다(상품·펀드 문맥 제외).
+    if const_ref is not None and n_const_groups == 1 and not product_ref and re.search(r"ETN", q) \
+            and re.search(r"증권$", (const_ref.display or "").strip()) and not any(v in q for v in HOLDING_VERBS) and "비중" not in q and not plan.calls:
+        # 14바퀴: '삼성증권 ETN 몇 개' — 증권사 이름 + ETN 은 종목 편입이 아니라 발행사 범위(종전 삼성증권 종목을 담은 ETF 로 오답)
+        _iss_nm = const_ref.display.strip()
+        if any(w in q for w in COUNT_WORDS):
+            plan.calls.append(ChannelCall("sql", "mgmt_product_count", {"mgmt": _iss_nm}))
+            plan.notes.append(f"'{_iss_nm}' 발행 ETN 수 — 발행사 표기(cu_fund_mgmt_co, 오염 정정값 기준)가 '{_iss_nm}'로 시작하는 상품을 유형·상장상태별로 집계")
+            plan.hints["skip_generation"] = True
+            return done("company_product_count")
+        plan.calls.append(ChannelCall("sql", "etp_by_mgmt", {"mgmt": _iss_nm, "instrument_type": "ETN", "active_only": "Y", "limit": max(limit, 10)}))
+        plan.notes.append(f"'{_iss_nm}' 발행 상장중 ETN — 순자산 큰 순")
+        plan.hints["display_rows"] = top_n or 10
+        return done("company_products")
     if const_ref is not None and n_const_groups == 1 and has_etf_word and not product_ref and not is_fund_domain \
             and not comp_ref and not plan.calls and re.search(r"알려|있어|뭐|어떤|목록|찾아|보여|몇\s*개|몇개|개수|추천", q):
         plan.calls.append(ChannelCall("graph", "holding_etfs", {"query": const_ref.key, "limit": 10}))
@@ -2762,7 +2814,12 @@ def route_stage_a(question, index, policy=None, today=None):
             return done("etp_count")
         _fee_cnt = next(((v, d) for v, k, d in percents if k == "fee" and d in ("이하", "미만")), None)
         if _fee_cnt and any(w in q for w in COUNT_WORDS) and not comp_ref and not product_ref and not is_global:   # 12바퀴: '총보수 0.5% 이하 ETF 몇 개'(종전 전체 건수 오답)
-            plan.calls.append(ChannelCall("sql", "etp_low_fee", {"max_fee": _fee_cnt[0], "limit": 2000}))
+            _fc_th = non_region_themes[0] if non_region_themes else (_region_cnt[0] if _region_cnt else None)
+            _fcp = {"max_fee": _fee_cnt[0], "limit": 2000}
+            if _fc_th:                                    # 14바퀴: '미국 ETF 중 총보수 0.1% 이하 몇 개'(종전 테마 조건 소실)
+                _fcp["name_pattern"] = f"%{_fc_th}%"
+                plan.notes.append(f"상품명에 '{_fc_th}' 표기가 있는 상품 기준")
+            plan.calls.append(ChannelCall("sql", "etp_low_fee", _fcp))
             plan.calls.append(ChannelCall("sql", "coverage_check", {"field": "kr_etp.cu_charge_rt"}))
             plan.notes.append(f"총보수 {_fee_cnt[0]:g}% {_fee_cnt[1]} 상장중 ETF — 건수는 목록 머리의 '결과 N건'"
                               "(총보수 값 보유 상품 18.5% 기준 · 0 표기는 미확정이라 제외)")
@@ -2816,8 +2873,12 @@ def route_stage_a(question, index, policy=None, today=None):
             _range_params["max_listed_dt"] = _lu_list
         if (_aum_p or _lf_list or _lu_list) and not any(w in q for w in TOP_WORDS) \
                 and not ("보수" in q or any(_k == "fee" for _v, _k, _d in percents)):   # 9/3 2바퀴: '순자산 1조원 이상인 ETF 목록'(종전 폴백) · 11바퀴: '지난달 상장한 ETF'(구간만) · 13바퀴: 보수 조건은 보수 필터 소관
-            plan.calls.append(ChannelCall("sql", "etp_top_aum",
-                                          {"instrument_type": itype or "ETF", "limit": max(limit, 20), **_range_params}))
+            _al_th = non_region_themes[0] if non_region_themes else (_region_cnt[0] if _region_cnt else None)
+            _alp = {"instrument_type": itype or "ETF", "limit": max(limit, 20), **_range_params}
+            if _al_th:                                    # 14바퀴: '채권 ETF 중 순자산 1조 넘는 것'(종전 테마 조건 소실)
+                _alp["name_pattern"] = f"%{_al_th}%"
+                plan.notes.append(f"상품명에 '{_al_th}' 표기가 있는 상품 기준")
+            plan.calls.append(ChannelCall("sql", "etp_top_aum", _alp))
             plan.notes.extend(_range_notes)
             plan.notes.append("순자산총액 내림차순 · 상장중(active) 기준 — 건수는 목록 머리의 '결과 N건'")
             plan.hints["display_rows"] = top_n or 10
@@ -2990,11 +3051,13 @@ def route_stage_a(question, index, policy=None, today=None):
                                   "구성종목 기준일 2026-08-21 · 구성 공시가 빈 ETF 는 집계에서 빠짐")
                 return done("etp_ranking_common_holdings")
             return done("etp_ranking")
-        if "보수" in q and (re.search(r"이하|미만|낮|싼|저렴", q)
+        if ("보수" in q or re.search(r"(제일|가장|젤)\s*(싼|저렴한)", q)) and (re.search(r"이하|미만|낮|싼|저렴", q)
                             or (idx_ref and re.search(r"비교|알려|목록|나열|어때|얼마", q))):   # L-26 · v3 H-04 · 11바퀴: 'KOSPI200 추종 ETF들의 총보수 비교'
             fee_th = next((v for v, k, _d in percents if k == "fee"), None)
             fee_params = {"max_fee": fee_th if fee_th is not None else 100.0,
                           "limit": max(limit, 20)}
+            if "보수" not in q:                           # 14바퀴: '제일 싼 ETF 뭐야'(종전 폴백)
+                plan.notes.append("'싼'은 총보수(비용)가 낮은 순으로 해석 — 가격(종가)이 낮은 순은 '종가 낮은 ETF'로 질문")
             if _range_params:                             # 13바퀴: '2025년에 상장한 ETF 중 총보수 낮은 것'·'순자산 1조 이상이면서 총보수 0.1% 이하'(종전 보수 조건 소실)
                 fee_params.update(_range_params)
                 plan.notes.extend(_range_notes)
@@ -3127,6 +3190,30 @@ def route_stage_a(question, index, policy=None, today=None):
                                                     or token_matches(index, _m_fn.group(1).replace(" ", ""), limit=1)))
                         else None)                        # '지금판매중인공모펀드'(붙여쓰기)의 조각을 이름으로 오인하지 않게(v3 P-25)
             _fc_aum, _fc_aum_n = extract_aum_bounds(q)     # 10바퀴: '펀드 순자산 1000억 이상 몇 개'(종전 전체 건수)
+            _fc_fee_hi = next(((v, d) for v, k, d in percents if k == "fee" and d in ("이하", "미만")), None)
+            _fc_fee_lo = next(((v, d) for v, k, d in percents if k == "fee" and d in ("이상", "초과", "넘")), None)
+            if (_fc_fee_hi or _fc_fee_lo) and "보수" in q and not _fc_name:   # 14바퀴: '펀드 총보수 1% 넘는 것 몇 개'(종전 조건 없는 전체 건수)
+                _ffp = {"order": "total_asc", "limit": 30000}
+                if _fc_fee_hi:
+                    _ffp["max_total_fee"] = _fc_fee_hi[0] + (1e-6 if _fc_fee_hi[1] == "이하" else -1e-6)
+                    plan.notes.append(f"총보수(4종 합) {_fc_fee_hi[0]:g}% {_fc_fee_hi[1]} 조건(합 0·결측 제외)")
+                if _fc_fee_lo:
+                    _ffp["min_total_fee"] = _fc_fee_lo[0] - (1e-6 if _fc_fee_lo[1] == "이상" else 0.0)
+                    plan.notes.append(f"총보수(4종 합) {_fc_fee_lo[0]:g}% {_fc_fee_lo[1]} 조건(합 0·결측 제외)")
+                if _fc_attr:
+                    _ffp["attr_pattern_raw"] = _FUND_ATTR_PAT.get(_fc_attr, _fc_attr)
+                    plan.notes.append(f"'{_fc_attr}'은 운용속성(or_attr_desc) 표기 기준")
+                if _fc_sale:
+                    _ffp["on_sale_only"] = "Y"
+                    plan.notes.append("현재 판매상태는 sale_yn='판매중' 기준")
+                if _fc_risk:
+                    _ffp["min_risk"], _ffp["max_risk"] = _fc_risk[0], _fc_risk[1]
+                    plan.notes.extend(_fc_risk[2])
+                plan.calls.append(ChannelCall("sql", "fund_by_fee", _ffp))
+                plan.notes.append("건수는 목록 머리의 '결과 N건'(보수 4종 합 값 보유 상품 기준 — 합 0·결측 제외)")
+                plan.hints["display_rows"] = 5
+                plan.hints["skip_generation"] = True
+                return done("fund_fee_count", "partial")
             if _fc_attr or _fc_region or _fc_sale or _fc_name or _fc_risk or _fc_mgmt or _fc_aum:   # 9/3 2바퀴 · 9/6: 'TDF 펀드 몇 개'·위험등급·운용사
                 _fcp = {"limit": 30000}                    # 조건 필터(L-22 와 같은 기준)로 건수 — 목록 머리 '결과 N건'
                 if _fc_aum:
@@ -3330,6 +3417,15 @@ def route_stage_a(question, index, policy=None, today=None):
                 if _ff:                                   # 9/3 2바퀴: '총보수 0.5% 이하 펀드'(종전 조건 누락)
                     fee_params["max_total_fee"] = _ff[0] + (1e-6 if _ff[1] == "이하" else -1e-6)
                     plan.notes.append(f"총보수(4종 합) {_ff[0]:g}% {_ff[1]} 조건(합 0·결측 제외)")
+                _ff_lo = next(((v, d) for v, k, d in percents if k == "fee" and d in ("이상", "초과", "넘")), None)
+                if _ff_lo:                                # 14바퀴: '펀드 총보수 1% 넘는 것 몇 개'(종전 조건 없는 전체 건수)
+                    fee_params["min_total_fee"] = _ff_lo[0] - (1e-6 if _ff_lo[1] == "이상" else 0.0)
+                    plan.notes.append(f"총보수(4종 합) {_ff_lo[0]:g}% {_ff_lo[1]} 조건(합 0·결측 제외)")
+                if (_ff or _ff_lo) and any(w in q for w in COUNT_WORDS):
+                    fee_params["limit"] = 30000
+                    plan.notes.append("건수는 목록 머리의 '결과 N건'(보수 값 보유 상품 기준)")
+                    plan.hints["display_rows"] = 5
+                    plan.hints["skip_generation"] = True
                 if _bt:
                     fee_params["btyp_pattern"] = f"%{_bt.group(1)}%"
                     plan.notes.append(f"'{_bt.group(1)}'은 유형 분류(zrin_btyp_nm) 기준")

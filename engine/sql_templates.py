@@ -273,7 +273,7 @@ TEMPLATES = {t.id: t for t in [
                  pd_net_tamt, du_er_1y, du_er_ytd, pd_lstg_dt, drv_curr_cd,
                  pd_dvid_yield, pd_divd_amt_ann, pd_dvid_pay_cnt, pd_dvid_pay_months,
                  du_chas_errt, du_diff_rt, du_vlty_1y, du_vol_1d, cu_strtegy, pd_lst_stk_cnt, du_last_nav,
-                 du_er_1m, du_er_3m, du_er_6m, du_vlty_1m, du_vlty_3m, du_vlty_6m
+                 du_er_1m, du_er_3m, du_er_6m, du_vlty_1m, du_vlty_3m, du_vlty_6m, du_clpr, pd_mkt_nm
           FROM kr_etp WHERE pd_itm_no = $pd_itm_no""",
        [Param("pd_itm_no", required=True)], source="PREF01N001", key_col="pd_itm_no"),
 
@@ -765,6 +765,10 @@ TEMPLATES = {t.id: t for t in [
                  OR coalesce(m.resolved, e.cu_fund_mgmt_co) LIKE $mgmt || '%')   -- 9/6 6바퀴 운용사(숨김)
             AND ($index_pattern IS NULL OR coalesce(cu_base_index, ref_base_index) ILIKE $index_pattern
                  OR pd_nm ILIKE $index_pattern OR pd_abrv_nm ILIKE $index_pattern)
+            AND ($top_aum_n IS NULL OR pd_itm_no IN (SELECT pd_itm_no FROM kr_etp WHERE drv_listing_status = 'active'
+                                                       AND ($type IS NULL OR drv_instrument_type = $type)
+                                                     ORDER BY TRY_CAST(pd_net_tamt AS DOUBLE) DESC NULLS LAST LIMIT $top_aum_n))   -- 15바퀴 순자산 상위 N(숨김)
+            AND ($holder_code IS NULL OR pd_itm_no IN (SELECT etf_isin FROM etf_constituent WHERE COMPST_ISU_CD = $holder_code))   -- 15바퀴 특정 종목 편입 ETF(숨김)
             AND coalesce(CASE $metric WHEN 'diff' THEN TRY_CAST(du_diff_rt AS DOUBLE)
                                       WHEN 'tracking' THEN TRY_CAST(du_chas_errt AS DOUBLE)
                                       WHEN 'volume' THEN TRY_CAST(du_vol_1d AS DOUBLE)
@@ -774,7 +778,7 @@ TEMPLATES = {t.id: t for t in [
                                       ELSE TRY_CAST(du_vlty_1y AS DOUBLE) END, 0) <> 0""",
        [Param("metric", required=True,
               enum=("diff", "tracking", "vol_1m", "vol_3m", "vol_6m", "vol_1y", "volume", "value", "nav", "fee")),
-        Param("type", enum=("ETF", "ETN")), Param("index_pattern"), Param("name_pattern"), Param("mgmt")],
+        Param("type", enum=("ETF", "ETN")), Param("index_pattern"), Param("name_pattern"), Param("mgmt"), Param("top_aum_n"), Param("holder_code")],
        source="PREF01N001"),
 
     _t("bond_metric_avg",
@@ -1085,6 +1089,8 @@ TEMPLATES = {t.id: t for t in [
             AND ($min_return IS NULL OR TRY_CAST(fd_yr1_ern_r AS DOUBLE) >= $min_return)   -- 9/3 문턱(숨김)
             AND ($max_return IS NULL OR TRY_CAST(fd_yr1_ern_r AS DOUBLE) < $max_return)
             AND ($min_aum IS NULL OR TRY_CAST(fd_nast_suma AS DOUBLE) >= $min_aum)
+            AND ($min_risk IS NULL OR TRY_CAST(drv_risk_grade AS INT) >= $min_risk)   -- 15바퀴 위험등급(숨김)
+            AND ($max_risk IS NULL OR TRY_CAST(drv_risk_grade AS INT) <= $max_risk)
             AND ($region IS NULL OR ovrs_fd_desc = $region)   -- 9/6 지역(숨김)
             AND ($name_pattern IS NULL OR itm_nm ILIKE $name_pattern ESCAPE '\\' OR itm_abrv_nm ILIKE $name_pattern ESCAPE '\\')   -- 9/6 이름 표기(숨김)
           ORDER BY CASE WHEN coalesce($order,'desc') = 'desc' THEN TRY_CAST(fd_yr1_ern_r AS DOUBLE) END DESC NULLS LAST,
@@ -1092,7 +1098,7 @@ TEMPLATES = {t.id: t for t in [
                    itm_no LIMIT $limit""",
        [Param("on_sale_only"), Param("thco_sale_only"), Param("btyp_pattern"),
         Param("order", enum=("desc", "asc")), Param("limit", required=True), Param("min_return"), Param("max_return"), Param("min_aum"),
-        Param("region"), Param("name_pattern")],
+        Param("region"), Param("name_pattern"), Param("min_risk"), Param("max_risk")],
        source="PRFD01N001", key_col="itm_no"),
 
     _t("fund_by_benchmark",
@@ -1552,6 +1558,8 @@ LLM_HIDDEN_PARAMS = {
     ("bond_filter", "name_pattern"), ("bond_count", "name_pattern"), ("global_etf_count", "region_pattern"),
     # 14바퀴 — 펀드 총보수 하한, 채권 건수 듀레이션, 종목 비중 문턱 목록의 순자산 정렬
     ("fund_by_fee", "min_total_fee"), ("bond_count", "min_dur"), ("bond_count", "max_dur"), ("constituent_weight_above", "order"),
+    # 15바퀴 — 순자산 상위 N·편입 ETF 평균, 펀드 수익률 순위 위험등급
+    ("etp_metric_avg", "top_aum_n"), ("etp_metric_avg", "holder_code"), ("fund_top_return_1y", "min_risk"), ("fund_top_return_1y", "max_risk"),
     ("etp_by_dividend", "mgmt"), ("etp_by_dividend", "name_pattern"), ("etp_top_return", "mgmt"),
     ("etp_low_fee", "mgmt"), ("etp_metric_rank", "mgmt"),
     ("global_etf_filter", "leveraged_only"), ("global_etf_count", "leveraged_only"),

@@ -1,0 +1,18 @@
+{"id": "R15-01", "level": "하", "category": "지수 표기 건수", "question": "코스피200 ETF 몇 개", "channels": ["sql"], "behavior": "answer", "gold": "기초지수·상품명에 KOSPI 200 표기 ETF 건수(상장중 94)", "basis": "9/6 15바퀴: 띄어쓰기 없는 지수 표기가 전체 건수로"}
+{"id": "R15-02", "level": "하", "category": "상세/가격", "question": "KODEX 200 한 주 얼마야", "channels": ["sql"], "behavior": "answer", "gold": "기준일 종가 109,980원", "basis": "9/6 15바퀴: 상세 조회문에 종가 없음"}
+{"id": "R15-03", "level": "하", "category": "상세/상장 시장", "question": "KODEX 200 어느 거래소에 상장돼 있어", "channels": ["sql"], "behavior": "answer", "gold": "상장시장 유가증권(코스피)", "basis": "9/6 15바퀴: 상장일만 답하던 것"}
+{"id": "R15-04", "level": "하", "category": "상세/분배금 우선", "question": "TIGER 200 분배금 얼마 줘", "channels": ["sql"], "behavior": "answer", "gold": "연간 추정 분배금 87,282.37원(분배수익률 0.86%)", "basis": "9/6 15바퀴: 분배수익률이 먼저 오던 것"}
+{"id": "R15-05", "level": "하", "category": "상세/배당수익률", "question": "TIGER 200 배당수익률", "channels": ["sql"], "behavior": "answer", "gold": "분배(배당)수익률 0.86%", "basis": "9/6 15바퀴: 1년 수익률(158.71%)이 먼저 오던 것"}
+{"id": "R15-06", "level": "상", "category": "집계/편입 ETF 평균", "question": "삼성전자 담은 ETF 평균 총보수", "channels": ["sql"], "behavior": "partial", "gold": "삼성전자 편입 상장중 ETF 의 총보수 값 보유분 단순 평균(0.41%, 17건)", "basis": "9/6 15바퀴: 편입 목록만 답하던 것"}
+{"id": "R15-07", "level": "중", "category": "집계/운용사 순자산 합계", "question": "미래에셋 ETF 순자산 합계", "channels": ["sql"], "behavior": "answer", "gold": "미래에셋 상장중 ETF 230종 순자산 합계 141.5조원", "basis": "9/6 15바퀴: 순자산 순위 목록으로 답하던 것"}
+{"id": "R15-08", "level": "중", "category": "채권/만기 연도 어순×등급 건수", "question": "회사채 중 만기 2027년 AAA 몇 개", "channels": ["sql"], "behavior": "answer", "gold": "2027년 만기·AAA 회사채 건수(1,143)", "basis": "9/6 15바퀴: 만기 조건 없이 AAA 전체(3,219)"}
+{"id": "R15-09", "level": "중", "category": "구성종목/교집합 건수", "question": "SK하이닉스랑 삼성전자 둘 다 담은 ETF 몇 개", "channels": ["sql", "graph"], "behavior": "answer", "gold": "두 종목 모두 편입한 상장중 ETF 수(204)", "basis": "9/6 15바퀴: 10건 상한 목록"}
+{"id": "R15-10", "level": "하", "category": "환헤지 건수", "question": "환헤지 ETF 몇 개", "channels": ["sql"], "behavior": "answer", "gold": "상품명 (H) 표기 상장중 ETP 건수", "basis": "9/6 15바퀴: 20건 상한"}
+{"id": "R15-11", "level": "중", "category": "위험/안전한", "question": "안전한 ETF 추천해줘", "channels": ["sql"], "behavior": "answer", "gold": "위험등급 5~6등급 ETF 순자산 큰 순(추천 아닌 사실 목록)", "basis": "9/6 15바퀴: 폴백"}
+{"id": "R15-12", "level": "함정", "category": "함정/환노출", "question": "환노출 ETF 알려줘", "channels": [], "behavior": "refuse", "gold": "환노출 여부 항목 없음(사유 명시)", "basis": "9/6 15바퀴: 사유 없는 폴백 거절"}
+{"id": "R15-13", "level": "함정", "category": "함정/연도별 수익률", "question": "2024년 수익률 높은 ETF", "channels": [], "behavior": "refuse", "gold": "과거 특정 연도 수익률 항목 없음", "basis": "9/6 15바퀴: 사유 없는 폴백 거절"}
+{"id": "R15-14", "level": "함정", "category": "함정/작년 수익률", "question": "작년 수익률 좋은 ETF", "channels": [], "behavior": "refuse", "gold": "과거 특정 연도 수익률 항목 없음", "basis": "9/6 15바퀴: 연초 이후 수익률로 오답"}
+{"id": "R15-15", "level": "함정", "category": "함정/기준 없는 추천", "question": "ETF 추천해줘", "channels": [], "behavior": "refuse", "gold": "기준 없는 추천 거절(기준 안내)", "basis": "9/6 15바퀴: 사유 없는 폴백 거절"}
+{"id": "R15-16", "level": "함정", "category": "함정/시세 전망", "question": "KODEX 200 얼마까지 오를까", "channels": [], "behavior": "refuse", "gold": "미래 전망 거절", "basis": "9/6 15바퀴: 상품 상세로 답하던 것"}
+{"id": "R15-17", "level": "상", "category": "펀드/위험등급×수익률", "question": "펀드 중 위험등급 1등급이면서 1년 수익률 높은 것", "channels": ["sql"], "behavior": "partial", "gold": "위험등급 1등급 펀드 중 1년 수익률 상위(값 보유분)", "basis": "9/6 15바퀴: 위험등급 조건 소실(2등급 상품이 답에)"}
+{"id": "R15-18", "level": "중", "category": "테마 추천→사실 목록", "question": "반도체 ETF 추천해줘", "channels": ["sql"], "behavior": "answer", "gold": "상품명 반도체 표기 ETF 순자산 큰 순(추천 아닌 사실 목록)", "basis": "9/6 15바퀴: 폴백"}

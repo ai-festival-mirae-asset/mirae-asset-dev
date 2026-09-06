@@ -1,0 +1,4 @@
+{"id": "R21-01", "level": "함정", "category": "기준일 외 날짜 시세", "question": "9월 1일 KODEX 200 종가", "channels": [], "behavior": "refuse", "gold": "기준일(8/22) 스냅샷만 있음 → 거절", "basis": "9/6 21바퀴: 기준일 종가로 답하던 조용한 오답"}
+{"id": "R21-02", "level": "하", "category": "기준일 시세", "question": "2026년 8월 22일 KODEX 200 종가", "channels": ["sql"], "behavior": "answer", "gold": "기준일 종가 109,980", "basis": "9/6 21바퀴: 회귀 방지"}
+{"id": "R21-03", "level": "중", "category": "채권 콜옵션 건수", "question": "회사채 중 콜옵션 있는 거 몇 개", "channels": ["sql"], "behavior": "answer", "gold": "채권명 '(콜' 표기 회사채 건수(근사)", "basis": "9/6 21바퀴: 조건 무시 전체 건수"}
+{"id": "R21-04", "level": "함정", "category": "계좌 편입 가능", "question": "연금저축으로 살 수 있는 ETF", "channels": [], "behavior": "refuse", "gold": "계좌별 매매 가능 여부 없음 → 거절", "basis": "9/6 21바퀴: 폴백"}

@@ -947,7 +947,7 @@ def route_stage_a(question, index, policy=None, today=None):
         plan.notes.append("용어·개념 설명은 제공 범위 밖(상품 데이터 조회 전용 서비스) — 특정 상품의 해당 항목 값(총보수·괴리율·분배금 등)은 조회 가능")
         plan.hints["unsupported_request"] = "concept"
         return done("concept_question", "refuse")
-    if re.search(r"(?:(?:ISA|CMA)\s*(?:계좌)?|증권\s*계좌|위탁\s*계좌|연금저축\s*계좌|일반\s*계좌)\s*(?:로|에서|에|으로|를|을|용|에는)?\s*(?:ETF|ETN|ETP|펀드|채권|상품)?\s*(?:살|사|매수|담|투자|가입|편입|거래|넣|추천|좋|가능|되나|돼)", q, re.IGNORECASE) \
+    if re.search(r"(?:(?:ISA|CMA)\s*(?:계좌)?|증권\s*계좌|위탁\s*계좌|연금저축\s*계좌|연금저축(?=\s*(?:로|에서|으로|에는))|일반\s*계좌)\s*(?:로|에서|에|으로|를|을|용|에는)?\s*(?:ETF|ETN|ETP|펀드|채권|상품)?\s*(?:살|사|매수|담|투자|가입|편입|거래|넣|추천|좋|가능|되나|돼)", q, re.IGNORECASE) \
             and not product_ref:   # 12바퀴: 'ISA 계좌로 살 수 있는 ETF 알려줘'(종전 'ISA' 상품명 검색 0건)
         plan.notes.append("계좌 유형별 매매 가능 여부·추천은 제공 범위 밖 — 퇴직연금 편입 가능 여부(pd_pen_tr_yn)만 보유('퇴직연금 ETF'로 질문 가능)")
         plan.hints["unsupported_request"] = "account_type"
@@ -1122,6 +1122,15 @@ def route_stage_a(question, index, policy=None, today=None):
         plan.notes.append(f"실시간 시세는 제공 범위 밖 — 데이터는 {AS_OF_MASTER} 스냅샷")
         plan.hints["time_violation"] = "realtime"
         return done("time_violation", "refuse")
+    _dm = re.search(r"(?:(20\d\d)\s*년\s*)?(\d{1,2})\s*월\s*(\d{1,2})\s*일", q)
+    if _dm and re.search(r"종가|시세|가격|주가|NAV|나브|기준가|순자산|수익률|얼마", q) \
+            and not re.search(r"만기|발행|상장|설정|지급|분배|배당", q):
+        # 21바퀴: '9월 1일 KODEX 200 종가'(종전 기준일 종가로 답하던 조용한 오답) — 기준일과 다른 날짜의 시세는 없다
+        _dstr = f"{int(_dm.group(1) or AS_OF_MASTER[:4]):04d}-{int(_dm.group(2)):02d}-{int(_dm.group(3)):02d}"
+        if _dstr != AS_OF_MASTER:
+            plan.notes.append(f"{_dstr} 시점의 시세는 보유하지 않음 — 데이터는 {AS_OF_MASTER} 기준일 스냅샷(그날의 종가·NAV만 있음)")
+            plan.hints["time_violation"] = "dated_price"
+            return done("time_violation", "refuse")
     if re.search(r"어제|그제|오늘|지난\s*주|이번\s*주|지난\s*달|최근\s*며칠", q) \
             and re.search(r"종가|시세|가격|주가|NAV|나브|기준가|얼마나\s*(올랐|내렸|떨어|빠졌)|등락|상승률|하락률", q):
         # 7바퀴: '어제 TIGER 200 NAV 얼마였어'(시간 낱말과 시세 낱말 사이에 상품명) · '코스닥 ETF 오늘 얼마나 올랐어'
@@ -2253,7 +2262,7 @@ def route_stage_a(question, index, policy=None, today=None):
         elif not cond and re.search(r"투기\s*등급|투자\s*부적격|하이일드|정크", q):
             cond = {"min_rating_rank": 11}
             notes = list(notes) + ["투기등급 = BB+ 이하(신용등급 서열 11 이상) 기준"]
-        if re.search(r"\d+\s*년\s*물", q):                                   # 9/6 9바퀴: '국고채 3년물' — 발행 만기 구분 항목 없음
+        if re.search(r"(?<!\d)\d{1,2}\s*년\s*(?:물|만기(?!\s*(?:이내|이하|이상|미만|초과|안|남|까지|전|후)))", q):   # 21바퀴: 연도(2027년 만기)는 제외   # 9/6 9바퀴: '국고채 3년물' · 21바퀴: '국고채 30년 만기 있어?' — 발행 만기 구분 항목 없음
             plan.notes.append("'N년물'(발행 당시 만기 구분) 항목은 원천에 없음 — 만기일·잔존만기 기준('잔존만기 3년 이내 국공채')으로 질문하면 조회 가능")
             plan.hints["unsupported_request"] = "bond_tenor_bucket"
             return done("unsupported_field", "refuse")
@@ -2527,6 +2536,9 @@ def route_stage_a(question, index, policy=None, today=None):
                 _iss = None
         if _iss:
             plan.notes.append(f"발행사 표기 '{_iss}'가 채권명(정식명·약칭)에 있는 종목 기준")
+        elif re.search(r"콜\s*옵션|콜옵션|콜\s*조건|콜부|조기\s*상환\s*(?:조건|가능|권)", q):   # 21바퀴: '회사채 중 콜옵션 있는 거 몇 개'(종전 전체 건수)
+            _iss = "(콜"
+            plan.notes.append("콜옵션(조기상환권)은 원천에 별도 항목이 없어 채권명의 '(콜)' 표기 기준으로 근사")
         if currency and currency != "KRW" and not ccy_exclude:   # 12바퀴: '달러 표시 채권 있어' — 원천은 원화 채권만
             plan.notes.append("채권 표(kr_bond)는 원화(KRW) 표시 채권만 수집 — 외화 표시 채권은 원천에 없어 0건이 정상")
         params = {"currency": currency if not ccy_exclude else None,

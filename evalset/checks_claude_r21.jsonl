@@ -1,0 +1,4 @@
+{"id": "R21-01", "checks": [{"type": "note_any", "name": "거절 사유", "terms": ["2026-09-01 시점의 시세는 보유하지 않음"]}, {"type": "answer_has_none", "name": "종가 숫자 없음", "terms": ["109,980"]}]}
+{"id": "R21-02", "checks": [{"type": "sql_number", "name": "KODEX 200 종가", "sql": "SELECT TRY_CAST(du_clpr AS DOUBLE) FROM kr_etp WHERE pd_itm_no='KR7069500007'"}]}
+{"id": "R21-03", "checks": [{"type": "sql_number", "name": "(콜) 표기 회사채 건수", "sql": "SELECT count(*) FROM kr_bond WHERE STD_PD_MCLS_NM='회사채' AND (PD_NM ILIKE '%(콜%' OR PD_ABRV_NM ILIKE '%(콜%')"}, {"type": "note_any", "name": "근사 명시", "terms": ["'(콜)' 표기 기준으로 근사"]}]}
+{"id": "R21-04", "checks": [{"type": "note_any", "name": "거절 사유", "terms": ["계좌 유형별 매매 가능 여부"]}]}

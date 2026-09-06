@@ -169,6 +169,21 @@ def test_year_and_numeric_conditions_are_not_absent_names(index,question):
     assert route(question,index,today=TODAY).behavior_hint != "refuse"
 
 
+@pytest.mark.parametrize("question", [
+    "표면금리가 3%인 채권 한 개만 보여줘",
+    "3% 표면금리 퇴직연금 채권 하나만",
+    "금리 3%짜리 채권 1개",
+])
+def test_single_bond_keeps_verified_product_name(index, con, question):
+    plan, rows = query(index, con, question, "bond_filter")
+    assert plan.hints["skip_generation"]
+    assert plan.hints["display_rows"] == 1
+    gold = con.execute("SELECT PD_ABRV_NM, PD_NM FROM kr_bond WHERE drv_maturity_status='active' AND TRY_CAST(SRFC_IRT AS DOUBLE)=3 AND (?=false OR PD_PEN_TR_YN='Y') ORDER BY PD_NO", ["퇴직연금" in question]).fetchall()
+    answer = _draft_answer(plan, execute_plan(plan, RuntimeContext(con=con, index=index)), question)
+    assert rows and gold
+    assert sum(any(name and name in answer for name in pair) for pair in gold) == 1
+
+
 def test_all_new_traps_are_rule_refusals(index):
     path=Path(__file__).resolve().parents[1]/"evalset/evalset_codex_2.jsonl"
     for line in path.read_text(encoding="utf-8").splitlines():

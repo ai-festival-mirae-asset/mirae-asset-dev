@@ -2484,7 +2484,8 @@ def route_stage_a(question, index, policy=None, today=None):
                   "min_coupon": coupon_lo, "max_coupon": coupon_hi,
                   "min_after_tax": at_lo, "max_after_tax": at_hi,
                   "name_pattern": f"%{_iss}%" if _iss else None}
-        if coupon_order == "mat_asc":
+        if coupon_order == "mat_asc" or top_n == 1:
+            # 한 종목 요청은 검증된 목록을 그대로 표시해 생성 후 상품명이 사라지지 않게 한다.
             plan.hints["skip_generation"] = True
         params.update(cond)
         params = {k: v for k, v in params.items() if v is not None}
@@ -3000,6 +3001,7 @@ def route_stage_a(question, index, policy=None, today=None):
             _range_params["min_listed_dt"] = _lf_list
         if _lu_list:
             _range_params["max_listed_dt"] = _lu_list
+        fee_request = "보수" in q and re.search(r"이하|미만|낮|싼|저렴", q)
         if (_aum_p or _lf_list or _lu_list) and not any(w in q for w in TOP_WORDS) \
                 and not ("보수" in q or any(_k == "fee" for _v, _k, _d in percents)):   # 9/3 2바퀴: '순자산 1조원 이상인 ETF 목록'(종전 폴백) · 11바퀴: '지난달 상장한 ETF'(구간만) · 13바퀴: 보수 조건은 보수 필터 소관
             _al_th = non_region_themes[0] if non_region_themes else (_region_cnt[0] if _region_cnt else None)

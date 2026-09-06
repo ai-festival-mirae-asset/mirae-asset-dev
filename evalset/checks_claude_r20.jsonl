@@ -1,0 +1,3 @@
+{"id": "R20-01", "checks": [{"type": "note_any", "name": "거절 사유", "terms": ["미래 전망"]}, {"type": "answer_has_none", "name": "종가 숫자 없음", "terms": ["109,980"]}]}
+{"id": "R20-02", "checks": [{"type": "answer_has_any", "name": "미국 소형주 ETF 표시", "terms": ["Small Cap", "Small-Cap", "small cap"]}]}
+{"id": "R20-03", "checks": [{"type": "sql_number", "name": "KODEX 200 종가", "sql": "SELECT TRY_CAST(du_clpr AS DOUBLE) FROM kr_etp WHERE pd_itm_no='KR7069500007'"}]}

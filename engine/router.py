@@ -860,10 +860,12 @@ def route_stage_a(question, index, policy=None, today=None):
         plan.notes.append("기준 없는 상품 추천은 제공 범위 밖(단정 추천 금지) — 기준(위험등급·보수·순자산·테마)을 정해 주면 사실 조회 가능")
         plan.hints["unsupported_request"] = "bare_recommendation"
         return done("action_request", "refuse")
-    if re.search(r"오를까|내릴까|오르나요|오르냐|떨어질까|얼마까지\s*(?:오|내|갈)|상승할까|하락할까|오를\s*것\s*같|갈\s*것\s*같|오를\s*지|떨어질\s*지|오를까요|빠질까", q):
+    if re.search(r"오를까|내릴까|오르나요|오르냐|떨어질까|얼마까지\s*(?:오|내|갈)|상승할까|하락할까|오를\s*것\s*같|갈\s*것\s*같|오를\s*지|떨어질\s*지|오를까요|빠질까"
+                 r"|(?:내일|모레|다음\s*주|다음\s*달|내년|향후|앞으로|미래)\s*(?:의\s*)?(?:가격|종가|시세|주가|NAV|기준가|순자산|수익률|전망)", q):   # 20바퀴: 'KODEX 200 내일 가격'(종전 기준일 종가)
         # 15바퀴: 'KODEX 200 얼마까지 오를까'(종전 상품 상세)
         plan.notes.append("미래 전망·시장 예측은 제공 불가(단정 추천 금지) — 기준일 종가·NAV·수익률 등 사실 조회로 전환 가능")
         plan.hints["unsupported_request"] = "price_forecast"
+        plan.hints["time_violation"] = "future_forecast"     # 20바퀴: Codex 전망 거절 규칙과 같은 표식(시험 호환)
         return done("time_violation", "refuse")
     if re.search(r"(?:ETF|ETN|펀드|채권|주식|예금|적금)\s*(?:이랑|랑|와|과|하고|vs|대|이나|나)\s*(?:ETF|ETN|펀드|채권|주식|예금|적금)\s*(?:중에서|중에|중)?\s*"
                  r"(?:뭐가|어느\s*(?:게|쪽이|것이|쪽)|어떤\s*게|어디가)\s*(?:더\s*)?(?:나아|낫|좋)", q, re.IGNORECASE) and not product_ref:
@@ -3881,8 +3883,9 @@ def route_stage_a(question, index, policy=None, today=None):
         return done("theme_history", "partial")
 
     if (non_region_themes or "테마" in q or (is_global and theme_hits)) \
-            and re.search(r"투자하는|투자하|전략|중심|집중|테마|찾아|알려|골라|있어", q) \
-            and not product_ref and (not is_bond_domain or has_etf_word):
+            and (re.search(r"투자하는|투자하|전략|중심|집중|테마|찾아|알려|골라|있어", q)
+                 or (is_global and non_region_themes and has_etf_word)) \
+            and not product_ref and (not is_bond_domain or has_etf_word):   # 20바퀴: '미국 소형주 해외 ETF'(동사 없는 짧은 형 → 폴백)
         excluded_region = detect_region_exclusion(q)
         if is_global and excluded_region and non_region_themes:      # H-18: '미국 말고' 배당형 해외 ETF
             anchors = [t for t in themes.get(non_region_themes[0], []) if t][:1] or [non_region_themes[0]]

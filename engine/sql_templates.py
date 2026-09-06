@@ -186,6 +186,7 @@ TEMPLATES = {t.id: t for t in [
             AND ($min_coupon IS NULL OR TRY_CAST(SRFC_IRT AS DOUBLE) >= $min_coupon)
             AND ($max_coupon IS NULL OR TRY_CAST(SRFC_IRT AS DOUBLE) < $max_coupon)
             AND ($bond_class IS NULL OR STD_PD_MCLS_NM = $bond_class)
+            AND ($pension_only IS NULL OR upper(trim(coalesce(PD_PEN_TR_YN,''))) IN ('Y','TRUE','1'))
           ORDER BY CASE WHEN $order = 'coupon' THEN TRY_CAST(SRFC_IRT AS DOUBLE) END DESC NULLS LAST,
                    CASE WHEN $order = 'coupon_asc' THEN TRY_CAST(SRFC_IRT AS DOUBLE) END ASC NULLS LAST,
                    CASE WHEN $order = 'after_tax' THEN TRY_CAST(AFTER_TAX_YIELD AS DOUBLE) END DESC NULLS LAST,   -- 9/6 9바퀴(숨김)
@@ -195,7 +196,7 @@ TEMPLATES = {t.id: t for t in [
                    replace(MAT_DT,'-',''), PD_NO LIMIT $limit""",
        [Param("as_of_date", required=True), Param("until", required=True), Param("currency"),
         Param("max_rating_rank"), Param("min_rating_rank"), Param("min_coupon"),
-        Param("max_coupon"), Param("bond_class"),
+        Param("max_coupon"), Param("bond_class"), Param("pension_only"),
         Param("order", enum=("coupon", "coupon_asc", "after_tax", "after_tax_asc")),
         Param("limit", required=True)],
        source="PRBD01N001", key_col="PD_NO"),
@@ -415,6 +416,10 @@ TEMPLATES = {t.id: t for t in [
                  OR coalesce(m.resolved, e.cu_fund_mgmt_co) LIKE $mgmt || '%')   -- 9/6 7바퀴 운용사 범위(숨김)
             AND TRY_CAST(cu_charge_rt AS DOUBLE) > 0
             AND TRY_CAST(cu_charge_rt AS DOUBLE) <= $max_fee
+            AND ($min_aum_gt IS NULL OR TRY_CAST(pd_net_tamt AS DOUBLE) > $min_aum_gt)
+            AND ($min_aum_ge IS NULL OR TRY_CAST(pd_net_tamt AS DOUBLE) >= $min_aum_ge)
+            AND ($max_aum_lt IS NULL OR TRY_CAST(pd_net_tamt AS DOUBLE) < $max_aum_lt)
+            AND ($max_aum_le IS NULL OR TRY_CAST(pd_net_tamt AS DOUBLE) <= $max_aum_le)
             AND ($min_grade IS NULL OR TRY_CAST(drv_risk_grade AS INT) >= $min_grade)
             AND ($max_grade IS NULL OR TRY_CAST(drv_risk_grade AS INT) <= $max_grade)
             AND ($min_listed_dt IS NULL OR replace(coalesce(pd_lstg_dt,''),'-','') >= replace($min_listed_dt,'-',''))   -- 13바퀴 상장 구간·순자산 문턱(숨김)
@@ -451,6 +456,8 @@ TEMPLATES = {t.id: t for t in [
             AND ($month_pattern IS NULL OR pd_dvid_pay_months ILIKE $month_pattern ESCAPE '\\')
             AND ($min_pay_cnt IS NULL OR TRY_CAST(pd_dvid_pay_cnt AS INT) >= $min_pay_cnt)
             AND ($max_pay_cnt IS NULL OR TRY_CAST(pd_dvid_pay_cnt AS INT) <= $max_pay_cnt)   -- 9/6 정확 일치(숨김)
+            AND ($min_amount IS NULL OR TRY_CAST(pd_divd_amt_ann AS DOUBLE) >= $min_amount)
+            AND ($max_amount IS NULL OR TRY_CAST(pd_divd_amt_ann AS DOUBLE) <= $max_amount)
             AND ($min_listed_dt IS NULL OR replace(coalesce(pd_lstg_dt,''),'-','') >= replace($min_listed_dt,'-',''))   -- 9/3: 형식 정규화
             AND ($min_yield IS NULL OR TRY_CAST(pd_dvid_yield AS DOUBLE) >= $min_yield)   -- 9/3 문턱(숨김)
             AND ($max_yield IS NULL OR TRY_CAST(pd_dvid_yield AS DOUBLE) < $max_yield)
@@ -463,7 +470,7 @@ TEMPLATES = {t.id: t for t in [
                         ELSE TRY_CAST(pd_dvid_yield AS DOUBLE) END DESC NULLS LAST,
                    pd_itm_no LIMIT $limit""",
        [Param("metric", required=True, enum=("yield", "amount")), Param("month_pattern"),
-        Param("min_pay_cnt"), Param("min_listed_dt"), Param("limit", required=True), Param("min_yield"), Param("max_yield"), Param("max_pay_cnt"), Param("mgmt"), Param("name_pattern"), Param("order", enum=("aum",)),
+        Param("min_amount"), Param("max_amount"), Param("min_pay_cnt"), Param("min_listed_dt"), Param("limit", required=True), Param("min_yield"), Param("max_yield"), Param("max_pay_cnt"), Param("mgmt"), Param("name_pattern"), Param("order", enum=("aum",)),
         Param("min_aum_gt"), Param("min_aum_ge"), Param("max_aum_lt"), Param("max_aum_le")],
        source="PREF01N001", key_col="pd_itm_no"),
 
@@ -691,6 +698,7 @@ TEMPLATES = {t.id: t for t in [
             AND ($name_pattern IS NULL OR itm_nm ILIKE $name_pattern ESCAPE '\\' OR itm_abrv_nm ILIKE $name_pattern ESCAPE '\\')   -- 9/6 이름 표기(숨김)
             AND ($min_aum IS NULL OR TRY_CAST(fd_nast_suma AS DOUBLE) >= $min_aum)   -- 9/6 10바퀴 순자산 문턱(숨김)
             AND ($max_aum IS NULL OR TRY_CAST(fd_nast_suma AS DOUBLE) <= $max_aum)
+            AND ($public_only IS NULL OR prvo_pbff_desc = '공모')
           ORDER BY CASE WHEN $order = 'aum' THEN TRY_CAST(fd_nast_suma AS DOUBLE) END DESC NULLS LAST,
                    CASE WHEN $order = 'classes' THEN TRY_CAST(share_class_count AS INT) END DESC NULLS LAST,   -- 9/6 9바퀴 '클래스 수 많은'
                    CASE WHEN $order IS NULL AND $on_sale_only IS NULL
@@ -700,7 +708,7 @@ TEMPLATES = {t.id: t for t in [
                    itm_no LIMIT $limit""",
        [Param("on_sale_only"), Param("thco_sale_only"), Param("attr_pattern"),
         Param("btyp_pattern"), Param("min_risk"),
-        Param("max_risk"), Param("region"), Param("order"), Param("limit", required=True), Param("name_pattern"), Param("min_aum"), Param("max_aum")],
+        Param("public_only"), Param("max_risk"), Param("region"), Param("order"), Param("limit", required=True), Param("name_pattern"), Param("min_aum"), Param("max_aum")],
        source="PRFD01N001", key_col="itm_no"),
 
     _t("fund_by_fee",
@@ -1093,12 +1101,13 @@ TEMPLATES = {t.id: t for t in [
             AND ($max_risk IS NULL OR TRY_CAST(drv_risk_grade AS INT) <= $max_risk)
             AND ($region IS NULL OR ovrs_fd_desc = $region)   -- 9/6 지역(숨김)
             AND ($name_pattern IS NULL OR itm_nm ILIKE $name_pattern ESCAPE '\\' OR itm_abrv_nm ILIKE $name_pattern ESCAPE '\\')   -- 9/6 이름 표기(숨김)
+            AND ($public_only IS NULL OR prvo_pbff_desc = '공모')
           ORDER BY CASE WHEN coalesce($order,'desc') = 'desc' THEN TRY_CAST(fd_yr1_ern_r AS DOUBLE) END DESC NULLS LAST,
                    CASE WHEN $order = 'asc' THEN TRY_CAST(fd_yr1_ern_r AS DOUBLE) END ASC NULLS LAST,
                    itm_no LIMIT $limit""",
        [Param("on_sale_only"), Param("thco_sale_only"), Param("btyp_pattern"),
         Param("order", enum=("desc", "asc")), Param("limit", required=True), Param("min_return"), Param("max_return"), Param("min_aum"),
-        Param("region"), Param("name_pattern"), Param("min_risk"), Param("max_risk")],
+        Param("public_only"), Param("region"), Param("name_pattern"), Param("min_risk"), Param("max_risk")],
        source="PRFD01N001", key_col="itm_no"),
 
     _t("fund_by_benchmark",
@@ -1545,6 +1554,12 @@ LLM_HIDDEN_ENUM_VALUES = {
 }
 # 같은 원칙의 파라미터판 — 규칙 라우터만 넘기는 파라미터는 AI 라우터 목록에서 통째로 뺀다(9/3 bond_count 금리 조건).
 LLM_HIDDEN_PARAMS = {
+    # codex_2: 조회 조건만 확장하고 AI 라우터의 목록은 그대로 유지한다.
+    ("bond_maturing_within", "pension_only"),
+    ("etp_low_fee", "min_aum_gt"), ("etp_low_fee", "min_aum_ge"),
+    ("etp_low_fee", "max_aum_lt"), ("etp_low_fee", "max_aum_le"),
+    ("etp_by_dividend", "min_amount"), ("etp_by_dividend", "max_amount"),
+    ("fund_filter", "public_only"), ("fund_top_return_1y", "public_only"),
     ("bond_count", "min_coupon"), ("bond_count", "max_coupon"),
     # 9/6 6바퀴 — 브랜드·운용사 평균, 표기 변형 OR
     ("etp_metric_avg", "name_pattern"), ("etp_metric_avg", "mgmt"), ("etp_top_aum", "name_pattern2"),

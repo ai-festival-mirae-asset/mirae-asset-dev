@@ -1,0 +1,4 @@
+최신 main c894aa0 통합 후 전체 자동 시험
+명령: python -m pytest tests/ -q --basetemp .test-tmp-codex-2-release1742 -o cache_dir=.pytest-cache-codex-2-release1742 --tb=short
+결과: 976 passed, 2 skipped, 1 warning in 98.85s (0:01:38)
+별도 제외 시험: 없음. 기존 유료 실시간 시험 2개는 기본 설정에 따라 건너뜀. 셸 문법 시험 포함.

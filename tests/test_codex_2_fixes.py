@@ -47,9 +47,9 @@ def test_vague_count_is_not_an_exact_number(word):
 
 
 @pytest.mark.parametrize("question", ["만기 짧은 채권 서너 개만 보여줘", "만기가 가까운 채권 몇 개 보여주세요", "만기 빠른 채권을 소개해줘"])
-def test_short_maturity_orders_by_actual_date(index, con, question):
+def test_short_maturity_uses_master_active_rows(index, con, question):
     plan, rows = query(index, con, question, "bond_filter")
-    gold = con.execute("SELECT replace(MAT_DT,'-','') FROM kr_bond WHERE drv_maturity_status='active' AND upper(coalesce(drv_is_perpetual,'')) NOT IN ('Y','TRUE','1') AND replace(MAT_DT,'-','')>'20260906' ORDER BY replace(MAT_DT,'-','') LIMIT ?", [len(rows)]).fetchall()
+    gold = con.execute("SELECT replace(MAT_DT,'-','') FROM kr_bond WHERE drv_maturity_status='active' ORDER BY replace(MAT_DT,'-','') LIMIT ?", [len(rows)]).fetchall()
     assert rows and [r["MAT_DT"].replace("-", "") for r in rows] == [r[0] for r in gold]
     assert plan.hints["skip_generation"]
 

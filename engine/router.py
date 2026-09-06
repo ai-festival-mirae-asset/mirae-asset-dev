@@ -2395,9 +2395,10 @@ def route_stage_a(question, index, policy=None, today=None):
             plan.notes.append(f"만기 도래 판정: {today.isoformat()} ~ {until.isoformat()} (요청 시점 기준)")
             return done("bond_ranking")
 
+        bond_examples = bool(re.search(r"몇\s*개\s*(?:만\s*)?(?:소개|보여)", q))
         wants_active = bool(re.search(r"만기가 안 지|만기 안 지|만기가 지나지", q)) or bool(buyable)
         # 8/22 v2 L-14: 만기가 이미 지난 채권까지 섞여 나오던 것 — 기본은 '만기 미경과'로 두고 명시한다
-        if not wants_active and not any(w in q for w in COUNT_WORDS) \
+        if not wants_active and (not any(w in q for w in COUNT_WORDS) or bond_examples) \
                 and not re.search(r"만기\s*(가\s*)?(지난|된|도래한|경과)|과거|전체|모든|이미|포함", q):
             wants_active = True                      # 목록 질문만 — 건수 질문(L-05 등)은 전체 통계 그대로
             plan.notes.append("만기가 지나지 않은(기준일 현재 유효한) 채권 기준 — 만기 경과분까지 보려면 '만기 지난 채권 포함'으로 질문")
@@ -2483,6 +2484,8 @@ def route_stage_a(question, index, policy=None, today=None):
                   "min_coupon": coupon_lo, "max_coupon": coupon_hi,
                   "min_after_tax": at_lo, "max_after_tax": at_hi,
                   "name_pattern": f"%{_iss}%" if _iss else None}
+        if coupon_order == "mat_asc":
+            plan.hints["skip_generation"] = True
         params.update(cond)
         params = {k: v for k, v in params.items() if v is not None}
         if coupon_note:
@@ -2510,7 +2513,7 @@ def route_stage_a(question, index, policy=None, today=None):
                               + (" · 만기 미도래(기준일 현재 유효) 종목 기준" if "maturity_status" in _bp else ""))
             plan.hints["skip_generation"] = True
             return done("bond_metric_avg", "partial")
-        if any(w in q for w in COUNT_WORDS) and not (coupon_order == "mat_asc" and re.search(r"소개|보여", q)):
+        if any(w in q for w in COUNT_WORDS) and not bond_examples:
             count_keys = ("currency", "max_rating_rank", "min_rating_rank",
                           "maturity_status", "buyable_only", "bond_class", "pension_only",
                           "min_issue_dt", "max_issue_dt", "min_coupon", "max_coupon",   # 9/3: 금리 조건도 건수에

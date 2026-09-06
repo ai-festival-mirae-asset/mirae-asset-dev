@@ -91,6 +91,10 @@ CHECKS = {
 }
 
 # 원천에서 계산한 반대 조건도 확인해 맞는 이름 한 개의 우연한 포함을 줄인다.
+# 가까운 만기의 시간 기준은 미확정이다. 두 모집단을 각각 직접 조회하고 기준 설명을 요구한다.
+CHECKS[5][0] = {"type":"any_of","name":"명시한 만기 기준의 가까운 후보",
+                "checks":[CHECKS[5][0], names(bond("1=1", "replace(MAT_DT,'-',''),PD_NO"), "원천 기준일에 유효한 가까운 만기", top=10)]}
+CHECKS[5].append(note("만기 기준 시점 명시", "기준일 현재", "요청 시점", "2026-08-22", "2026-09-06"))
 CHECKS[13][0] = {"type":"any_of","name":"원천의 두 주식형 분류 중 명시한 기준",
                  "checks":[CHECKS[13][0], names(fund(f"ovrs_fd_desc='국내' AND or_attr_desc='주식형' AND prvo_pbff_desc='공모' AND {num('fd_yr1_ern_r')}<>0", f"{num('fd_yr1_ern_r')} DESC,itm_no"), "운용속성 주식형 상위", top=5, minimum=5, ordered=True)]}
 CHECKS[13].append(note("선택한 분류 기준 명시", "유형 분류", "운용속성", "zrin_btyp_nm", "or_attr_desc"))

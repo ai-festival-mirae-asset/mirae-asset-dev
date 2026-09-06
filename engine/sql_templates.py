@@ -754,7 +754,7 @@ TEMPLATES = {t.id: t for t in [
                                   WHEN 'volume' THEN TRY_CAST(du_vol_1d AS DOUBLE)
                                   WHEN 'value' THEN TRY_CAST(du_val_1d AS DOUBLE)
                                   WHEN 'nav' THEN TRY_CAST(du_last_nav AS DOUBLE)
-                                  WHEN 'fee' THEN TRY_CAST(cu_charge_rt AS DOUBLE)
+                                  WHEN 'fee' THEN TRY_CAST(cu_charge_rt AS DOUBLE) WHEN 'aum' THEN TRY_CAST(pd_net_tamt AS DOUBLE)
                                   ELSE TRY_CAST(du_vlty_1y AS DOUBLE) END), 2) AS avg_value,
                  count(*) AS n
           FROM kr_etp e LEFT JOIN mgmt_resolved m USING (pd_itm_no)
@@ -774,10 +774,10 @@ TEMPLATES = {t.id: t for t in [
                                       WHEN 'volume' THEN TRY_CAST(du_vol_1d AS DOUBLE)
                                       WHEN 'value' THEN TRY_CAST(du_val_1d AS DOUBLE)
                                       WHEN 'nav' THEN TRY_CAST(du_last_nav AS DOUBLE)
-                                      WHEN 'fee' THEN TRY_CAST(cu_charge_rt AS DOUBLE)
+                                      WHEN 'fee' THEN TRY_CAST(cu_charge_rt AS DOUBLE) WHEN 'aum' THEN TRY_CAST(pd_net_tamt AS DOUBLE)
                                       ELSE TRY_CAST(du_vlty_1y AS DOUBLE) END, 0) <> 0""",
        [Param("metric", required=True,
-              enum=("diff", "tracking", "vol_1m", "vol_3m", "vol_6m", "vol_1y", "volume", "value", "nav", "fee")),
+              enum=("diff", "tracking", "vol_1m", "vol_3m", "vol_6m", "vol_1y", "volume", "value", "nav", "fee", "aum")),
         Param("type", enum=("ETF", "ETN")), Param("index_pattern"), Param("name_pattern"), Param("mgmt"), Param("top_aum_n"), Param("holder_code")],
        source="PREF01N001"),
 
@@ -1539,7 +1539,7 @@ LLM_HIDDEN_ENUM_VALUES = {
     ("etp_metric_rank", "metric"): ("price", "mkt_cap", "fee", "shares", "listed"),
     ("constituent_holders", "order"): ("mkt_cap",),
     ("coverage_check", "field"): ("kr_etp.pd_dvid_yield",),
-    ("etp_metric_avg", "metric"): ("fee",),               # 9/6 6바퀴: 'TIGER ETF 총보수 평균'
+    ("etp_metric_avg", "metric"): ("fee", "aum"),        # 9/6 6바퀴: 'TIGER ETF 총보수 평균' · 16바퀴: 'ETF 순자산 평균'
     ("bond_filter", "order"): ("mat_asc", "mat_desc", "issue_desc", "issue_asc"),   # 9/6 8바퀴: 만기 가까운 순·발행일 최근 순
     ("bond_maturing_within", "order"): ("after_tax", "after_tax_asc"),   # 9/6 9바퀴: '만기 2년 이하 회사채 세후수익률 높은 순'
 }

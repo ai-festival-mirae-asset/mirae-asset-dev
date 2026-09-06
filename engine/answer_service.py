@@ -452,6 +452,8 @@ def avg_sentence(op, rows, label=None):
         if unit.strip().upper() == "USD":                 # 달러 금액은 억·조 단위로(krw_readable 재사용 — '66억 USD')
             r = krw_readable(av)
             num, unit = ((r[:-1] + " USD") if (r and r.endswith("원")) else f"{float(av):,.0f} USD"), ""
+        elif unit.strip().upper() == "KRW":               # 16바퀴: 원화 큰 금액(순자산 평균)은 억·조 단위로
+            num, unit = krw_readable(av), ""
         else:
             num = f"{float(av):,.2f}".rstrip("0").rstrip(".") or "0"
     except (TypeError, ValueError):
@@ -483,7 +485,7 @@ _ATTR_NOTES = [
     (r"순자산|규모", "pd_net_tamt", "순자산총액", "krw"),
     (r"기초\s*지수|추종", "cu_base_index", "기초지수", "text"),
     (r"듀레이션", "DUR", "듀레이션(년)", "num"),
-    (r"보수", "cu_charge_rt", "총보수(%)", "text"),
+    (r"보수|수수료(?!\s*(?:유형|미징구|선취|후취))", "cu_charge_rt", "총보수(%)", "text"),   # 16바퀴: 수수료 얼마
     (r"1\s*개월\s*수익률|한\s*달\s*수익률|최근\s*(?:1\s*개월|한\s*달)", "du_er_1m", "1개월 수익률(%)", "text"),   # 13바퀴: 'KODEX 200 최근 1개월 수익률'(종전 1년 수익률로 답함)
     (r"3\s*개월\s*수익률|최근\s*3\s*개월", "du_er_3m", "3개월 수익률(%)", "text"),
     (r"6\s*개월\s*수익률|최근\s*6\s*개월", "du_er_6m", "6개월 수익률(%)", "text"),
@@ -536,7 +538,7 @@ _ONLY_FIELDS = [                                          # (질문 낱말, 후�
     (r"순자산|규모|AUM", ("pd_net_tamt", "fd_nast_suma", "du_last_aum", "total_aum"), "순자산총액", "krw"),
     (r"시가총액|시총", ("mkt_cap",), "시가총액(계산값)", "krw"),
     (r"종가|가격", ("du_clpr",), "장내 종가(원)", "num"),
-    (r"총\s*보수|보수", ("cu_charge_rt", "total_fee_pct"), "총보수", "pct"),
+    (r"총\s*보수|보수|수수료(?!\s*(?:유형|미징구|선취|후취))", ("cu_charge_rt", "total_fee_pct"), "총보수", "pct"),   # 16바퀴: 'KODEX 200 수수료 얼마'
     (r"표면\s*금리|금리|쿠폰|이자율", ("SRFC_IRT",), "표면금리", "pct"),
     (r"만기일|만기", ("MAT_DT", "maturity_yyyymm"), "만기일", "date"),
     (r"발행일", ("ISU_DT",), "발행일", "date"),
@@ -675,7 +677,7 @@ _TOP_ATTRS = [
     (r"위험\s*등급", "drv_risk_grade", "위험등급(1=매우 높음~6=매우 낮음)", "risk"),
     (r"상장일|언제 상장|상장됐", "pd_lstg_dt", "상장일", "date"),
     (r"기초\s*지수|추종", "cu_base_index", "기초지수", "text"),
-    (r"보수", "cu_charge_rt", "총보수(%)", "text"),
+    (r"보수|수수료(?!\s*(?:유형|미징구|선취|후취))", "cu_charge_rt", "총보수(%)", "text"),   # 16바퀴: 수수료 얼마
     (r"배당\s*수익률|분배\s*수익률", "pd_dvid_yield", "분배(배당)수익률(%)", "text"),
     (r"추적\s*오차", "du_chas_errt", "추적오차율(%)", "text"),
     (r"수익률", "du_er_1y", "1년 수익률(%)", "text"),

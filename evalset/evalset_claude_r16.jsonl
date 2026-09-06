@@ -1,0 +1,14 @@
+{"id": "R16-01", "level": "하", "category": "펀드 건수/순자산", "question": "순자산 1000억 이상 펀드 몇 개", "channels": ["sql"], "behavior": "answer", "gold": "순자산 1000억 이상 공모펀드 건수(440)", "basis": "9/6 16바퀴: '이상'이 상품명 조건으로 새어 0건"}
+{"id": "R16-02", "level": "중", "category": "펀드 건수/설정액", "question": "설정액 1000억 이상 펀드 몇 개", "channels": ["sql"], "behavior": "answer", "gold": "설정액 항목 없음 → 순자산 기준 440건 + 안내", "basis": "9/6 16바퀴: 조건 없이 1건"}
+{"id": "R16-03", "level": "중", "category": "보수 필터/지역", "question": "미국 ETF 중 보수 0.1% 이하", "channels": ["sql"], "behavior": "answer", "gold": "상품명 '미국' 표기 + 총보수 0.1% 이하(값 보유분)", "basis": "9/6 16바퀴: 지역 조건 소실"}
+{"id": "R16-04", "level": "중", "category": "지수+테마 목록", "question": "코스닥150 레버리지 ETF", "channels": ["sql"], "behavior": "answer", "gold": "KOSDAQ 150 기초지수·상품명 + 레버리지 표기 상장중 ETF", "basis": "9/6 16바퀴: '레버리지'만으로 검색"}
+{"id": "R16-05", "level": "하", "category": "지수 목록", "question": "코스피200 ETF 뭐 있어", "channels": ["sql"], "behavior": "answer", "gold": "KOSPI 200 기초지수·상품명 표기 상장중 ETF 순자산 큰 순", "basis": "9/6 16바퀴: 폴백"}
+{"id": "R16-06", "level": "중", "category": "지수 추종 목록", "question": "코스피200 추종 ETF 알려줘", "channels": ["sql"], "behavior": "answer", "gold": "기초지수 KOSPI 200 상장중 ETF(KODEX 200 포함)", "basis": "9/6 16바퀴: 상품명 표기 2건만"}
+{"id": "R16-07", "level": "중", "category": "집계/순자산 평균", "question": "ETF 순자산 평균", "channels": ["sql"], "behavior": "answer", "gold": "상장중 ETF 순자산총액 단순 평균(값 0·결측 제외)", "basis": "9/6 16바퀴: 폴백"}
+{"id": "R16-08", "level": "중", "category": "집계/운용사 순자산 평균", "question": "삼성자산운용 ETF 순자산 평균", "channels": ["sql"], "behavior": "answer", "gold": "삼성 운용 상장중 ETF 순자산 평균", "basis": "9/6 16바퀴: 폴백"}
+{"id": "R16-09", "level": "하", "category": "상세/수수료", "question": "KODEX 200 수수료 얼마", "channels": ["sql"], "behavior": "answer", "gold": "총보수 항목 초점(원천 0 표기 안내)", "basis": "9/6 16바퀴: 초점 없음"}
+{"id": "R16-10", "level": "함정", "category": "매수 판단", "question": "KODEX 200 지금 사도 돼?", "channels": [], "behavior": "refuse", "gold": "매수 판단 거절 + 사실 조회 안내", "basis": "9/6 16바퀴: 상품 상세로 답하던 것"}
+{"id": "R16-11", "level": "함정", "category": "유형 우열", "question": "ETF랑 펀드 중 뭐가 나아", "channels": [], "behavior": "refuse", "gold": "유형 간 우열 판단 거절", "basis": "9/6 16바퀴: 사유 없는 폴백"}
+{"id": "R16-12", "level": "함정", "category": "통계 집계", "question": "ETF 총보수 중앙값", "channels": [], "behavior": "refuse", "gold": "중앙값 미제공(평균·건수·순위 가능)", "basis": "9/6 16바퀴: 폴백"}
+{"id": "R16-13", "level": "함정", "category": "펀드 보수 평균", "question": "클래스 A 펀드 총보수 평균", "channels": [], "behavior": "refuse", "gold": "펀드 보수 평균 집계 미제공", "basis": "9/6 16바퀴: 엉뚱한 정렬 목록"}
+{"id": "R16-14", "level": "중", "category": "지수 추종 ETN", "question": "나스닥100 추종 ETN 알려줘", "channels": ["sql"], "behavior": "answer", "gold": "기초지수 나스닥100 상장중 ETN 순자산 큰 순", "basis": "9/6 16바퀴: 상품명 표기 검색"}

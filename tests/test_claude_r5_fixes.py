@@ -187,8 +187,10 @@ def test_order_words_rank_by_aum(index):
 def test_index_products_filter_active_etf(index):
     plan = _route(index, "S&P500 추종 국내 ETF 뭐 있어")
     assert plan.intent == "index_products"
-    calls = [c for c in plan.calls if c.op == "etp_name_search"]
-    assert calls and all(c.params.get("status") == "active" and c.params.get("instrument_type") == "ETF" for c in calls)
+    # 9/6 16바퀴: 알려진 4개 지수는 기초지수 표기(etp_top_aum index_pattern)로 조회 — ETF 유형 조건은 그대로
+    calls = [c for c in plan.calls if c.op in ("etp_name_search", "etp_top_aum")]
+    assert calls and all(c.params.get("instrument_type") == "ETF" for c in calls)
+    assert all(c.params.get("status") == "active" for c in calls if c.op == "etp_name_search")
 
 
 @pytest.mark.parametrize("q", ["만기 2년 안 남은 국공채 알려줘", "만기가 2년 이내인 국공채 보여줘"])

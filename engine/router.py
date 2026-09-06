@@ -335,6 +335,9 @@ _COUNT_WORD_RE = re.compile(
 
 
 def extract_top_n(question):
+    _rng = re.search(r"(\d+)\s*위\s*부터\s*(\d+)\s*위", question)        # 22바퀴: '1위부터 3위까지' → 3
+    if _rng and 0 < int(_rng.group(2)) <= 100:
+        return int(_rng.group(2))
     for m in _TOPN_RE.finditer(question):
         n = m.group(1) or m.group(2)
         if n and 0 < int(n) <= 100:
@@ -855,7 +858,7 @@ def route_stage_a(question, index, policy=None, today=None):
         plan.notes.append("환노출(환헤지 없음) 여부 항목은 원천에 없음 — 상품명 '(H)' 표기로 환헤지형만 식별 가능('환헤지 ETF'로 질문 가능)")
         plan.hints["unsupported_request"] = "fx_exposure"
         return done("unsupported_field", "refuse")
-    if re.fullmatch(r"\s*(?:국내\s*|해외\s*|좋은\s*|괜찮은\s*|요즘\s*)?(?:ETF|ETN|펀드|채권|상품)\s*(?:하나|좀|몇\s*개|하나만|1개)?\s*(?:추천|골라|찍어)\S*\s*[?!.~]*\s*", q, re.IGNORECASE):
+    if re.fullmatch(r"\s*(?:국내\s*|해외\s*|좋은\s*|괜찮은\s*|요즘\s*)?(?:ETF|ETN|펀드|채권|상품)\s*(?:하나|좀|몇\s*개|하나만|1개)?\s*(?:추천|골라|찍어)\S*(?:\s*(?:좀|하나|해\s*줘|부탁\S*))?\s*[?!.~]*\s*", q, re.IGNORECASE):   # 22바퀴: 'ETF 추천 좀\'
         # 15바퀴: 'ETF 추천해줘'(종전 사유 없는 폴백 거절) — 기준 없는 추천은 단정 추천 금지
         plan.notes.append("기준 없는 상품 추천은 제공 범위 밖(단정 추천 금지) — 기준(위험등급·보수·순자산·테마)을 정해 주면 사실 조회 가능")
         plan.hints["unsupported_request"] = "bare_recommendation"

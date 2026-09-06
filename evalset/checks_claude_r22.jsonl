@@ -1,0 +1,2 @@
+{"id": "R22-01", "checks": [{"type": "sql_names", "name": "순자산 상위 3(순서)", "top": 3, "ordered": true, "sql": "SELECT pd_abrv_nm, pd_nm FROM kr_etp WHERE drv_instrument_type='ETF' AND drv_listing_status='active' ORDER BY TRY_CAST(pd_net_tamt AS DOUBLE) DESC NULLS LAST, pd_itm_no LIMIT 3"}]}
+{"id": "R22-02", "checks": [{"type": "note_any", "name": "거절 사유", "terms": ["기준 없는 상품 추천"]}]}

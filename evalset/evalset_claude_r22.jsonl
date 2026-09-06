@@ -1,0 +1,2 @@
+{"id": "R22-01", "level": "하", "category": "순위 범위", "question": "ETF 순자산 순위 1위부터 3위까지", "channels": ["sql"], "behavior": "answer", "gold": "순자산총액 상위 3", "basis": "9/6 22바퀴: '1위'만 읽어 1건"}
+{"id": "R22-02", "level": "함정", "category": "기준 없는 추천", "question": "ETF 추천 좀", "channels": [], "behavior": "refuse", "gold": "기준 없는 추천 거절", "basis": "9/6 22바퀴: 폴백"}

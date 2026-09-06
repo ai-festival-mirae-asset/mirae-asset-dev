@@ -267,7 +267,7 @@ TEMPLATES = {t.id: t for t in [
                  cu_charge_rt, drv_risk_grade,
                  pd_net_tamt, du_er_1y, du_er_ytd, pd_lstg_dt, drv_curr_cd,
                  pd_dvid_yield, pd_divd_amt_ann, pd_dvid_pay_cnt, pd_dvid_pay_months,
-                 du_chas_errt, du_diff_rt, du_vlty_1y, du_vol_1d, cu_strtegy, pd_lst_stk_cnt
+                 du_chas_errt, du_diff_rt, du_vlty_1y, du_vol_1d, cu_strtegy, pd_lst_stk_cnt, du_last_nav
           FROM kr_etp WHERE pd_itm_no = $pd_itm_no""",
        [Param("pd_itm_no", required=True)], source="PREF01N001", key_col="pd_itm_no"),
 
@@ -276,8 +276,9 @@ TEMPLATES = {t.id: t for t in [
        "ETF/ETN 혼재(30.7%) 함정 방어를 위해 유형 필수. "
        "name_pattern 은 테마어 결합('2차전지 ETF 중 순자산 1위' — 8/26 v3 C-08). "
        "대상: L-11(KODEX 200 1위 검증 완료), M-02 후단.",
-       """SELECT pd_itm_no, pd_abrv_nm, pd_net_tamt, cu_fund_mgmt_co, drv_risk_grade, pd_lstg_dt
-          FROM kr_etp
+       """SELECT pd_itm_no, pd_abrv_nm, pd_net_tamt, coalesce(m.resolved, cu_fund_mgmt_co) AS cu_fund_mgmt_co,
+                 drv_risk_grade, pd_lstg_dt
+          FROM kr_etp LEFT JOIN mgmt_resolved m USING (pd_itm_no)   -- 12바퀴: 운용사 표기는 오염 정정값
           WHERE drv_instrument_type = $instrument_type AND drv_listing_status = 'active'
             AND ($order IS NULL OR $order <> 'asc' OR TRY_CAST(pd_net_tamt AS DOUBLE) > 0)
             AND ($name_pattern IS NULL OR pd_nm ILIKE $name_pattern ESCAPE '\\'
@@ -363,9 +364,11 @@ TEMPLATES = {t.id: t for t in [
           WHERE drv_instrument_type = 'ETF'
             AND replace(coalesce(pd_lstg_dt,''),'-','') BETWEEN replace($date_from,'-','')
                                                             AND replace($date_to,'-','')
-          ORDER BY replace(pd_lstg_dt,'-','') DESC, pd_itm_no LIMIT $limit""",
+          ORDER BY (CASE WHEN $order = 'asc' THEN -1 ELSE 1 END)
+                   * TRY_CAST(nullif(replace(coalesce(pd_lstg_dt,''),'-',''),'') AS BIGINT) DESC NULLS LAST,
+                   pd_itm_no LIMIT $limit""",
        [Param("date_from", required=True), Param("date_to", required=True),
-        Param("limit", required=True)],
+        Param("limit", required=True), Param("order", enum=("asc",))],
        source="PREF01N001", key_col="pd_itm_no"),
 
     _t("etp_count",
@@ -385,10 +388,12 @@ TEMPLATES = {t.id: t for t in [
             AND ($min_er_1y IS NULL OR TRY_CAST(du_er_1y AS DOUBLE) > $min_er_1y)
             AND ($index_pattern IS NULL OR coalesce(cu_base_index, ref_base_index) ILIKE $index_pattern
                  OR pd_nm ILIKE $index_pattern OR pd_abrv_nm ILIKE $index_pattern)   -- 9/6 7바퀴 지수 추종 건수(숨김)
+            AND ($mgmt IS NULL OR coalesce((SELECT m.resolved FROM mgmt_resolved m WHERE m.pd_itm_no = kr_etp.pd_itm_no),
+                                           cu_fund_mgmt_co) LIKE $mgmt || '%')   -- 12바퀴 운용사 범위 건수(숨김)
           GROUP BY 1, 2 ORDER BY 1, 2""",
        [Param("min_aum_gt"), Param("min_aum_ge"), Param("max_aum_lt"), Param("max_aum_le"),
         Param("min_listed_dt"), Param("max_listed_dt"), Param("min_grade"), Param("max_grade"),
-        Param("pension_only"), Param("max_er_1y"), Param("min_er_1y"), Param("index_pattern")],
+        Param("pension_only"), Param("max_er_1y"), Param("min_er_1y"), Param("index_pattern"), Param("mgmt")],
        source="PREF01N001"),
 
     _t("etp_low_fee",
@@ -894,6 +899,17 @@ TEMPLATES = {t.id: t for t in [
                  OR coalesce(m.resolved, e.cu_fund_mgmt_co) LIKE $mgmt || '%')""",
        [Param("instrument_type", enum=("ETF", "ETN")), Param("name_pattern"), Param("mgmt")],
        source="PREF01N001"),
+
+    _t("global_etf_aum_sum",
+       "해외 ETF 순자산(du_last_aum, 달러) 합계·건수 — 12바퀴 '해외 ETF 전체 순자산 합계'(종전 국내 합계로 오답). "
+       "상품명 조건 선택 · 규칙 라우터 전용(숨김).",
+       """SELECT count(*) AS n, count(TRY_CAST(du_last_aum AS DOUBLE)) AS n_with_aum,
+                 sum(TRY_CAST(du_last_aum AS DOUBLE)) AS total_aum, 'USD' AS pd_trd_ccy
+          FROM global_etf
+          WHERE drv_instrument_type = 'ETF'
+            AND ($region_pattern IS NULL OR wu_inv_rgn ILIKE $region_pattern)
+            AND ($name_pattern IS NULL OR pd_nm ILIKE $name_pattern OR pd_abrv_nm ILIKE $name_pattern)""",
+       [Param("name_pattern"), Param("region_pattern")], source="PREF02N001"),
 
     _t("data_as_of",
        "데이터 기준일 안내 — 9/6 11바퀴('기준일이 언제야'·'데이터 기준일 알려줘'가 폴백 거절). 규칙 라우터 전용(숨김).",
@@ -1468,7 +1484,7 @@ def validate_params(template_id, params=None):
 # 왜: 목록 한 줄이 늘어도 경계 문항의 조회문 선택이 흔들린다(9/2 실측) — 평균 질의는 규칙이 앞에서 잡으므로 AI 가 알 필요 없음.
 LLM_HIDDEN_TEMPLATES = frozenset({"bond_metric_avg", "global_etf_metric_avg", "global_etf_detail", "constituent_pair_weight",
                                   "bond_rating_dist", "constituent_non_holders", "risk_grade_dist",
-                                  "etp_fee_aum_rank", "etp_aum_sum", "data_as_of"})   # 7바퀴: 해외 티커 상세·상품×종목 비중 · 9바퀴: 등급 분포·미편입·등급×상품군 · 11바퀴: 보수×순자산·순자산 합계·기준일
+                                  "etp_fee_aum_rank", "etp_aum_sum", "data_as_of", "global_etf_aum_sum"})   # 7바퀴: 해외 티커 상세·상품×종목 비중 · 9바퀴: 등급 분포·미편입·등급×상품군 · 11바퀴: 보수×순자산·순자산 합계·기준일
 LLM_HIDDEN_ENUM_VALUES = {
     ("etp_metric_rank", "metric"): ("price", "mkt_cap", "fee", "shares", "listed"),
     ("constituent_holders", "order"): ("mkt_cap",),
@@ -1484,6 +1500,7 @@ LLM_HIDDEN_PARAMS = {
     ("etp_metric_avg", "name_pattern"), ("etp_metric_avg", "mgmt"), ("etp_top_aum", "name_pattern2"),
     # 9/6 7바퀴 — 지수 추종 건수·순위(기초지수 열), 운용사 범위 순위(배당·수익률·보수·지표), 해외 레버리지 배수
     ("etp_count", "index_pattern"), ("etp_top_aum", "index_pattern"),
+    ("etp_count", "mgmt"), ("etp_listed_between", "order"),   # 12바퀴 — 운용사×순자산 문턱 건수 · 가장 오래된 ETF
     ("etp_by_dividend", "mgmt"), ("etp_by_dividend", "name_pattern"), ("etp_top_return", "mgmt"),
     ("etp_low_fee", "mgmt"), ("etp_metric_rank", "mgmt"),
     ("global_etf_filter", "leveraged_only"), ("global_etf_count", "leveraged_only"),

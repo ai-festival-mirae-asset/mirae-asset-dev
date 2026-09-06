@@ -58,7 +58,7 @@ _COL_DISPLAY = {
     "cu_base_index": ("기초지수", "text"), "ref_base_index": ("기초지수", "text"), "base_index": ("기초지수", "text"),
     "cu_charge_rt": ("총보수", "pct"), "cu_charge_etc_rt": ("기타비용", "pct"), "cu_strtegy": ("운용전략", "text"),
     "cu_lev_fector": ("레버리지 배수", "num"), "cu_index_repl_mthd": ("지수 복제방식", "text"),
-    "pd_net_tamt": ("순자산총액", "krw"), "du_last_aum": ("순자산(AUM)", "krw"), "total_aum": ("순자산 합계", "krw"),
+    "pd_net_tamt": ("순자산총액", "krw"), "du_last_aum": ("순자산(AUM)", "krw"), "total_aum": ("순자산 합계", "krw"), "n_with_aum": ("순자산 값 보유 건수", "int"),
     "mkt_cap": ("시가총액(계산값)", "krw"), "du_last_nav": ("기준가(NAV)", "num"), "du_clpr": ("종가(원)", "num"),
     "ru_mkt_price": ("시장가격", "num"), "pd_lst_stk_cnt": ("상장주식수", "int"),
     "du_er_1d": ("1일 수익률", "pct"), "du_er_1m": ("1개월 수익률", "pct"), "du_er_3m": ("3개월 수익률", "pct"),
@@ -469,7 +469,9 @@ _DETAIL_OPS = {"etp_detail", "bond_detail", "fund_detail"}
 _ATTR_NOTES = [
     (r"상장\s*주식\s*수|주식\s*수", "pd_lst_stk_cnt", "상장주식수", "int"),                # 9/6 11바퀴: '상장주식수'가 상장일로 읽히던 것
     (r"연초\s*이후|YTD|올해\s*수익률|연초\s*대비", "du_er_ytd", "연초 이후 수익률(%)", "text"),   # 11바퀴
-    (r"상장(?!\s*주식)|거래\s*가능|언제", "pd_lstg_dt", "상장일(원천 항목명: 상품거래가능일자)", "date"),
+    (r"(?:분배|배당)\s*(?:금|은|을|이|는)?\s*(?:언제|시기|주기|몇\s*월|어느\s*달)|지급\s*(?:월|시기|일|주기)", "pd_dvid_pay_months", "분배 지급월", "months"),   # 12바퀴: 'KODEX 200 분배금 언제 줘'(종전 상장일)
+    (r"[Nn][Aa][Vv]|기준\s*가(?:격)?", "du_last_nav", "기준가(NAV, 원)", "text"),   # 12바퀴: 'TIGER 200 NAV 얼마야'(종전 초점 없음)
+    (r"상장(?!\s*주식)|거래\s*가능|^(?!.*(?:분배|배당|만기|발행|결산|설정)).*언제", "pd_lstg_dt", "상장일(원천 항목명: 상품거래가능일자)", "date"),
     (r"만기", "MAT_DT", "만기일", "date"),
     (r"발행일|발행", "ISU_DT", "발행일", "date"),
     (r"신용\s*등급|등급", "drv_crd_grd_norm", "신용등급(대표)", "text"),
@@ -635,6 +637,8 @@ def _fmt_attr(row, col, fmt):
         return f"{s}등급" + (f"({name})" if name else "")
     if fmt == "krw":
         return row.get(col + "_krw") or s
+    if fmt == "months":                               # 12바퀴: 분배 지급월 노트도 '1월·4월·7월·10월'로
+        return _fmt_display_value(row, col, "months")
     f = _to_float(s)                                  # 9/3: 노트의 숫자도 소수 2자리(원문 6자리)
     if f is not None and re.fullmatch(r"-?\d+\.\d{3,}", s):
         return f"{f:,.2f}".rstrip("0").rstrip(".")

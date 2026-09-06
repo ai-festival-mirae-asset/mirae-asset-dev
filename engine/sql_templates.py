@@ -267,7 +267,7 @@ TEMPLATES = {t.id: t for t in [
                  cu_charge_rt, drv_risk_grade,
                  pd_net_tamt, du_er_1y, du_er_ytd, pd_lstg_dt, drv_curr_cd,
                  pd_dvid_yield, pd_divd_amt_ann, pd_dvid_pay_cnt, pd_dvid_pay_months,
-                 du_chas_errt, du_diff_rt, du_vlty_1y, du_vol_1d, cu_strtegy
+                 du_chas_errt, du_diff_rt, du_vlty_1y, du_vol_1d, cu_strtegy, pd_lst_stk_cnt
           FROM kr_etp WHERE pd_itm_no = $pd_itm_no""",
        [Param("pd_itm_no", required=True)], source="PREF01N001", key_col="pd_itm_no"),
 
@@ -867,6 +867,39 @@ TEMPLATES = {t.id: t for t in [
           ORDER BY grade, product_group""",
        [], source="PRBD01N001·PREF01N001·PRFD01N001"),
 
+    _t("etp_fee_aum_rank",
+       "국내 ETF 보수·순자산 순위 합 — '총보수 낮고 순자산 큰'(총보수 오름차순 순위 + 순자산 내림차순 순위, 값 보유분만) 9/6 11바퀴 "
+       "(주최 p.4 예시의 국내판 '국내 상장 ETF 중 총보수 낮고 순자산 큰 3개'가 순자산만으로 답하던 것). 규칙 라우터 전용(숨김).",
+       """SELECT e.pd_itm_no, e.pd_abrv_nm, e.cu_charge_rt, e.pd_net_tamt,
+                 coalesce(m.resolved, e.cu_fund_mgmt_co) AS cu_fund_mgmt_co, e.drv_risk_grade
+          FROM kr_etp e LEFT JOIN mgmt_resolved m USING (pd_itm_no)
+          WHERE e.drv_instrument_type = $instrument_type AND e.drv_listing_status = 'active'
+            AND TRY_CAST(e.cu_charge_rt AS DOUBLE) > 0 AND TRY_CAST(e.pd_net_tamt AS DOUBLE) > 0
+            AND ($name_pattern IS NULL OR e.pd_nm ILIKE $name_pattern ESCAPE '\\' OR e.pd_abrv_nm ILIKE $name_pattern ESCAPE '\\')
+          ORDER BY (RANK() OVER (ORDER BY TRY_CAST(e.cu_charge_rt AS DOUBLE) ASC NULLS LAST)
+                    + RANK() OVER (ORDER BY TRY_CAST(e.pd_net_tamt AS DOUBLE) DESC NULLS LAST)) ASC,
+                   TRY_CAST(e.pd_net_tamt AS DOUBLE) DESC NULLS LAST, e.pd_itm_no LIMIT $limit""",
+       [Param("instrument_type", required=True, enum=("ETF", "ETN")), Param("name_pattern"), Param("limit", required=True)],
+       source="PREF01N001", key_col="pd_itm_no"),
+
+    _t("etp_aum_sum",
+       "국내 ETP 순자산총액 합계·건수(상장중) — 9/6 11바퀴('반도체 ETF 순자산 합계'·'KODEX ETF 순자산 합계'가 폴백). "
+       "상품명 표기·운용사 조건 선택. 규칙 라우터 전용(숨김).",
+       """SELECT count(*) AS n, sum(TRY_CAST(e.pd_net_tamt AS DOUBLE)) AS total_aum
+          FROM kr_etp e LEFT JOIN mgmt_resolved m USING (pd_itm_no)
+          WHERE e.drv_listing_status = 'active'
+            AND ($instrument_type IS NULL OR e.drv_instrument_type = $instrument_type)
+            AND ($name_pattern IS NULL OR e.pd_nm ILIKE $name_pattern ESCAPE '\\' OR e.pd_abrv_nm ILIKE $name_pattern ESCAPE '\\')
+            AND ($mgmt IS NULL OR coalesce(m.resolved, e.cu_fund_mgmt_co) = $mgmt
+                 OR coalesce(m.resolved, e.cu_fund_mgmt_co) LIKE $mgmt || '%')""",
+       [Param("instrument_type", enum=("ETF", "ETN")), Param("name_pattern"), Param("mgmt")],
+       source="PREF01N001"),
+
+    _t("data_as_of",
+       "데이터 기준일 안내 — 9/6 11바퀴('기준일이 언제야'·'데이터 기준일 알려줘'가 폴백 거절). 규칙 라우터 전용(숨김).",
+       f"""SELECT '{AS_OF_MASTER}' AS master_as_of, '{AS_OF_MASTER_GL}' AS global_as_of, '{AS_OF_CONSTITUENTS}' AS constituents_as_of""",
+       [], source="PRBD01N001·PREF01N001·PRFD01N001·PREF02N001·KRX-PDF"),
+
     _t("etp_market_dist",
        "국내 ETP 상장 시장(pd_mkt_nm)별 분포 — 8/28 r4 R4-02('코스닥에 상장된 ETN 있어?' — "
        "전부 유가증권시장이라 '없음'이 정답인 존재 질의).",
@@ -1434,7 +1467,8 @@ def validate_params(template_id, params=None):
 # 규칙 라우터 전용 조회문 — AI 라우터 목록(프롬프트)·도구 스키마에서 통째로 뺀다(9/6 6바퀴: 평균 집계 2종).
 # 왜: 목록 한 줄이 늘어도 경계 문항의 조회문 선택이 흔들린다(9/2 실측) — 평균 질의는 규칙이 앞에서 잡으므로 AI 가 알 필요 없음.
 LLM_HIDDEN_TEMPLATES = frozenset({"bond_metric_avg", "global_etf_metric_avg", "global_etf_detail", "constituent_pair_weight",
-                                  "bond_rating_dist", "constituent_non_holders", "risk_grade_dist"})   # 7바퀴: 해외 티커 상세·상품×종목 비중 · 9바퀴: 등급 분포·미편입·등급×상품군
+                                  "bond_rating_dist", "constituent_non_holders", "risk_grade_dist",
+                                  "etp_fee_aum_rank", "etp_aum_sum", "data_as_of"})   # 7바퀴: 해외 티커 상세·상품×종목 비중 · 9바퀴: 등급 분포·미편입·등급×상품군 · 11바퀴: 보수×순자산·순자산 합계·기준일
 LLM_HIDDEN_ENUM_VALUES = {
     ("etp_metric_rank", "metric"): ("price", "mkt_cap", "fee", "shares", "listed"),
     ("constituent_holders", "order"): ("mkt_cap",),

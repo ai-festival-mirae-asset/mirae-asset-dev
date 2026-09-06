@@ -106,6 +106,8 @@ _COL_DISPLAY = {
     "n_etfs_holding": ("편입 ETF 수", "int"), "avg_weight_pct": ("평균 편입 비중", "pct"), "held_by": ("편입 ETF", "text"),
     "ksq_weight_pct": ("코스닥 비중 합계", "pct"), "n": ("건수", "int"), "n_etf": ("ETF 수", "int"),
     "product_group": ("상품군", "text"), "grade": ("위험등급", "risk"),   # 9/6 9바퀴 risk_grade_dist
+    "master_as_of": ("국내 마스터 기준일(채권·ETF·펀드)", "text"), "global_as_of": ("해외 ETF 기준일", "text"),
+    "constituents_as_of": ("ETF 구성종목 기준일", "text"),   # 9/6 11바퀴 data_as_of
     "share_pct": ("점유율", "pct"), "cnt": ("건수", "int"),
 }
 # 이름의 다른 표기(정식명·약칭·영문명)는 숨기지 않고 라벨로 보인다 — 9/3 실측: 숨겼더니 채점표·시험 5건이
@@ -465,7 +467,9 @@ _COUNT_LABELS = {"n": "건수", "products": "상품(마스터) 수", "share_clas
 # 상세 행에서 그 칸을 못 찾거나 빼먹던 실측). (질문 낱말, 열, 라벨, 형식)
 _DETAIL_OPS = {"etp_detail", "bond_detail", "fund_detail"}
 _ATTR_NOTES = [
-    (r"상장|거래\s*가능|언제", "pd_lstg_dt", "상장일(원천 항목명: 상품거래가능일자)", "date"),
+    (r"상장\s*주식\s*수|주식\s*수", "pd_lst_stk_cnt", "상장주식수", "int"),                # 9/6 11바퀴: '상장주식수'가 상장일로 읽히던 것
+    (r"연초\s*이후|YTD|올해\s*수익률|연초\s*대비", "du_er_ytd", "연초 이후 수익률(%)", "text"),   # 11바퀴
+    (r"상장(?!\s*주식)|거래\s*가능|언제", "pd_lstg_dt", "상장일(원천 항목명: 상품거래가능일자)", "date"),
     (r"만기", "MAT_DT", "만기일", "date"),
     (r"발행일|발행", "ISU_DT", "발행일", "date"),
     (r"신용\s*등급|등급", "drv_crd_grd_norm", "신용등급(대표)", "text"),

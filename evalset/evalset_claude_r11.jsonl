@@ -1,0 +1,15 @@
+{"id": "R11-01", "level": "상", "category": "국내ETF/보수×순자산(주최 p.4 국내판)", "question": "국내 상장 ETF 중 총보수 낮고 순자산 큰 3개", "channels": ["sql"], "behavior": "partial", "gold": "총보수 오름차순 순위 + 순자산 내림차순 순위 합 최소 3(값 보유분) — 커버리지 명시", "basis": "9/6 11바퀴: 순자산만으로 답하던 것(보수 조건 누락)"}
+{"id": "R11-02", "level": "중", "category": "지수 추종/보수 비교", "question": "KOSPI200을 추종하는 ETF들의 총보수 비교", "channels": ["sql"], "behavior": "partial", "gold": "KOSPI 200 표기(기초지수·상품명) ETF 총보수 오름차순(값 보유분)", "basis": "9/6 11바퀴: 폴백"}
+{"id": "R11-03", "level": "하", "category": "상세/상장주식수", "question": "KODEX 200 상장주식수 얼마야", "channels": ["sql"], "behavior": "answer", "gold": "KODEX 200 상장주식수 235,350,000", "basis": "9/6 11바퀴: '상장'이 상장일로 읽혀 상장일을 답하던 것"}
+{"id": "R11-04", "level": "하", "category": "상세/연초 이후 수익률", "question": "TIGER 200 1년 수익률이랑 연초 이후 수익률", "channels": ["sql"], "behavior": "answer", "gold": "1년 158.71% · 연초 이후 80.9%", "basis": "9/6 11바퀴: 연초 이후 수익률 항목이 답에 빠지던 것"}
+{"id": "R11-05", "level": "중", "category": "상세/환헤지", "question": "TIGER 미국S&P500 환헤지 해?", "channels": ["sql"], "behavior": "answer", "gold": "환헤지 항목 없음 — 상품명 (H) 표기 없음 → 환노출로 볼 수 있음", "basis": "9/6 11바퀴: 근거 안내 없는 상세"}
+{"id": "R11-06", "level": "중", "category": "집계/순자산 합계", "question": "반도체 ETF 순자산 합계", "channels": ["sql"], "behavior": "answer", "gold": "상품명 반도체 표기 상장중 ETF 59종 순자산 합계 52.1조원", "basis": "9/6 11바퀴: 폴백"}
+{"id": "R11-07", "level": "중", "category": "집계/브랜드 합계", "question": "KODEX ETF 순자산 합계 얼마야", "channels": ["sql"], "behavior": "answer", "gold": "KODEX 표기 상장중 ETF 240종 순자산 합계 174.8조원", "basis": "9/6 11바퀴: 폴백"}
+{"id": "R11-08", "level": "중", "category": "집계/운용사별", "question": "운용사별 ETF 개수", "channels": ["sql"], "behavior": "answer", "gold": "운용사별 상장중 ETF 수·순자산 합계·점유율", "basis": "9/6 11바퀴: 전체 건수로 답하던 것"}
+{"id": "R11-09", "level": "중", "category": "집계/운용사별 점유율", "question": "운용사별 순자산 점유율", "channels": ["sql"], "behavior": "answer", "gold": "운용사별 순자산 점유율(삼성 38.7% …)", "basis": "9/6 11바퀴: 폴백"}
+{"id": "R11-10", "level": "함정", "category": "함정/원천에 없는 분류", "question": "테마별 ETF 개수", "channels": [], "behavior": "refuse", "gold": "테마 분류 항목 없음 — 상품명 표기로 개별 테마 조회 안내", "basis": "9/6 11바퀴: 전체 건수로 답하던 것"}
+{"id": "R11-11", "level": "하", "category": "채권/대분류 분포", "question": "채권 대분류별 건수", "channels": ["sql"], "behavior": "answer", "gold": "회사채 12,622 · 특수채 6,100 · 국공채 1,775", "basis": "9/6 11바퀴: 목록으로 답하던 것"}
+{"id": "R11-12", "level": "하", "category": "메타/기준일", "question": "데이터 기준일 알려줘", "channels": ["sql"], "behavior": "answer", "gold": "국내 마스터 2026-08-22 · 해외 ETF 2026-08-23 · 구성종목 2026-08-21", "basis": "9/6 11바퀴: 폴백 거절"}
+{"id": "R11-13", "level": "함정", "category": "함정/우열 판단", "question": "ETF랑 펀드 중 뭐가 더 좋아", "channels": [], "behavior": "refuse", "gold": "우열 판단은 범위 밖", "basis": "9/6 11바퀴: 사유 없는 폴백 거절"}
+{"id": "R11-14", "level": "함정", "category": "함정/종목 목표가", "question": "삼성전자 목표가 얼마야", "channels": [], "behavior": "refuse", "gold": "개별 종목 정보 없음", "basis": "9/6 11바퀴: 폴백"}
+{"id": "R11-15", "level": "함정", "category": "함정/실시간 금리", "question": "지금 금리 얼마야", "channels": [], "behavior": "refuse", "gold": "실시간 시장 지표는 범위 밖", "basis": "9/6 11바퀴: 사유 없는 폴백 거절"}

@@ -1006,7 +1006,7 @@ def route_stage_a(question, index, policy=None, today=None):
     if div_hit and not product_ref and const_ref is None and not is_global and not is_fund_domain \
             and re.search(r"배당\s*수익률|분배\s*수익률|배당금|분배금|월\s*배당|월배당|매월\s*분배|매달\s*분배"
                            r"|배당\s*주|분배\s*주|배당\s*하는|분배\s*하는|분배|지급|\d\s*회\s*(?:분배|배당|지급)", q) \
-             and (div_condition or any(w in q for w in TOP_WORDS) or re.search(r"높|많|추천|알려|뭐|어떤|있|\d\s*회", q)
+             and (div_condition or any(w in q for w in TOP_WORDS) or any(w in q for w in COUNT_WORDS) or re.search(r"높|많|추천|알려|뭐|어떤|있|\d\s*회", q)   # 18바퀴: '월배당 ETF 몇 개'
                  or any(_k == "dividend" for _v, _k, _d in percents)
                  or extract_aum_bounds(q)[0]):   # 9/6: '지급 횟수 12회인' · 10바퀴: '분배수익률 3% 이상 5% 이하 ETF' · 13바퀴: '월배당이면서 순자산 1000억 이상'
         # 수익률 표현이 있으면 금액(분배금) 낱말이 함께 있어도 수익률 정렬이다
@@ -2497,9 +2497,11 @@ def route_stage_a(question, index, policy=None, today=None):
             elif re.search(r"만기\s*(?:가|이|는|일)?\s*(?:가장\s*)?(긴|먼|늦은|오래|길게)", q):
                 coupon_order = "mat_desc"
                 plan.notes.append("만기일(MAT_DT) 먼 순 정렬")
-            elif re.search(r"발행\s*(?:일|된|한)?\s*(?:이|가)?\s*(?:가장\s*)?(최근|최신|늦)", q):
+            elif re.search(r"발행\s*(?:일|된|한)?\s*(?:이|가)?\s*(?:가장\s*)?(최근|최신|늦)|(?:최근|최신|새로)(?:에)?\s*(?:발행|나온)", q):   # 18바퀴: '최근에 발행된 채권 5개'(종전 정렬 없음)
                 coupon_order = "issue_desc"
                 plan.notes.append("발행일(ISU_DT) 최근 순 정렬")
+                if top_n:
+                    plan.hints["display_rows"] = top_n
             elif re.search(r"발행\s*(?:일|된|한)?\s*(?:이|가)?\s*(?:가장\s*)?(오래|이른|먼저|처음)", q):
                 coupon_order = "issue_asc"
                 plan.notes.append("발행일(ISU_DT) 오래된 순 정렬")
@@ -3398,7 +3400,7 @@ def route_stage_a(question, index, policy=None, today=None):
             _fc_generic = ("공모", "국내", "해외", "주식형", "채권형", "혼합형", "재간접", "MMF", "판매중인", "판매", "전체",
                            "모든", "어떤", "무슨", "공모형", "현재", "지금", "우리", "당사", "요즘", "국내외", "이런", "그런")
             _fc_name = (_m_fn.group(1) if (_m_fn and not _fc_attr
-                                           and not any(g in _m_fn.group(1) for g in _fc_generic + ("판매", "중인", "몇", "개", "있는", "가능", "이상", "이하", "초과", "미만", "넘는", "억", "조"))   # 16바퀴: '1000억 이상 펀드'의 조건 낱말
+                                           and not any(g in _m_fn.group(1) for g in _fc_generic + ("판매", "중인", "몇", "개", "있는", "가능", "이상", "이하", "초과", "미만", "넘는", "억", "조", "등급", "위험"))   # 18바퀴: '위험등급 6등급 펀드 몇 개'   # 16바퀴: '1000억 이상 펀드'의 조건 낱말
                                            and not re.search(r"(는|은|던|할|될|한|된)$", _m_fn.group(1))   # 9바퀴: '설정된 펀드'의 수식어
                                            and bool(index.search(_m_fn.group(1).replace(" ", ""), limit=1)
                                                     or token_matches(index, _m_fn.group(1).replace(" ", ""), limit=1)))

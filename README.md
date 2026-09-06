@@ -80,11 +80,12 @@
 | 리더 15바퀴(표현 변형 점검 11차) | 18 | 18/18 | 표기·비교·상세·집계·함정 40문항 점검 → 지수 표기 건수, 종가·거래소 초점, 편입 ETF·상위 N 평균, 운용사 합계, 만기 어순, 연도별 수익률 함정 등 약 16건 수정 |
 | 리더 16바퀴(표현 변형 점검 12차) | 14 | 14/14 | ETN·채권·펀드·지역·집계·함정 40문항 점검 → 펀드 건수 조건 낱말 오염, 보수 필터 지역, 지수 표기 목록(기초지수), 순자산 평균, 매수 판단·유형 우열 함정 등 약 12건 수정 |
 | 리더 17바퀴(구어체 최종 점검) | 4 | 4/4 | 구어체·복합 조건 25문항 점검 → '제일 큰 거 하나만'(순자산 낱말 없음) 폴백, '위험등급 2등급 펀드 중 수익률'의 등급 소실 2건 수정 |
+| 리더 18바퀴(채권·펀드·ETF·해외 점검) | 4 | 4/4 | 30문항 점검 → 최근 발행 채권 정렬, 펀드 '등급' 건수 0건, 월배당 건수 3건 수정 · 화면에 원본 JSON 보기·복사·최근 질문 추가 |
 | codex_all 개선 바퀴 | 30 | 30/30 | 숫자·수량 표현, 기간별 변동성, 펀드·ETF 교차 조건, 답변 불가 유형을 새로 확인 |
 | codex_2 개선 바퀴 | 30 | 16/30 → 30/30 | 표현 변형·복합 조건·회사에서 편입 ETF로 이어지는 조회, 채권 한 종목 표시 보완 |
 | 사용자 실측 + 자체 점검(9/2 종가·시가총액, 9/3 채권 금리·표시 요청·숫자 조건, 9/6 주최 예시) | 38 | 38/38 | 사용자가 서버에서 직접 찾은 오답 5건(첫 측정 0/5)의 표현 변형 16 + 함정 1, 9/3 자체 점검 47문항이 찾은 오답(숫자 조건 누락 등, 첫 측정 약 20/47)의 재발 방지 17, 9/6 주최 과제설명 p.4 예시(해외 판정 누락 오답, 첫 측정 0/1)의 변형 4 |
 
-합계 741문항 · 함정 오답 0 · 15초 초과 0. 자동 테스트 **993개**(991 통과 · 2 건너뜀) 전부 통과. 어떻게 찾고 고쳤는지의 날짜별 기록은 [PLAN.md](PLAN.md) 부록 A(9/2~9/6), 성적표 원본은 `evalset/reports/`에 있습니다.
+합계 745문항 · 함정 오답 0 · 15초 초과 0. 자동 테스트 **997개**(995 통과 · 2 건너뜀) 전부 통과. 어떻게 찾고 고쳤는지의 날짜별 기록은 [PLAN.md](PLAN.md) 부록 A(9/2~9/6), 성적표 원본은 `evalset/reports/`에 있습니다.
 
 **제출 후 운영(9/7~9/20)**
 
@@ -105,8 +106,8 @@
 ├── server/           API 서버 (app.py — 공식 규격 GET /answer, 상태 확인 /health, 브라우저 질문 시험대 /)
 ├── agent/            CLOVA(HCX) API 클라이언트 — 규정 준수 강제 장치 포함
 ├── config/           정책 파일(policy.json)과 설정 읽기(env_loader.py — .env 처리)
-├── evalset/          시험지 24종(jsonl) + 생성 스크립트 + 자동 채점기(eval_runner.py) + 성적표(reports/) — EVALSET_README.md
-├── tests/            자동 테스트 993개 (pytest)
+├── evalset/          시험지 25종(jsonl) + 생성 스크립트 + 자동 채점기(eval_runner.py) + 성적표(reports/) — EVALSET_README.md
+├── tests/            자동 테스트 997개 (pytest)
 ├── infra/deploy/     NCP 서버 생성·배포·2주 무인 운영 안내(README_DEPLOY.md) + 설치 스크립트·systemd·상태 점검
 └── datasets/         대회 원본 엑셀 8개 — 각자 로컬에만 두고 커밋하지 않음
 ```
@@ -227,7 +228,7 @@ python engine/answer_cli.py "kimi 관련 투자 상품 있어?"
 | [preprocessing/PREPROCESSING_METHOD.md](preprocessing/PREPROCESSING_METHOD.md) | 데이터 정제 규칙과 이유 | 전처리를 고치거나 제안서 "수집·정제" 절을 쓸 때 |
 | [external_data/COLLECTION_METHOD.md](external_data/COLLECTION_METHOD.md) | 해석 사전 9종 · ETF 구성종목 수집(KRX) · 계열사 수집기 | 외부 데이터의 출처·절차·재수집 방법 |
 | [kg/KG_METHOD.md](kg/KG_METHOD.md) | 온톨로지·지식그래프 구축 방법과 실측, 발전 방향 | 그래프를 고치거나 제안서 "온톨로지" 절을 쓸 때 |
-| [evalset/EVALSET_README.md](evalset/EVALSET_README.md) | 시험지 24종의 구조 · 자동 채점기 · 공식 예시 분석 · 개선 바퀴 기록 | 평가셋을 고치거나 점수 이력을 볼 때 |
+| [evalset/EVALSET_README.md](evalset/EVALSET_README.md) | 시험지 25종의 구조 · 자동 채점기 · 공식 예시 분석 · 개선 바퀴 기록 | 평가셋을 고치거나 점수 이력을 볼 때 |
 | [evalset/TEAM_IMPROVEMENT_GUIDE.md](evalset/TEAM_IMPROVEMENT_GUIDE.md) | 팀원용 개선 바퀴 안내(출제→채점→수정→푸시) + 블라인드 출제 원칙 | 새 문제를 내고 시스템을 고칠 때 |
 | [infra/deploy/README_DEPLOY.md](infra/deploy/README_DEPLOY.md) | NCP 서버 만들기 · 배포 · 2주 무인 운영 | 서버를 올리고 지킬 때 |
 

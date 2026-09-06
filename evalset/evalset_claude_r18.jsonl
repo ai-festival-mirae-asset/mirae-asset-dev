@@ -1,0 +1,4 @@
+{"id": "R18-01", "level": "하", "category": "채권 발행일 정렬", "question": "최근에 발행된 채권 5개", "channels": ["sql"], "behavior": "answer", "gold": "발행일(ISU_DT) 최근 순 5건", "basis": "9/6 18바퀴: 정렬 없이 20건"}
+{"id": "R18-02", "level": "하", "category": "펀드 등급 건수", "question": "위험등급 6등급 펀드 몇 개", "channels": ["sql"], "behavior": "answer", "gold": "위험등급 6등급 공모펀드 건수(355)", "basis": "9/6 18바퀴: '등급'이 상품명 조건으로 새어 0건"}
+{"id": "R18-03", "level": "중", "category": "월배당 건수", "question": "월배당 ETF 몇 개", "channels": ["sql"], "behavior": "answer", "gold": "연간 분배 지급횟수 12회 상장중 ETF 건수(값 보유분)", "basis": "9/6 18바퀴: 상품명 '월배당' 검색 0건"}
+{"id": "R18-04", "level": "하", "category": "채권 발행일 정렬(종전 어순)", "question": "발행일이 최근인 채권 5개", "channels": ["sql"], "behavior": "answer", "gold": "발행일 최근 순", "basis": "9/6 18바퀴: 회귀 방지"}

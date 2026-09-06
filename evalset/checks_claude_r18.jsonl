@@ -1,0 +1,4 @@
+{"id": "R18-01", "checks": [{"type": "note_any", "name": "정렬 명시", "terms": ["발행일(ISU_DT) 최근 순"]}, {"type": "answer_has_any", "name": "2026년 발행 상품 표시", "terms": ["26-8", "26-7", "26-08", "2026"]}]}
+{"id": "R18-02", "checks": [{"type": "sql_number", "name": "6등급 공모펀드 건수", "sql": "SELECT count(*) FROM fund_master WHERE TRY_CAST(drv_risk_grade AS INT) = 6"}, {"type": "answer_has_none", "name": "0건 아님", "terms": ["결과 0건"]}]}
+{"id": "R18-03", "checks": [{"type": "sql_number", "name": "월배당(12회) 상장중 ETF 건수", "sql": "SELECT count(*) FROM kr_etp WHERE drv_instrument_type='ETF' AND drv_listing_status='active' AND TRY_CAST(pd_dvid_pay_cnt AS DOUBLE) >= 12 AND TRY_CAST(pd_dvid_yield AS DOUBLE) > 0"}, {"type": "note_any", "name": "해석 명시", "terms": ["연간 분배 지급횟수 12회"]}]}
+{"id": "R18-04", "checks": [{"type": "note_any", "name": "정렬 명시", "terms": ["발행일(ISU_DT) 최근 순"]}]}

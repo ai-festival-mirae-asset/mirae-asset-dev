@@ -1,0 +1,19 @@
+{"id": "R10-01", "level": "중", "category": "수익률/음수 문턱", "question": "1년 수익률 -10% 이하 ETF 몇 개", "channels": ["sql"], "behavior": "answer", "gold": "1년 수익률 -10% 이하 상장중 ETF 건수", "basis": "9/6 10바퀴: 음수 부호가 사라져 '10% 이하'(420건)로 답하던 오답"}
+{"id": "R10-02", "level": "중", "category": "펀드/음수 문턱", "question": "주식형 펀드 중 1년 수익률 -5% 이하", "channels": ["sql"], "behavior": "answer", "gold": "주식형 공모펀드 1년 수익률 -5% 이하 목록", "basis": "9/6 10바퀴: '5% 이하'로 조회하던 오답"}
+{"id": "R10-03", "level": "중", "category": "분배/구간", "question": "분배수익률 3% 이상 5% 이하 ETF", "channels": ["sql"], "behavior": "partial", "gold": "분배수익률 3~5% ETF(값 보유분) 내림차순", "basis": "9/6 10바퀴: 순위 낱말이 없어 폴백"}
+{"id": "R10-04", "level": "중", "category": "총보수/하한", "question": "총보수 0.5% 초과 ETF 알려줘", "channels": ["sql"], "behavior": "answer", "gold": "총보수 0.5% 초과(값 보유) ETF 내림차순", "basis": "9/6 10바퀴: 상한만 지원해 폴백"}
+{"id": "R10-05", "level": "중", "category": "채권/등급 두 경계", "question": "신용등급 AA- 이상 AA+ 이하 회사채 몇 개", "channels": ["sql"], "behavior": "answer", "gold": "서열 2~4(AA+·AA·AA-) 회사채 건수", "basis": "9/6 10바퀴: 'AA- 이상'만 적용(10,003)"}
+{"id": "R10-06", "level": "하", "category": "펀드/순자산 문턱 건수", "question": "펀드 순자산 1000억 이상 몇 개", "channels": ["sql"], "behavior": "answer", "gold": "순자산 1,000억 원 이상 공모펀드 건수(440)", "basis": "9/6 10바퀴: 전체 건수(23,622)로 답하던 오답"}
+{"id": "R10-07", "level": "중", "category": "펀드/클래스 표기", "question": "클래스 A 펀드 몇 개", "channels": ["sql"], "behavior": "partial", "gold": "A 클래스 = 수수료선취·오프라인 판매 클래스 건수(1,002)", "basis": "9/6 10바퀴: 폴백"}
+{"id": "R10-08", "level": "상", "category": "해외ETF/금액 단위", "question": "나스닥 상장 ETF 중 순자산 1000억 달러 이상", "channels": ["sql"], "behavior": "answer", "gold": "순자산 1,000억 달러 이상 해외 ETF(VOO·IVV·SPY …)", "basis": "9/6 10바퀴: '달러'가 통화 조건으로 오인 → 고치자 국내 표 목록(KODEX 200)으로 새던 것"}
+{"id": "R10-09", "level": "함정", "category": "함정/지수 실시간", "question": "코스피 200 지수 지금 얼마", "channels": [], "behavior": "refuse", "gold": "실시간 지수는 범위 밖(스냅샷)", "basis": "9/6 10바퀴: 상품명 검색 0건 답변"}
+{"id": "R10-10", "level": "중", "category": "해외ETF/보수 문턱 건수", "question": "해외 ETF 중 총보수 1% 넘는 것 몇 개", "channels": ["sql"], "behavior": "answer", "gold": "총보수 1% 초과 해외 ETF 건수(324)", "basis": "9/6 10바퀴: 전체 5,972 로 답하던 오답"}
+{"id": "R10-11", "level": "중", "category": "종목×위험등급", "question": "삼성전자 담은 ETF 중 위험등급 1등급", "channels": ["graph", "sql"], "behavior": "answer", "gold": "삼성전자 편입 ETF 중 위험등급 1등급(비중 순)", "basis": "9/6 10바퀴: 등급 조건 누락"}
+{"id": "R10-12", "level": "중", "category": "종목×상장일", "question": "삼성전자 담은 ETF 중 2024년 이후 상장", "channels": ["graph", "sql"], "behavior": "answer", "gold": "삼성전자 편입 ETF 중 2024년 이후 상장(비중 순)", "basis": "9/6 10바퀴: 상장일 조건 누락"}
+{"id": "R10-13", "level": "중", "category": "해외ETF/한국 투자", "question": "해외 ETF 중 한국 투자하는 것", "channels": ["sql"], "behavior": "answer", "gold": "투자지역 Korea 해외 ETF 8종", "basis": "9/6 10바퀴: 지역 사전에 없어 폴백"}
+{"id": "R10-14", "level": "함정", "category": "함정/개인 수익률", "question": "내 수익률 계산해줘", "channels": [], "behavior": "refuse", "gold": "개인 계좌 정보 범위 밖", "basis": "9/6 10바퀴"}
+{"id": "R10-15", "level": "함정", "category": "함정/손실 가능성", "question": "TIGER 200 원금 손실 가능성 있어?", "channels": [], "behavior": "refuse", "gold": "손실 가능성 판단 범위 밖 — 위험등급 조회 안내", "basis": "9/6 10바퀴: 상품 상세로 답하던 것"}
+{"id": "R10-16", "level": "함정", "category": "함정/총보수 0 표기", "question": "총보수 0인 해외 ETF 몇 개", "channels": [], "behavior": "refuse", "gold": "0 표기는 미확정 — 값 보유 상품만 집계", "basis": "9/6 10바퀴: 전체 건수로 답하던 것"}
+{"id": "R10-17", "level": "하", "category": "개요", "question": "ETF 뭐 있어", "channels": ["sql"], "behavior": "answer", "gold": "국내 ETF 건수 + 순자산 큰 순 10개 예시", "basis": "9/6 10바퀴: 폴백 거절"}
+{"id": "R10-18", "level": "하", "category": "개요", "question": "펀드 뭐 있어", "channels": ["sql"], "behavior": "answer", "gold": "공모펀드 건수 + 순자산 큰 순 10개 예시", "basis": "9/6 10바퀴: 폴백 거절"}
+{"id": "R10-19", "level": "하", "category": "채권/등급 한 경계(회귀 확인)", "question": "AA 이상 회사채 몇 개", "channels": ["sql"], "behavior": "answer", "gold": "서열 3 이하 회사채 건수(문자 그대로 해석)", "basis": "10바퀴 두 경계 수정의 회귀 확인"}

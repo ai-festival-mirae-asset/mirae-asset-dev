@@ -323,14 +323,14 @@ def extract_top_n(question):
     return None
 
 
-_PCT_RE = re.compile(r"(\d+(?:\.\d+)?)\s*%\s*(?:를|을|가)?\s*(이상|초과|넘|이하|미만|대)?")
+_PCT_RE = re.compile(r"((?:-|마이너스\s*)?\d+(?:\.\d+)?)\s*%\s*(?:를|을|가)?\s*(이상|초과|넘|이하|미만|대)?")   # 10바퀴: '-10% 이하'·'마이너스 5%'
 
 
 def extract_percents(question):
     """[(값, 종류, 방향)] — 앞 문맥 또는 숫자 바로 뒤 속성 낱말로 판정."""
     out = []
     for m in _PCT_RE.finditer(question):
-        value, direction = float(m.group(1)), m.group(2) or ""
+        value, direction = float(m.group(1).replace("마이너스", "-").replace(" ", "")), m.group(2) or ""
         ctx = question[max(0, m.start() - 14):m.start()]
         # '3% 이자율인'처럼 숫자가 먼저 오면 바로 뒤 속성만 문맥으로 쓴다.
         # 뒤의 다른 조건까지 넓게 읽으면 앞 숫자를 엉뚱한 항목에 붙이게 된다.
@@ -363,7 +363,7 @@ def detect_time_flags(question, as_of=AS_OF_MASTER):
     if re.search(r"지금 주가|현재가|실시간|현재 주가|시세", question) or \
             re.search(r"(오늘|지금|현재)\s*(의)?\s*(코스피|코스닥|나스닥|다우|S&P|환율|기준금리)", question, re.I) or \
             re.search(r"(오늘|지금|현재).{0,14}?(주가|종가)", question) or \
-            re.search(r"(코스피|코스닥|나스닥|다우)\s*(지수)?\s*(몇|얼마|어때)", question):
+            re.search(r"(코스피|코스닥|나스닥|다우)\s*\d*\s*(지수)?\s*(지금|현재|오늘)?\s*(몇|얼마|어때)", question):   # 10바퀴: '코스피 200 지수 지금 얼마'
         flags["realtime"] = True                         # "오늘 코스피 지수 몇이야?"(v2 T-05) · "지금 삼성전자 주가"(v3 T-10)
     if re.search(r"다음\s*달|다음\s*주|내일|모레|내년|앞으로|전망|예측|가능성을 반영", question):
         flags["future"] = True                           # "다음 주에 상장하는"(v3 T-09) 포함
@@ -383,6 +383,8 @@ def detect_currency(question):
     for word, code in CURRENCY_MAP:
         i = question.find(word)
         if i < 0:
+            continue
+        if re.search(r"(\d|억|만|조|천)\s*$", question[max(0, i - 4):i]):   # 10바퀴: '1000억 달러 이상'은 금액 단위(통화 조건 아님)
             continue
         tail = question[i + len(word):i + len(word) + 6]
         exclude = any(t in tail for t in ("말고", "아닌", "외", "제외"))
@@ -799,7 +801,7 @@ def route_stage_a(question, index, policy=None, today=None):
         plan.notes.append("예금·적금·대출·보험 상품은 제공 데이터(채권·ETF·ETN·공모펀드) 밖")
         plan.hints["unsupported_request"] = "other_product"
         return done("unsupported_asset", "refuse")
-    if re.search(r"(내|제|나의|저의)\s*(계좌|잔고|보유\s*종목|투자\s*내역|매수\s*내역)|계좌\s*잔고", q) and "공매도" not in q:   # 8바퀴: '내 계좌 잔고 알려줘'(공매도 잔고는 필드 거절 소관)
+    if re.search(r"(내|제|나의|저의)\s*(계좌|잔고|보유\s*종목|투자\s*내역|매수\s*내역|수익률|손익|평단|평균\s*단가)|계좌\s*잔고|수익률\s*계산", q) and "공매도" not in q:   # 8바퀴: '내 계좌 잔고 알려줘' · 10바퀴: '내 수익률 계산해줘'
         plan.notes.append("개인 계좌·잔고·거래 내역은 접근·제공 범위 밖(상품 정보 조회 전용 서비스)")
         plan.hints["unsupported_request"] = "personal_account"
         return done("action_request", "refuse")
@@ -819,6 +821,14 @@ def route_stage_a(question, index, policy=None, today=None):
         plan.notes.append("제도·절차 일반 안내는 제공 범위 밖 — 상품의 상장상태(상장중·거래종료) 조회는 가능")
         plan.hints["unsupported_request"] = "procedure_info"
         return done("action_request", "refuse")
+    if re.search(r"원금\s*손실\s*(가능|위험|날|볼|나)|손실\s*(볼|날|나)\s*(수|가능|위험)", q):   # 10바퀴: 'TIGER 200 원금 손실 가능성 있어?'(종전 상품 상세)
+        plan.notes.append("손실 가능성·수익 예측 판단은 제공 범위 밖(단정 금지) — 상품 위험등급(1~6)·변동성 같은 사실 조회는 가능")
+        plan.hints["unsupported_request"] = "loss_probability"
+        return done("action_request", "refuse")
+    if has_etf_word and re.search(r"보수\s*(?:가|이|는|은)?\s*(?:0(?![\d.])\s*%?|제로|없는|무료|무보수)", q):   # 10바퀴: '총보수 0인 해외 ETF 몇 개'(종전 전체 건수)
+        plan.notes.append("총보수 0 표기는 무보수인지 미수집인지 원천에서 미확정 — 값 보유 상품만 집계·정렬한다(0 표기 상품은 조건에 넣지 않음)")
+        plan.hints["unsupported_request"] = "zero_fee"
+        return done("unsupported_field", "refuse")
     if re.search(r"공모주|청약", q):                        # 9/6: '공모주 청약 일정'
         plan.notes.append("공모주·청약 정보는 제공 데이터(상품 마스터 4종 + ETF 구성종목) 밖")
         plan.hints["unsupported_request"] = "ipo"
@@ -870,7 +880,8 @@ def route_stage_a(question, index, policy=None, today=None):
     if div_hit and not product_ref and const_ref is None \
             and re.search(r"배당\s*수익률|분배\s*수익률|배당금|분배금|월\s*배당|월배당|매월\s*분배|매달\s*분배"
                           r"|배당\s*주|분배\s*주|배당\s*하는|분배\s*하는|\d\s*회\s*(?:분배|배당|지급)", q) \
-            and (any(w in q for w in TOP_WORDS) or re.search(r"높|많|추천|알려|뭐|어떤|있|\d\s*회", q)):   # 9/6: '지급 횟수 12회인'
+            and (any(w in q for w in TOP_WORDS) or re.search(r"높|많|추천|알려|뭐|어떤|있|\d\s*회", q)
+                 or any(_k == "dividend" for _v, _k, _d in percents)):   # 9/6: '지급 횟수 12회인' · 10바퀴: '분배수익률 3% 이상 5% 이하 ETF'
         # 수익률 표현이 있으면 금액(분배금) 낱말이 함께 있어도 수익률 정렬이다
         # ('분배금을 매월 지급하는 ETF 중 분배수익률이 가장 높은' — MR-A-02 실측)
         metric = "yield" if re.search(r"수익률", q) else (
@@ -1429,6 +1440,13 @@ def route_stage_a(question, index, policy=None, today=None):
                     holder_params["mgmt"] = mgmt_filter.key
                 if theme_pat:
                     holder_params["name_pattern_raw"] = theme_pat
+                if risk and risk[0] != "invalid":         # 10바퀴: '삼성전자 담은 ETF 중 위험등급 1등급'(종전 등급 누락)
+                    holder_params["min_risk"], holder_params["max_risk"] = risk[0], risk[1]
+                    plan.notes.extend(risk[2])
+                _lf_h = parse_listed_from(q, AS_OF_MASTER[:4])
+                if _lf_h:                                 # '…중 2024년 이후 상장'
+                    holder_params["min_listed_dt"] = _lf_h
+                    plan.notes.append(f"'{_lf_h} 이후 상장' 조건 적용")
                 plan.calls.append(ChannelCall("sql", "constituent_holders", holder_params))
         if mgmt_filter:
             plan.hints["mgmt_filter"] = {"name": comp_name, "key": mgmt_filter.key}
@@ -1591,7 +1609,8 @@ def route_stage_a(question, index, policy=None, today=None):
         _metric = f"vol_{_vp.group(1)}m" if _vp else "vol_1y"
     # 9/3 2바퀴: 총보수는 '높은/비싼' 순위만 여기서(낮은/싼은 11절 총보수 상한 필터 소관) · 상장일은 방향 낱말이
     # 있을 때만(오래된/최근) · 세 지표 모두 ETF/ETN 낱말 필수.
-    if _metric == "fee" and not re.search(r"높|비싼|많은|최고|최대|평균", q):   # 6바퀴: '총보수 평균'은 집계
+    if _metric == "fee" and not re.search(r"높|비싼|많은|최고|최대|평균", q) \
+            and not any(_k == "fee" and _d in ("이상", "초과", "넘") for _v, _k, _d in percents):   # 6바퀴: '총보수 평균'은 집계 · 10바퀴: '총보수 0.5% 초과'(하한은 7.4, 상한은 11절)
         _metric = None
     if _metric == "listed" and not re.search(r"오래|빠른|이른|먼저|최초|처음|최근|늦|나중", q):
         _metric = None
@@ -1942,6 +1961,17 @@ def route_stage_a(question, index, policy=None, today=None):
     # ── 9. 채권 (L-01~07/27) — ETF 단어가 있으면 ETP 소관, 잔존만기 복합은 Stage B ──
     if is_bond_domain and not has_etf_word and not is_fund_domain:
         cond, notes = rating_condition(q, policy)
+        _vr, _ = extract_ratings(q)
+        if len(_vr) >= 2:                                 # 10바퀴: '신용등급 AA- 이상 AA+ 이하 회사채' — 두 경계
+            notes = list(notes)
+            for _tok, _rk, _end in _vr:
+                _tail = q[_end:_end + 6].lstrip()
+                if _tail.startswith("이하") and "min_rating_rank" not in cond:
+                    cond = dict(cond, min_rating_rank=_rk)
+                    notes.append(f"'{_tok} 이하'=서열 {_rk} 이상(등급 낮은 쪽)으로 해석")
+                elif _tail.startswith("이상") and "max_rating_rank" not in cond:
+                    cond = dict(cond, max_rating_rank=_rk)
+                    notes.append(f"'{_tok} 이상'=서열 {_rk} 이하로 해석")
         if not cond and re.search(r"투자\s*적격|투자\s*등급\s*(이상|채권)", q):   # 9/6 8바퀴: '투자적격 등급 채권 몇 개'(종전 전체 건수)
             cond = {"max_rating_rank": 10}
             notes = list(notes) + ["투자적격 = BBB- 이상(신용등급 서열 10 이하) 기준"]
@@ -2295,6 +2325,9 @@ def route_stage_a(question, index, policy=None, today=None):
             if _lev_m:                                    # 8바퀴: '해외 3배 레버리지 ETF 몇 개'
                 _gl_common["lev_abs"] = float(_lev_m.group(1))
                 _gl_notes.append(f"레버리지 배수 절댓값 {_lev_m.group(1)} 상품만")
+        if re.search(r"한국|코리아", q) and not _gl_region:   # 10바퀴: '해외 ETF 중 한국 투자하는 것'(원천 지역 표기 'Korea')
+            _gl_common["region_pattern_raw"] = "Korea"
+            _gl_notes.append("투자지역(wu_inv_rgn) 'Korea' 기준")
         if "인버스" in q:                                   # 8바퀴: '해외 인버스 (레버리지) ETF 순자산 큰 3개'가 인버스 조건 없이 전체 순위
             _gl_common["inverse_only"] = "Y"
             _gl_notes.append("인버스(drv_is_inverse='Y') 상품만")
@@ -2360,9 +2393,26 @@ def route_stage_a(question, index, policy=None, today=None):
             return done("global_aum_rank")
         _g_aum, _g_aum_n = extract_aum_bounds(q)          # 9/3 2바퀴: '순자산 100억달러 이상 몇 개'(종전 전체 건수 오답)
         _g_aum_n = [n.replace("순자산총액(pd_net_tamt)", "순자산(du_last_aum, 원천 통화=달러)").replace(" 원 ", " ") for n in _g_aum_n]
+        if global_bounds and not any(w in q for w in COUNT_WORDS):
+            # 10바퀴: '나스닥 상장 ETF 중 순자산 1000억 달러 이상'·'해외 ETF 중 총보수 0.5% 이하인 것' — 문턱만 있는 목록은 해외 표(종전 국내 순자산 목록)
+            plan.calls.append(ChannelCall("sql", "global_etf_filter", dict(_gl_common, limit=max(limit, 20))))
+            plan.notes.extend(_gl_notes)
+            plan.notes.append("해외 ETF 순자산(du_last_aum, 달러) 내림차순 — 조건 일치 건수는 목록 머리의 '결과 N건'(상한 20)")
+            plan.hints["display_rows"] = top_n or 10
+            plan.hints["skip_generation"] = True
+            return done("global_filter")
+        if _gl_common.get("region_pattern_raw") == "Korea" and not any(w in q for w in COUNT_WORDS):
+            # 10바퀴: '해외 ETF 중 한국 투자하는 것'(종전 폴백) — 지역 사전(REGIONS)에 없는 '한국'은 원천 표기 'Korea'
+            plan.calls.append(ChannelCall("sql", "global_etf_filter", dict(_gl_common, limit=max(limit, 20))))
+            plan.notes.extend(_gl_notes)
+            plan.hints["display_rows"] = top_n or 10
+            plan.hints["skip_generation"] = True
+            return done("global_filter")
         if any(w in q for w in COUNT_WORDS):             # L-17
             _gcnt = dict(_g_aum)
             plan.notes.extend(_g_aum_n)
+            _gcnt.update({k: v for k, v in _gl_common.items() if k in ("min_fee_gt", "min_fee_ge", "max_fee_lt", "max_fee_le")})   # 10바퀴: '총보수 1% 넘는 것 몇 개'
+            plan.notes.extend([n for n in _gl_notes if "총보수" in n])
             _ast_c = next((en for ko, en in (("채권", "Bond"), ("주식", "Equity"), ("원자재", "Commodity"),
                                              ("대체", "Alternatives"), ("혼합", "Mixed Assets"))
                            if ko in q), None)             # 8/28 r4 R4-07
@@ -2860,8 +2910,19 @@ def route_stage_a(question, index, policy=None, today=None):
                                            and bool(index.search(_m_fn.group(1).replace(" ", ""), limit=1)
                                                     or token_matches(index, _m_fn.group(1).replace(" ", ""), limit=1)))
                         else None)                        # '지금판매중인공모펀드'(붙여쓰기)의 조각을 이름으로 오인하지 않게(v3 P-25)
-            if _fc_attr or _fc_region or _fc_sale or _fc_name or _fc_risk or _fc_mgmt:   # 9/3 2바퀴 · 9/6: 'TDF 펀드 몇 개'·위험등급·운용사
+            _fc_aum, _fc_aum_n = extract_aum_bounds(q)     # 10바퀴: '펀드 순자산 1000억 이상 몇 개'(종전 전체 건수)
+            if _fc_attr or _fc_region or _fc_sale or _fc_name or _fc_risk or _fc_mgmt or _fc_aum:   # 9/3 2바퀴 · 9/6: 'TDF 펀드 몇 개'·위험등급·운용사
                 _fcp = {"limit": 30000}                    # 조건 필터(L-22 와 같은 기준)로 건수 — 목록 머리 '결과 N건'
+                if _fc_aum:
+                    if "min_aum_ge" in _fc_aum:
+                        _fcp["min_aum"] = _fc_aum["min_aum_ge"]
+                    if "min_aum_gt" in _fc_aum:
+                        _fcp["min_aum"] = _fc_aum["min_aum_gt"] + 1
+                    if "max_aum_le" in _fc_aum:
+                        _fcp["max_aum"] = _fc_aum["max_aum_le"]
+                    if "max_aum_lt" in _fc_aum:
+                        _fcp["max_aum"] = _fc_aum["max_aum_lt"] - 1
+                    plan.notes.extend([n.replace("순자산총액(pd_net_tamt)", "순자산(fd_nast_suma)") for n in _fc_aum_n])
                 if _fc_name:
                     _fcp["name_pattern_raw"] = _fc_name
                     plan.notes.append(f"상품명(정식명·약칭)에 '{_fc_name}' 표기가 있는 공모펀드 기준")
@@ -3025,6 +3086,13 @@ def route_stage_a(question, index, policy=None, today=None):
         fee_type = ("수수료미징구" if fee_free
                     else ("수수료선취" if "선취" in q else ("수수료후취" if "후취" in q else None)))
         channel_pattern = "%온라인%" if "온라인" in q else None
+        _cl = re.search(r"(?:클래스|class)\s*([AC])\s*(e|-e)?(?![A-Za-z가-힣])|(?<![A-Za-z])([AC])\s*(e|-e)?\s*(?:클래스|class|형)", q, re.I)
+        if _cl and not fee_type and not re.search(r"차이|비교|뭐야|의미|설명", q):   # 10바퀴: '클래스 A 펀드 몇 개' — KOFIA 사전의 A(선취·오프라인)/C(미징구·오프라인), e 는 온라인
+            _cl_letter = (_cl.group(1) or _cl.group(3)).upper()
+            _cl_e = bool(_cl.group(2) or _cl.group(4))
+            fee_type = "수수료선취" if _cl_letter == "A" else "수수료미징구"
+            channel_pattern = "%온라인%" if _cl_e else "%오프라인%"
+            plan.notes.append(f"'{_cl_letter}{'e' if _cl_e else ''} 클래스' = KOFIA 클래스 사전 기준 {fee_type}·{'온라인' if _cl_e else '오프라인'} 판매 클래스로 해석")
         # 8/28 r2(T-14 전환): 재배포본 보수 분해 4종 신설 — 총보수/판매보수 질의를 합산·정렬로 답한다.
         if "보수" in q and not product_ref:
             _bt = re.search(r"(주식혼합형|채권혼합형|주식형|채권형)", q)
@@ -3188,6 +3256,23 @@ def route_stage_a(question, index, policy=None, today=None):
                 plan.notes.append("판매중 상품을 먼저 표시(판매완료 상품도 목록 뒤에 포함)")
             plan.calls.append(ChannelCall("sql", "fund_filter", params))
             return done("fund_filter")
+
+    # ── 12.95 개요 질의 (9/6 10바퀴) — 'ETF 뭐 있어'·'펀드 뭐 있어'가 폴백 거절이던 것: 순자산 큰 순 10개를 예시로
+    if not plan.calls and re.fullmatch(r"\s*(ETF|ETN|이티에프)\s*(?:들|은|는)?\s*(?:뭐|무엇|어떤\s*게|어떤\s*것)\s*(?:있|팔|나와)\S*\s*\??\s*", q, re.IGNORECASE):
+        _ov_type = "ETN" if re.search(r"ETN", q) else "ETF"
+        plan.calls.append(ChannelCall("sql", "etp_top_aum", {"instrument_type": _ov_type, "limit": 10}))
+        plan.calls.append(ChannelCall("sql", "etp_count", {}))
+        plan.notes.append(f"국내 {_ov_type} 전체 건수(유형·상장상태별)와 순자산 큰 순 10개 예시 — 테마·운용사·위험등급 등 조건을 정해 주면 좁혀 조회")
+        plan.hints["display_rows"] = 10
+        plan.hints["skip_generation"] = True
+        return done("etp_overview")
+    if not plan.calls and is_fund_domain and re.fullmatch(r"\s*(?:공모)?\s*펀드\s*(?:들|은|는)?\s*(?:뭐|무엇|어떤\s*게|어떤\s*것)\s*(?:있|팔|나와)\S*\s*\??\s*", q):
+        plan.calls.append(ChannelCall("sql", "fund_counts", {}))
+        plan.calls.append(ChannelCall("sql", "fund_filter", {"limit": 10, "order": "aum"}))
+        plan.notes.append("공모펀드 전체 건수(마스터·클래스)와 순자산 큰 순 10개 예시 — 유형·위험등급·운용사 등 조건을 정해 주면 좁혀 조회")
+        plan.hints["display_rows"] = 10
+        plan.hints["skip_generation"] = True
+        return done("fund_overview")
 
     # ── 13. 미등록 개체·상품 존재 질의 (T-04~09) — 비대칭 원칙:
     #        이름 일부라도 실제 상품명 안에 등장하면(CSI300 등) 거절이 아니라
